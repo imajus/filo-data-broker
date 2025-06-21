@@ -1,0 +1,94 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# FEVM Hardhat Kit Development Guide
+
+## Project Overview
+This is a Filecoin EVM (FEVM) Hardhat Kit for developing smart contracts that can interact with Filecoin storage deals and APIs. The project demonstrates how to build contracts that leverage Filecoin's unique storage capabilities.
+
+## Key Configuration Files
+- [hardhat.config.js](mdc:hardhat.config.js) - Main Hardhat configuration
+- [helper-hardhat-config.js](mdc:helper-hardhat-config.js) - Helper configuration for network settings
+- [package.json](mdc:package.json) - Dependencies and scripts
+- [deploy/00_deploy.js](mdc:deploy/00_deploy.js) - Deployment script for all contracts
+
+## Contract Categories
+
+### Basic Solidity Examples
+Located in `contracts/basic-solidity-examples/`:
+- [SimpleCoin.sol](mdc:contracts/basic-solidity-examples/SimpleCoin.sol) - Basic ERC20-like token contract
+
+### Filecoin API Examples
+Located in `contracts/filecoin-api-examples/`:
+- [DealRewarder.sol](mdc:contracts/filecoin-api-examples/DealRewarder.sol) - Bounty contract for incentivizing data storage
+- [FilecoinMarketConsumer.sol](mdc:contracts/filecoin-api-examples/FilecoinMarketConsumer.sol) - Contract for reading Filecoin market data
+
+### Deal Client Contract
+Located in `contracts/basic-deal-client/`:
+- [DealClient.sol](mdc:contracts/basic-deal-client/DealClient.sol) - Contract for creating storage deals via Solidity events
+
+## Task Scripts
+All task scripts are located in the `tasks/` directory and can be run with `yarn hardhat <task-name>`:
+
+### General Tasks
+- [get-address.js](mdc:tasks/get-address.js) - Get Ethereum and Filecoin addresses from private key
+- [cid-to-bytes.js](mdc:tasks/cid-to-bytes.js) - Convert CID to bytes format
+
+### SimpleCoin Tasks
+Located in `tasks/simple-coin/`:
+- [get-balance.js](mdc:tasks/simple-coin/get-balance.js) - Check SimpleCoin balance
+- [send-coin.js](mdc:tasks/simple-coin/send-coin.js) - Send SimpleCoin tokens
+
+### Deal Client Tasks
+Located in `tasks/deal-client/`:
+- [make-deal-proposal.js](mdc:tasks/deal-client/make-deal-proposal.js) - Create storage deal proposals
+- [get-deal-proposal.js](mdc:tasks/deal-client/get-deal-proposal.js) - Retrieve deal proposal data
+- [get-deal-status.js](mdc:tasks/deal-client/get-deal-status.js) - Check deal status
+
+### Deal Rewarder Tasks
+Located in `tasks/deal-rewarder/`:
+- [fund.js](mdc:tasks/deal-rewarder/fund.js) - Fund the bounty contract
+- [add-cid.js](mdc:tasks/deal-rewarder/add-cid.js) - Add CID to bounty list
+- [claim-bounty.js](mdc:tasks/deal-rewarder/claim-bounty.js) - Claim bounty for stored data
+
+### Filecoin Market Consumer Tasks
+Located in `tasks/filecoin-market-consumer/`:
+- [store-all.js](mdc:tasks/filecoin-market-consumer/store-all.js) - Store all deal data from MarketAPI
+- [get-deal-commmitment.js](mdc:tasks/filecoin-market-consumer/get-deal-commmitment.js) - Get deal commitment data
+
+## Development Workflow
+
+### Setup
+1. Install dependencies: `yarn install`
+2. Set private key: `export PRIVATE_KEY='your-private-key'`
+3. Get deployer address: `yarn hardhat get-address`
+4. Fund address at: https://faucet.calibration.fildev.network/
+
+### Deployment
+- Deploy all contracts: `yarn hardhat deploy`
+- Contracts deploy to Calibrationnet testnet by default
+
+### Testing Contracts
+- Use task scripts to interact with deployed contracts
+- Example: `yarn hardhat get-balance --contract ADDRESS --account ADDRESS`
+
+## Tools and Utilities
+- [tools/go-generate-car/](mdc:tools/go-generate-car) - Go tool for generating CAR files for Filecoin storage
+- CAR file generation is required before creating storage deals
+
+## Key Dependencies
+- **Filecoin.sol**: Library for accessing Filecoin APIs (currently in BETA)
+- **Hardhat**: Development framework
+- **Boost**: Storage provider integration for deal-making
+
+## Network Information
+- **Default Network**: Calibrationnet (Filecoin testnet)
+- **Faucet**: https://faucet.calibration.fildev.network/
+- **Deal Explorer**: https://calibration.filfox.info/en/deal
+
+## Code Style Preferences
+- Prefer JavaScript over TypeScript
+- No empty lines inside functions for styling
+- Use empty lines outside functions where applicable
