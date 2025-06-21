@@ -903,6 +903,14 @@
   resolved "https://registry.yarnpkg.com/@sovpro/delimited-stream/-/delimited-stream-1.1.0.tgz#4334bba7ee241036e580fdd99c019377630d26b4"
   integrity sha512-kQpk267uxB19X3X2T1mvNMjyvIEonpNSHrMlK5ZaBU6aZxw7wPbpgKJOjHN3+/GPVpXgAV9soVT2oyHpLkLtyw==
 
+"@starboardventures/hardhat-verify@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@starboardventures/hardhat-verify/-/hardhat-verify-1.0.1.tgz#4af0717c22ce0f3e7ec9e8794fd4ead5ab89ff83"
+  integrity sha512-/FO3wMmUSrL8PsYwuxA233+3iwLzmjI2z39MiZCgki0uJXtDELhO9YXDI9qoUR2jHxvHiBa1gKd/ZIpC9tpuKw==
+  dependencies:
+    fs-extra "^11.1.1"
+    node-fetch "2.0.0"
+
 "@szmarczak/http-timer@^4.0.5":
   version "4.0.6"
   resolved "https://registry.yarnpkg.com/@szmarczak/http-timer/-/http-timer-4.0.6.tgz#b4a914bb62e7c272d4e5989fe4440f812ab1d807"
@@ -3103,6 +3111,15 @@ fs-extra@^10.0.0:
     jsonfile "^6.0.1"
     universalify "^2.0.0"
 
+fs-extra@^11.1.1:
+  version "11.3.0"
+  resolved "https://registry.yarnpkg.com/fs-extra/-/fs-extra-11.3.0.tgz#0daced136bbaf65a555a326719af931adc7a314d"
+  integrity sha512-Z4XaCL6dUDHfP/jT25jJKMmtxvuwbkrD1vNSMFlo9lNLY2c5FHYSQgHPRZUjAB26TpDEoW9HCOgplrdbaPV/ew==
+  dependencies:
+    graceful-fs "^4.2.0"
+    jsonfile "^6.0.1"
+    universalify "^2.0.0"
+
 fs-extra@^4.0.2:
   version "4.0.3"
   resolved "https://registry.yarnpkg.com/fs-extra/-/fs-extra-4.0.3.tgz#0d852122e5bc5beb453fb028e9c0c9bf36340c94"
@@ -4508,6 +4525,11 @@ node-emoji@^1.10.0:
   integrity sha512-wo2DpQkQp7Sjm2A0cq+sN7EHKO6Sl0ctXeBdFZrL9T9+UywORbufTcTZxom8YqpLQt/FqNMUkOpkZrJVYSKD3A==
   dependencies:
     lodash "^4.17.21"
+
+node-fetch@2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.0.0.tgz#982bba43ecd4f2922a29cc186a6bbb0bb73fcba6"
+  integrity sha512-bici2HCWFnAghTYMcy12WPxrEwJ5qK7GQJOTwTfyEZjyL99ECWxbYQfabZ2U1zrHMKkOBE97Z9iHIuKQfCMdzQ==
 
 node-fetch@^2.6.12:
   version "2.7.0"

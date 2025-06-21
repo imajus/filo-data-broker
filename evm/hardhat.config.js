@@ -1,4 +1,5 @@
 require("@nomicfoundation/hardhat-toolbox")
+require("@nomicfoundation/hardhat-verify")
 require("hardhat-deploy")
 require("hardhat-deploy-ethers")
 require("./tasks")
@@ -34,6 +35,24 @@ module.exports = {
             url: "https://api.node.glif.io",
             accounts: [PRIVATE_KEY],
         },
+    },
+    etherscan: {
+        apiKey: {
+            calibrationnet: "...",
+        },
+        customChains: [
+            {
+                network: "calibrationnet",
+                chainId: 314159,
+                urls: {
+                    apiURL: "https://filecoin-testnet.blockscout.com/api",
+                    browserURL: "https://filecoin-testnet.blockscout.com/",
+                },
+            },
+        ],
+    },
+    sourcify: {
+        enabled: false,
     },
     paths: {
         sources: "./contracts",
