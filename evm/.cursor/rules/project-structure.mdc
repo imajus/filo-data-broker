@@ -1,0 +1,58 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Filecoin EVM NFT Factory Project
+
+This is a Filecoin EVM-compatible NFT factory project built with Hardhat that allows creating and managing NFT collections on the Filecoin network.
+
+## Project Overview
+
+This project implements an NFT Factory pattern where:
+- **NFTFactory** contract creates individual NFT collection contracts
+- Each NFT collection is a separate ERC-721 compliant contract
+- Includes tools for IPFS/Filecoin storage (CAR file generation)
+- Built for Filecoin EVM (FEVM) with Calibration testnet support
+
+## Key Architecture
+
+### Smart Contracts
+- **[NFTFactory.sol](mdc:contracts/NFTFactory.sol)** - Factory contract that creates and manages NFT collections
+- **[NFT.sol](mdc:contracts/NFT.sol)** - Individual ERC-721 NFT collection contract template
+
+### Configuration
+- **[hardhat.config.js](mdc:hardhat.config.js)** - Hardhat configuration with Filecoin networks (localnet, calibrationnet, mainnet)
+- **[helper-hardhat-config.js](mdc:helper-hardhat-config.js)** - Network helper configurations
+- **[package.json](mdc:package.json)** - Project dependencies and scripts
+
+### Deployment
+- **[deploy/deploy.js](mdc:deploy/deploy.js)** - Deployment script for NFTFactory contract using hardhat-deploy
+- Uses hardhat-deploy plugin for consistent deployments across networks
+
+### Tasks (CLI Interface)
+- **[tasks/index.js](mdc:tasks/index.js)** - Exports all available Hardhat tasks
+- **tasks/nft-factory/** - Collection of task scripts:
+  - **[create-collection.js](mdc:tasks/nft-factory/create-collection.js)** - Create new NFT collections
+  - **[mint-nft.js](mdc:tasks/nft-factory/mint-nft.js)** - Mint individual NFTs
+  - **[batch-mint.js](mdc:tasks/nft-factory/batch-mint.js)** - Batch mint multiple NFTs
+  - **[get-collections.js](mdc:tasks/nft-factory/get-collections.js)** - Query user collections
+  - **[collection-stats.js](mdc:tasks/nft-factory/collection-stats.js)** - Get collection statistics
+
+### IPFS/Filecoin Tools
+- **[tools/go-generate-car/](mdc:tools/go-generate-car)** - Go CLI tool for generating CAR files and computing CommP for Filecoin storage
+- Essential for preparing metadata and assets for decentralized storage
+
+## Development Workflow
+
+1. **Compile contracts**: `npm run compile`
+2. **Deploy factory**: `npx hardhat deploy --network calibrationnet`
+3. **Create collection**: `npx hardhat create-collection --factory <address> --name "MyNFT" --symbol "MNFT" --baseuri "ipfs://..."`
+4. **Mint NFTs**: `npx hardhat mint-nft --factory <address> --collection <address> --to <address>`
+
+## Network Configuration
+
+- **Default network**: Calibration testnet (chainId: 314159)
+- **Local development**: localnet (chainId: 31415926)
+- **Production**: Filecoin mainnet (chainId: 314)
+- **Block explorer**: Filecoin testnet Blockscout for verification

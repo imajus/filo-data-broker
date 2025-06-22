@@ -1,0 +1,138 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Filecoin & IPFS Integration
+
+## Filecoin EVM (FEVM) Integration
+
+This project is specifically designed for the Filecoin ecosystem and leverages FEVM (Filecoin Ethereum Virtual Machine) capabilities.
+
+### Network Configuration
+Configured in [hardhat.config.js](mdc:hardhat.config.js):
+
+- **Filecoin Calibration Testnet**: Primary development network
+  - Chain ID: 314159
+  - RPC: `https://api.calibration.node.glif.io/rpc/v1`
+  - Explorer: `https://filecoin-testnet.blockscout.com/`
+
+- **Filecoin Mainnet**: Production network
+  - Chain ID: 314
+  - RPC: `https://api.node.glif.io`
+
+- **Local Network**: Development setup
+  - Chain ID: 31415926
+  - RPC: `http://127.0.0.1:1234/rpc/v1`
+
+### FEVM-Specific Dependencies
+From [package.json](mdc:package.json):
+- `@glif/filecoin-address`: Filecoin address utilities
+- `filecoin-solidity-api`: Solidity API for Filecoin functionality
+- `cids`: Content identifier utilities for IPFS
+
+## CAR File Generation Tool
+
+### Overview
+The **[go-generate-car](mdc:tools/go-generate-car)** tool is essential for preparing data for Filecoin storage:
+
+- **Purpose**: Generate CAR (Content Addressed Archive) files
+- **Functionality**: Compute CommP (Piece Commitment) for Filecoin deals
+- **Language**: Go-based CLI tool
+- **Integration**: Supports batch processing of NFT metadata and assets
+
+### Usage Pattern for NFT Metadata
+
+1. **Prepare Metadata**: Create JSON metadata files for NFTs
+2. **Generate File List**: Create input JSON with file paths and sizes
+3. **Generate CAR**: Use go-generate-car to create CAR file
+4. **Upload to Filecoin**: Store CAR file on Filecoin network
+5. **Set Base URI**: Use IPFS hash as baseURI in NFT collection
+
+### Input Format
+The tool expects JSON input with file information:
+```json
+[
+  {
+    "Path": "metadata/1.json",
+    "Size": 1024,
+    "Start": 0,
+    "End": 1024
+  },
+  {
+    "Path": "metadata/2.json", 
+    "Size": 1024
+  }
+]
+```
+
+### Command Examples
+```bash
+# Generate CAR file from file list
+./go-generate-car -i metadata-list.json -o ./car-files
+
+# With temporary directory for faster processing
+./go-generate-car -i metadata-list.json -o ./car-files -t /tmp/fast-storage
+
+# Specify target piece size
+./go-generate-car -i metadata-list.json -s 1073741824 -o ./car-files
+```
+
+## NFT Metadata Strategy
+
+### URI Structure
+NFT contracts use the pattern: `{baseURI}{tokenId}.json`
+
+Example:
+- Base URI: `ipfs://QmYourHashHere/`
+- Token 1 URI: `ipfs://QmYourHashHere/1.json`
+- Token 2 URI: `ipfs://QmYourHashHere/2.json`
+
+### Metadata Schema
+Standard ERC-721 metadata format:
+```json
+{
+  "name": "NFT Name #1",
+  "description": "NFT Description",
+  "image": "ipfs://QmImageHash",
+  "attributes": [
+    {
+      "trait_type": "Property",
+      "value": "Value"
+    }
+  ]
+}
+```
+
+### Storage Workflow
+
+1. **Create Metadata**: Generate JSON files for each NFT
+2. **Prepare Assets**: Organize images and other assets
+3. **Generate CAR**: Use go-generate-car tool
+4. **Store on Filecoin**: Upload CAR file to Filecoin
+5. **Get IPFS Hash**: Extract IPFS hash from CAR file
+6. **Deploy Collection**: Use IPFS hash as baseURI
+7. **Mint NFTs**: Each token automatically gets correct URI
+
+## Development Integration
+
+### Local Development
+For testing, you can use any IPFS pinning service or local IPFS node:
+- **Pinata**: Popular IPFS pinning service
+- **Web3.Storage**: Filecoin-backed storage service
+- **Local IPFS**: Run local IPFS node for development
+
+### Production Deployment
+For production on Filecoin:
+1. Use go-generate-car for efficient CAR file creation
+2. Store CAR files on Filecoin through storage providers
+3. Use resulting IPFS hashes for NFT metadata URIs
+4. Leverage Filecoin's verifiable storage guarantees
+
+## Testing Tools
+
+### Go Tool Testing
+The tool includes comprehensive tests in [spec/](mdc:tools/go-generate-car/spec) and [test/](mdc:tools/go-generate-car/test):
+- Unit tests for chunk processing
+- Integration tests with various file scenarios
+- Performance tests for large datasets

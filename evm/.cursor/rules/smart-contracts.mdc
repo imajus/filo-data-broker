@@ -1,0 +1,80 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Smart Contract Architecture & Patterns
+
+## Contract Overview
+
+### NFTFactory Contract Pattern
+The **[NFTFactory.sol](mdc:contracts/NFTFactory.sol)** implements a factory pattern for creating NFT collections:
+
+#### Key Features:
+- **Collection Creation**: `createCollection()` deploys new NFT contract instances
+- **Access Control**: Only collection owners can mint NFTs in their collections
+- **Batch Operations**: `batchMintNFTs()` for efficient bulk minting
+- **Collection Management**: Toggle active/inactive status, query statistics
+- **Event Logging**: Comprehensive events for indexing and tracking
+
+#### Data Structures:
+```solidity
+struct Collection {
+    address nftContract;
+    address owner;
+    string name;
+    string symbol;
+    string baseTokenURI;
+    uint256 createdAt;
+    bool isActive;
+}
+```
+
+### NFT Contract Implementation
+The **[NFT.sol](mdc:contracts/NFT.sol)** is a custom ERC-721 implementation:
+
+#### Key Features:
+- **Full ERC-721 Compliance**: Implements IERC721, IERC721Metadata, IERC165
+- **Custom Errors**: Gas-efficient error handling (e.g., `NFT__TokenDoesNotExist`)
+- **Owner-Only Minting**: Only contract owner (NFTFactory) can mint
+- **Automatic Token URI**: Constructs URIs as `{baseURI}{tokenId}.json`
+- **Sequential Token IDs**: Auto-incrementing token ID system
+
+#### Security Patterns:
+- **Input Validation**: Checks for zero addresses, existing tokens
+- **State Consistency**: Proper balance and ownership tracking
+- **Access Control**: `onlyOwner` modifier for critical functions
+- **Safe Transfers**: Implements safe transfer checks
+
+## Development Conventions
+
+### Solidity Style:
+- **Pragma**: `^0.8.23` for latest features and gas optimizations
+- **State Variables**: Prefixed with `s_` (e.g., `s_owners`, `s_balances`)
+- **Custom Errors**: Prefixed with contract name (e.g., `NFT__TokenDoesNotExist`)
+- **Console Logging**: Uses `hardhat/console.sol` for debugging
+
+### Gas Optimization:
+- **Optimizer Enabled**: 1000 runs in [hardhat.config.js](mdc:hardhat.config.js)
+- **Batch Operations**: Efficient batch minting with array returns
+- **Storage Packing**: Efficient struct layouts
+- **Custom Errors**: Instead of revert strings for gas savings
+
+### Testing Considerations:
+- **Event Emission**: All critical operations emit events
+- **Return Values**: Functions return relevant data for testing
+- **State Queries**: Comprehensive getter functions for contract state
+
+## Integration Patterns
+
+### Factory → NFT Communication:
+1. Factory creates NFT with specific parameters
+2. Factory retains ownership of NFT contract
+3. Factory delegates minting permissions
+4. Users interact through Factory for most operations
+
+### Metadata Strategy:
+- **Base URI**: Set at collection creation
+- **Token URI**: `{baseURI}{tokenId}.json` format
+- **IPFS Integration**: Designed for IPFS metadata storage
+- **CAR Files**: Use [go-generate-car tool](mdc:tools/go-generate-car) for Filecoin storage

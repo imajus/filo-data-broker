@@ -1,0 +1,191 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Development Workflow & Setup
+
+## Project Setup
+
+### Prerequisites
+- Node.js (v16+ recommended)
+- Yarn package manager (see [yarn.lock](mdc:yarn.lock))
+- Go (for CAR file generation tool)
+- Git
+
+### Initial Setup
+```bash
+# Install dependencies
+yarn install
+
+# Set up environment variables
+cp .env.example .env
+# Add your PRIVATE_KEY to .env
+
+# Compile contracts
+yarn compile
+# or
+npm run compile
+```
+
+### Environment Configuration
+Create `.env` file with:
+```
+PRIVATE_KEY=your_private_key_here
+```
+
+## Development Scripts
+
+From [package.json](mdc:package.json):
+
+### Core Commands
+- **`yarn compile`**: Compile Solidity contracts
+- **`yarn test`**: Run unit tests on local Hardhat network
+- **`yarn test-staging`**: Run staging tests on Goerli (update for Calibration)
+- **`yarn lint`**: Lint Solidity contracts with solhint
+- **`yarn lint:fix`**: Auto-fix Solidity linting issues
+- **`yarn format`**: Format code with Prettier
+- **`yarn coverage`**: Generate test coverage report
+
+### Security & Analysis
+- **`yarn fuzzing`**: Run security analysis with Docker toolbox
+
+## Common Development Workflows
+
+### 1. Contract Development Cycle
+```bash
+# Edit contracts in contracts/
+vim contracts/NFTFactory.sol
+
+# Compile to check for errors
+yarn compile
+
+# Run tests
+yarn test
+
+# Check coverage
+yarn coverage
+
+# Lint and format
+yarn lint:fix
+yarn format
+```
+
+### 2. Deployment Workflow
+```bash
+# Deploy to Calibration testnet
+npx hardhat deploy --network calibrationnet
+
+# Verify deployment
+npx hardhat verify --network calibrationnet <deployed_address>
+
+# Test deployment with tasks
+npx hardhat create-collection \
+  --factory <deployed_address> \
+  --name "Test Collection" \
+  --symbol "TEST" \
+  --baseuri "ipfs://test/" \
+  --network calibrationnet
+```
+
+### 3. Full NFT Collection Workflow
+```bash
+# 1. Prepare metadata files
+mkdir metadata
+echo '{"name":"NFT #1","description":"First NFT"}' > metadata/1.json
+
+# 2. Generate CAR file (if using go-generate-car)
+cd tools/go-generate-car
+echo '[{"Path":"metadata/1.json","Size":42}]' | ./go-generate-car -i -
+
+# 3. Upload to IPFS/Filecoin and get hash
+# (Use your preferred method: Pinata, Web3.Storage, etc.)
+
+# 4. Deploy factory (if not already deployed)
+npx hardhat deploy --network calibrationnet
+
+# 5. Create collection
+npx hardhat create-collection \
+  --factory <factory_address> \
+  --name "My Collection" \
+  --symbol "MC" \
+  --baseuri "ipfs://QmYourHash/" \
+  --network calibrationnet
+
+# 6. Mint NFTs
+npx hardhat mint-nft \
+  --factory <factory_address> \
+  --collection <collection_address> \
+  --to <recipient_address> \
+  --network calibrationnet
+```
+
+## Testing Strategy
+
+### Test Structure
+- **Unit Tests**: Test individual contract functions
+- **Integration Tests**: Test contract interactions
+- **Staging Tests**: Test on live testnets
+
+### Test Configuration
+From [package.json](mdc:package.json):
+- **Timeout**: 10,000,000ms for long-running tests
+- **Network**: Hardhat local network for unit tests
+- **Coverage**: Solidity coverage with `.solcover.js`
+
+### Running Tests
+```bash
+# Local unit tests
+yarn test
+
+# Specific test file
+npx hardhat test test/unit/NFTFactory_test.js
+
+# With gas reporting
+REPORT_GAS=true yarn test
+
+# Integration tests on testnet
+yarn test-staging
+```
+
+## Code Quality & Standards
+
+### Solidity Standards
+- **Version**: ^0.8.23 (latest stable)
+- **Style**: Follow Solidity style guide
+- **Security**: Use custom errors for gas efficiency
+- **Documentation**: NatSpec comments for public functions
+
+### JavaScript/TypeScript Standards
+- **Prettier**: Auto-formatting enabled
+- **ESLint**: Linting configuration
+- **Naming**: camelCase for variables, PascalCase for contracts
+
+### Git Workflow
+```bash
+# Feature branch workflow
+git checkout -b feature/new-nft-feature
+git add .
+git commit -m "feat: add new NFT feature"
+git push origin feature/new-nft-feature
+# Create pull request
+```
+
+## Debugging & Troubleshooting
+
+### Common Issues
+1. **"The address is not a smart contract"**: Contract not deployed or wrong network
+2. **Gas estimation failed**: Check contract state and parameters
+3. **Private key issues**: Ensure proper .env configuration
+
+### Debugging Tools
+- **Hardhat Console**: `npx hardhat console --network calibrationnet`
+- **Contract Verification**: Use Blockscout explorer
+- **Event Logs**: Check transaction receipts for events
+- **Hardhat Logs**: Use `console.log` in contracts for debugging
+
+### Gas Optimization
+- **Batch Operations**: Use `batchMintNFTs` for multiple mints
+- **Custom Errors**: Replace `require` strings with custom errors
+- **Storage Optimization**: Pack structs efficiently
+- **Optimizer**: Enabled with 1000 runs in config

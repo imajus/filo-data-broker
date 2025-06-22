@@ -1,0 +1,126 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Hardhat Tasks & CLI Commands
+
+## Task System Overview
+
+The project uses Hardhat's task system to provide a CLI interface for interacting with deployed contracts. All tasks are organized in the **[tasks/](mdc:tasks)** directory and exported through **[tasks/index.js](mdc:tasks/index.js)**.
+
+## Available Tasks
+
+### Collection Management
+
+#### Create Collection
+**File**: [create-collection.js](mdc:tasks/nft-factory/create-collection.js)
+```bash
+npx hardhat create-collection \
+  --factory <NFTFactory_address> \
+  --name "My NFT Collection" \
+  --symbol "MNC" \
+  --baseuri "ipfs://QmYourHashHere/" \
+  --network calibrationnet
+```
+
+#### Get User Collections
+**File**: [get-collections.js](mdc:tasks/nft-factory/get-collections.js)
+```bash
+npx hardhat get-collections \
+  --factory <NFTFactory_address> \
+  --user <user_address> \
+  --network calibrationnet
+```
+
+#### Collection Statistics
+**File**: [collection-stats.js](mdc:tasks/nft-factory/collection-stats.js)
+```bash
+npx hardhat collection-stats \
+  --factory <NFTFactory_address> \
+  --collection <NFT_contract_address> \
+  --network calibrationnet
+```
+
+### NFT Minting
+
+#### Single NFT Mint
+**File**: [mint-nft.js](mdc:tasks/nft-factory/mint-nft.js)
+```bash
+npx hardhat mint-nft \
+  --factory <NFTFactory_address> \
+  --collection <NFT_contract_address> \
+  --to <recipient_address> \
+  --network calibrationnet
+```
+
+#### Batch Mint
+**File**: [batch-mint.js](mdc:tasks/nft-factory/batch-mint.js)
+```bash
+npx hardhat batch-mint \
+  --factory <NFTFactory_address> \
+  --collection <NFT_contract_address> \
+  --recipients <address1,address2,address3> \
+  --network calibrationnet
+```
+
+## Task Implementation Pattern
+
+All tasks follow a consistent pattern:
+
+```javascript
+const { task } = require("hardhat/config")
+
+task("task-name", "Task description")
+    .addParam("param1", "Parameter description")
+    .addParam("param2", "Another parameter")
+    .setAction(async (taskArgs) => {
+        const { param1, param2 } = taskArgs
+        
+        // Get contract instance
+        const contract = await ethers.getContractAt("ContractName", address)
+        
+        // Execute transaction
+        const tx = await contract.someFunction(param1, param2)
+        const receipt = await tx.wait()
+        
+        // Parse events and log results
+        console.log(`Transaction hash: ${tx.hash}`)
+    })
+```
+
+## Network Configuration
+
+Tasks support multiple networks configured in [hardhat.config.js](mdc:hardhat.config.js):
+
+- **localnet**: Local development (chainId: 31415926)
+- **calibrationnet**: Filecoin testnet (chainId: 314159) - **Default**
+- **filecoinmainnet**: Filecoin mainnet (chainId: 314)
+
+## Environment Setup
+
+1. **Set Private Key**: Add `PRIVATE_KEY` to `.env` file
+2. **Deploy Factory**: `npx hardhat deploy --network calibrationnet`
+3. **Use Factory Address**: Copy deployed address for task commands
+
+## Task Development Guidelines
+
+### Parameter Naming:
+- Use lowercase with hyphens for consistency
+- Provide clear descriptions for each parameter
+- Include required vs optional parameter documentation
+
+### Error Handling:
+- Wrap contract calls in try-catch blocks
+- Provide meaningful error messages
+- Log transaction hashes for debugging
+
+### Event Parsing:
+- Extract relevant information from transaction receipts
+- Log important data like addresses and IDs
+- Use events to confirm successful operations
+
+### Gas Optimization:
+- Use batch operations when possible
+- Estimate gas before execution for large operations
+- Provide gas estimation feedback to users
