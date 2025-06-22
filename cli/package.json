@@ -1,0 +1,37 @@
+{
+  "name": "filo-data-broker-cli",
+  "version": "1.0.0",
+  "description": "A CLI tool for Filo Data Broker",
+  "main": "index.js",
+  "type": "module",
+  "bin": {
+    "filo": "./bin/cli.js"
+  },
+  "scripts": {
+    "start": "node bin/cli.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "cli",
+    "data-broker",
+    "filo"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@lighthouse-web3/kavach": "^0.2.1",
+    "@lighthouse-web3/sdk": "^0.4.0",
+    "chalk": "^4.1.2",
+    "commander": "^11.1.0",
+    "csv-parse": "^5.5.2",
+    "ethers": "^6.14.4",
+    "fs-extra": "^11.1.1",
+    "inquirer": "^8.2.6"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

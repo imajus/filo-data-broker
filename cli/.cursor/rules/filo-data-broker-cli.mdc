@@ -1,0 +1,99 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Filo Data Broker CLI - Cursor Rules
+
+## Project Overview
+This is a Node.js CLI application for importing CSV data to the Filo Data Broker with privacy-aware column selection. The tool provides interactive prompts to identify private/sensitive data columns and handles data encryption using Lighthouse SDK.
+
+## Architecture & Key Files
+
+### Entry Point
+- [bin/cli.js](mdc:bin/cli.js) - Main CLI entry point using Commander.js
+  - Defines the `import` command with required options (--api-key, --private-key, --file)
+  - Handles interactive privacy configuration using Inquirer.js
+  - Orchestrates the CSV processing workflow
+
+### Core Libraries
+- [lib/importer.js](mdc:lib/importer.js) - CSV file processing and streaming
+  - Uses `csv-parse` for efficient streaming of large CSV files
+  - Provides callbacks for header processing and progress tracking
+  - Handles row-by-row processing without loading entire file into memory
+
+- [lib/processor.js](mdc:lib/processor.js) - Data processing and encryption
+  - Handles separation of private vs public data columns
+  - Integrates with Lighthouse SDK for encrypted data upload
+  - Manages Ethereum wallet signing for authentication
+
+### Configuration Files
+- [package.json](mdc:package.json) - Project dependencies and scripts
+  - Uses ES modules (`"type": "module"`)
+  - Key dependencies: commander, chalk, csv-parse, inquirer, ethers, lighthouse SDKs
+  - Binary executable named `filo` pointing to [bin/cli.js](mdc:bin/cli.js)
+
+### Sample Data
+- [sample/](mdc:sample) - Contains sample CSV files for testing
+  - US counties data from 2020-2023 for development and testing purposes
+
+## Development Patterns
+
+### Code Style Guidelines
+- Uses ES6 modules with `.js` extensions
+- No empty lines inside functions (per user preference)
+- Prefers JavaScript over TypeScript
+- Uses async/await for asynchronous operations
+- Comprehensive error handling with colored console output
+
+### CLI Command Structure
+```bash
+npm start import -- --api-key KEY --private-key PRIVATE_KEY --file path/to/file.csv
+```
+
+### Interactive Workflow
+1. **File Validation** - Checks if CSV file exists
+2. **CSV Parsing** - Streams and parses CSV headers first
+3. **Column Display** - Shows all available column names
+4. **Privacy Selection** - Interactive checkbox for selecting private columns
+5. **Data Processing** - Row-by-row processing with progress updates
+6. **Encryption & Upload** - Private data encrypted via Lighthouse SDK
+
+### Key Dependencies Usage
+- **Commander.js** - CLI argument parsing and command definition
+- **Chalk** - Terminal output coloring and styling
+- **Inquirer.js** - Interactive command-line prompts (checkbox selection)
+- **csv-parse** - Streaming CSV parsing with column header support
+- **ethers** - Ethereum wallet operations and message signing
+- **@lighthouse-web3/sdk** - Encrypted data upload to IPFS
+- **@lighthouse-web3/kavach** - Authentication and JWT token management
+
+## Common Development Tasks
+
+### Adding New Commands
+1. Define new command in [bin/cli.js](mdc:bin/cli.js) using `.command()` method
+2. Add required/optional options with `.requiredOption()` or `.option()`
+3. Implement action handler with async function
+4. Add any new processing logic to [lib/processor.js](mdc:lib/processor.js) or create new lib files
+
+### Modifying CSV Processing
+- Update [lib/importer.js](mdc:lib/importer.js) for parsing logic changes
+- Modify [lib/processor.js](mdc:lib/processor.js) for data handling changes
+- Consider memory usage for large files - current implementation streams data
+
+### Testing with Sample Data
+- Use files in [sample/](mdc:sample) directory for development testing
+- Test with different CSV structures and column types
+- Verify privacy selection workflow with various data sets
+
+### Error Handling Patterns
+- File existence validation before processing
+- CSV parsing error handling with descriptive messages
+- Ethereum signing and API error handling
+- Progress tracking for long-running operations
+
+## Security Considerations
+- Private keys are masked in console output
+- Private data columns are encrypted before upload
+- Public data columns remain unencrypted
+- JWT authentication required for Lighthouse API access

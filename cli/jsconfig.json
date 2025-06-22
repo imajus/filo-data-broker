@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "noEmit": true,
+    "strict": false,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./lib/*"]
+    }
+  },
+  "include": [
+    "bin/**/*",
+    "lib/**/*"
+  ],
+  "exclude": ["node_modules"]
+} 
