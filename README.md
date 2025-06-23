@@ -1,10 +1,8 @@
 ## 🚀 Project Summary
 
-**FiloDataBroker** is a proof-of-concept platform to help data providers (e.g., database owners) legally and simply monetize their structured datasets while protecting sensitive information.
+**FiloDataBroker** is a proof-of-concept platform to help data providers monetize their structured CSV datasets while protecting sensitive information using decentralized storage and NFT-gated access.
 
-The service enables import of data via a CLI tool, storage of public fields for fast query, secure storage and access control for sensitive fields using decentralized storage (Filecoin/IPFS), and token/NFT-gated access for data consumers (such as LLM-powered apps).
-
-No unofficial scraping, no middlemen—creators get paid, and consumers use data legally.
+The service enables import of data via a CLI tool, storage of public and private columns on IPFS/Filecoin (using Lighthouse SDK), NFT-gated access to encrypted private data, and on-chain dataset metadata. No centralized backend, no custom API keys, no off-chain registry—everything is decentralized and NFT-driven.
 
 ---
 
@@ -13,34 +11,40 @@ No unofficial scraping, no middlemen—creators get paid, and consumers use data
 ```
        Data Provider (CLI)
                 |
-                | API Key Auth
+                | Lighthouse API Key & EOA Private Key
                 v
 +-------------------------------+
-|   PoC Service Backend API     |
+|         IPFS/Filecoin         |
 |-------------------------------|
-| - Public Data Store (DB)      |
-| - Sensitive Data Encrypted    |
-| - NFT Minting & Gated Access  |
-| - Dataset Registry/Discovery  |
+| - Public Data CSV             |
+| - Private Data (Encrypted)    |
+| - CIDs for Private Data       |
 +-------------------------------+
-        |             |
-        |             |
-        v             v
-MongoDB Source   IPFS/Filecoin (via Lighthouse API)
-                   (Encrypted Sensitive Data)
-               (Access controlled by NFT ownership)
-
-                ^
-                | API Key Auth
-                |
-       Data Consumer (MCP Client, LLM, App)
+        |
+        | NFT Contract Deployed (per dataset)
+        v
++-------------------------------+
+|   Filecoin EVM (NFTs +       |
+|   Dataset Metadata On-chain)  |
++-------------------------------+
+        |
+        v
++-------------------------------+
+|   MCP Server (REST API)       |
+|   (No DB, No Web Portal)      |
++-------------------------------+
+        |
+        v
+   Data Consumer (CLI, LLM, App)
 ```
 
 Main Flows:
 
-- **Public fields**: Fast-access DB for query/search via API.
-- **Private fields**: Encrypted, uploaded as row JSONs to IPFS/Filecoin, Lighthouse API enforces NFT-based access.
-- **Payment/Access**: Data consumers buy per-dataset NFTs to gain access to sensitive data.
+- **Public columns**: Uploaded as CSV to IPFS/Filecoin (unencrypted).
+- **Private columns**: Encrypted, uploaded as separate files to IPFS/Filecoin, CIDs referenced in public CSV.
+- **NFT Access**: Each dataset has its own NFT contract; holding an NFT from the collection grants access to the private data.
+- **Metadata**: Dataset name, description, schema, and CIDs are stored in the NFT contract on-chain.
+- **No backend DB, no web portal, no off-chain registry.**
 
 ---
 
@@ -48,36 +52,29 @@ Main Flows:
 
 ### 1. **CLI Tool for Data Providers**
 
-- Connects to MongoDB on local infastructure.
-- Guides user to select dataset, public/private fields.
-- Uploads public data to backend DB; private data encrypted, uploaded to IPFS/Filecoin (per row, via Lighthouse).
-- Registers dataset metadata with backend service.
-- Requires API Key (obtained from web portal).
+- Accepts CSV file as data source.
+- Guides user to select public/private columns.
+- Encrypts private data, uploads both public and private data to IPFS/Filecoin via Lighthouse SDK.
+- Deploys a new NFT contract for each dataset on Filecoin EVM, storing dataset metadata and CIDs.
+- Requires Lighthouse API key and Ethereum EOA private key.
 
-### 2. **Backend Service**
+### 2. **NFT Smart Contracts (On-chain Registry)**
 
-- Hosts public/queryable datasets.
-- Generates and mints ERC-721 NFTs for each dataset on Filecoin EVM.
-- Registers datasets for discovery, manages API keys.
-- Manages Lighthouse token-gating and sensitive data pointers (CIDs).
-- Provides REST API endpoints for search, access, NFT status, etc.
+- Each dataset is represented by its own NFT contract on Filecoin EVM.
+- Stores dataset metadata (name, description, schema, CIDs for public/private data).
+- NFT ownership is the sole access control for private data.
 
-### 3. **Frontend Web Portal**
+### 3. **MCP Server (REST API)**
 
-- User signup/login and API key management.
-- Dataset browsing/search/registry interface.
-- NFT purchase/minting for dataset access (USDFC payments).
+- Reacts to NFTFactory contract to list all datasets (by reading on-chain events/metadata).
+- Allows public search/listing of datasets and schemas (no authorization required).
+- Allows querying of datasets; for private data, requires a signed message with NFT-owning EOA private key as argument.
+- No frontend, no extra backend, no database.
 
-### 4. **Consumer API (MCP)**
+### 4. **Data Storage**
 
-- REST API for dataset discovery, list, schema, and query.
-- Enforces API Key check and, for sensitive/private requests, verifies NFT holding using Lighthouse’s on-chain integration.
-- Serves as a remote plugin for LLM apps.
-
-### 5. **Data Storage**
-
-- **Public data**: Fast-access backend database.
-- **Private data**: Per-row encrypted JSONs uploaded to Filecoin/IPFS (via Lighthouse), CIDs referenced in backend DB.
+- **Public data**: CSV file on IPFS/Filecoin (unencrypted), CID stored on-chain.
+- **Private data**: Encrypted files on IPFS/Filecoin, CIDs referenced in public CSV and stored on-chain.
 
 ---
 
@@ -85,41 +82,41 @@ Main Flows:
 
 ### Data Provider
 
-1. **Registration**: Signs up on portal, receives API key.
-2. **Run CLI Tool**: Connect to MongoDB, select data, define public/private fields.
-3. **Secure Upload**: CLI batches and uploads, encrypts sensitive rows, uploads via Lighthouse API.
-4. **Dataset Registered**: Confirmed/visible in backend registry and searchable.
+1. **Prepare CSV**: User prepares a CSV file with their dataset.
+2. **Run CLI Tool**: Selects public/private columns, encrypts private data, uploads both to IPFS/Filecoin.
+3. **Deploy NFT Contract**: CLI deploys a new NFT contract for the dataset, storing all metadata and CIDs on-chain.
 
 ### Data Consumer (LLM, App, etc.)
 
-1. **Browse/Discover**: Uses portal or MCP to find relevant datasets.
-2. **Purchase NFT**: For private access, buys NFT (one per dataset) via portal (Filecoin network, USDFC).
-3. **Query Data**: Gets public data instantly; provides NFT/API key for private fields—MCP checks NFT, fetches and decrypts from IPFS/Filecoin using Lighthouse API.
-4. **Consume Legally**: Holds NFT as proof of access; fully authorized to use the data.
+1. **Discover Datasets**: Uses MCP server to list/search datasets and view schemas (public, no auth).
+2. **Purchase NFT**: Acquires NFT from the dataset's collection (Filecoin EVM, via external means).
+3. **Query Data**: Uses MCP server to query datasets. For private data, provides a signed message with EOA private key; MCP verifies NFT ownership and provides access to encrypted data.
+4. **Decrypt & Use**: Decrypts private data using access granted by NFT ownership.
 
 ---
 
 ## 🧪 PoC Limitations & Assumptions
 
-- Only MongoDB supported as source in CLI for PoC.
-- NFT purchase/hold used as sole access and proof mechanism for private data.
-- No per-query auditing or on-chain registry for datasets (off-chain/web registry only).
-- Hard-coded row/result limits for API queries.
+- Only CSV files supported as data source in CLI for PoC.
+- NFT ownership is the sole access and proof mechanism for private data and acts as a proof of legal data access.
+- No per-query auditing, no off-chain registry, no web portal, no backend DB.
+- All dataset metadata is stored on-chain in NFT contracts.
 - Security, legal compliance, and data provider KYC out of initial scope.
+- Querying private data requires passing a signed message with EOA private key to MCP server.
 
 ---
 
 ## ⚙️ Quick Start (For Hackathon Demo)
 
 1. **Provider:**  
-   a. Register on portal, get API key  
-   b. Run CLI tool, connect to your MongoDB, select dataset/fields  
-   c. Upload data, view dataset in registry
+   a. Prepare your CSV file  
+   b. Run CLI tool, select public/private columns  
+   c. Upload data to IPFS/Filecoin, deploy NFT contract, store metadata on-chain
 
 2. **Consumer:**  
-   a. Find dataset on portal  
-   b. Purchase NFT via "Buy Access" (get wallet ready, use USDFC)  
-   c. Use API key and NFT to access full dataset from your LLM/application
+   a. Use MCP server to find dataset  
+   b. Acquire NFT from dataset's collection (Filecoin EVM)  
+   c. Query public data freely; for private data, provide signed message with EOA private key to MCP server
 
 ---
 
@@ -127,7 +124,6 @@ Main Flows:
 
 - [CLI Tool Usage](cli/README.md)
 - [MCP Documentation](mcp/README.md)
-- [Web Portal Walkthrough](web/README.md)
 
 ---
 
