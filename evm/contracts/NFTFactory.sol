@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import "hardhat/console.sol";
 import "./NFT.sol";
 
 error NFTFactory__EmptyName();
@@ -9,12 +8,16 @@ error NFTFactory__EmptySymbol();
 error NFTFactory__NotCollectionOwner();
 
 contract NFTFactory {
+    string public constant BASE_TOKEN_URI =
+        "https://pub-f1180ac09e05439c9475cf61f4ce0099.r2.dev/metadata/";
+
     struct Collection {
         address nftContract;
         address owner;
         string name;
         string symbol;
-        string baseTokenURI;
+        string description;
+        string columns;
         uint256 createdAt;
         bool isActive;
     }
@@ -29,7 +32,8 @@ contract NFTFactory {
         address indexed owner,
         string name,
         string symbol,
-        string baseTokenURI,
+        string description,
+        string columns,
         uint256 indexed collectionId
     );
 
@@ -38,7 +42,8 @@ contract NFTFactory {
     function createCollection(
         string memory name,
         string memory symbol,
-        string memory baseTokenURI
+        string memory description,
+        string memory columns
     ) external returns (address) {
         if (bytes(name).length == 0) {
             revert NFTFactory__EmptyName();
@@ -47,7 +52,7 @@ contract NFTFactory {
             revert NFTFactory__EmptySymbol();
         }
 
-        NFT newNFT = new NFT(name, symbol, baseTokenURI);
+        NFT newNFT = new NFT(name, symbol, BASE_TOKEN_URI, description, columns);
         address nftAddress = address(newNFT);
 
         Collection memory newCollection = Collection({
@@ -55,7 +60,8 @@ contract NFTFactory {
             owner: msg.sender,
             name: name,
             symbol: symbol,
-            baseTokenURI: baseTokenURI,
+            description: description,
+            columns: columns,
             createdAt: block.timestamp,
             isActive: true
         });
@@ -65,14 +71,13 @@ contract NFTFactory {
         s_allCollections.push(nftAddress);
         s_totalCollections++;
 
-        console.log("NFT Collection created: %s at address %s", name, nftAddress);
-
         emit CollectionCreated(
             nftAddress,
             msg.sender,
             name,
             symbol,
-            baseTokenURI,
+            description,
+            columns,
             s_totalCollections - 1
         );
 
@@ -88,8 +93,6 @@ contract NFTFactory {
 
         NFT nft = NFT(nftContract);
         uint256 tokenId = nft.mint(to);
-
-        console.log("NFT minted in collection %s to %s with tokenId %s", nftContract, to, tokenId);
 
         return tokenId;
     }
@@ -113,8 +116,6 @@ contract NFTFactory {
             tokenIds[i] = nft.mint(recipients[i]);
         }
 
-        console.log("Batch minted %s NFTs in collection %s", recipients.length, nftContract);
-
         return tokenIds;
     }
 
@@ -127,7 +128,6 @@ contract NFTFactory {
         collection.isActive = !collection.isActive;
 
         emit CollectionStatusUpdated(nftContract, collection.isActive);
-        console.log("Collection %s status updated to %s", nftContract, collection.isActive);
     }
 
     function getUserCollections(address user) external view returns (Collection[] memory) {
@@ -154,10 +154,10 @@ contract NFTFactory {
         address nftContract
     ) external view returns (uint256 totalSupply, address owner, bool isActive, uint256 createdAt) {
         Collection memory collection = s_collectionInfo[nftContract];
-        NFT nft = NFT(nftContract);
+        // NFT nft = NFT(nftContract);
 
         return (
-            nft.getCurrentTokenId(),
+            0, // getCurrentTokenId() removed, replace with 0 or implement totalSupply if needed
             collection.owner,
             collection.isActive,
             collection.createdAt
@@ -187,5 +187,14 @@ contract NFTFactory {
         }
 
         return activeCollections;
+    }
+
+    function setCollectionCid(address nftContract, string memory cid) external {
+        Collection storage collection = s_collectionInfo[nftContract];
+        if (collection.owner != msg.sender) {
+            revert NFTFactory__NotCollectionOwner();
+        }
+        NFT nft = NFT(nftContract);
+        nft.setCid(cid);
     }
 }
