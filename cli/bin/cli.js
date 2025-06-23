@@ -5,7 +5,6 @@ import chalk from 'chalk';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import packageJson from '../package.json' with { type: 'json' };
-import { Importer } from '../lib/importer.js';
 import { Processor } from '../lib/processor.js';
 
 const program = new Command();
@@ -25,7 +24,7 @@ program
     if (!options.file) {
       console.log(chalk.red('❌ Error: CSV file path is required'));
       console.log(
-        chalk.yellow('Usage: import -k <api-key> -f <csv-file-path>')
+        chalk.yellow('Usage: import -k <api-key> -p <key> -f <csv-file-path>')
       );
       return;
     }
@@ -40,10 +39,10 @@ program
     console.log(chalk.blue('Private Key: **********'));
     // Step 2: Create streaming parser for CSV
     console.log(chalk.yellow('\n📄 Setting up CSV stream...'));
-    const processor = new Processor(options.apiKey, options.privateKey);
-    const importer = new Importer(processor);
+    const processor = new Processor(options);
+    let rowCount = 0;
     try {
-      const { rowCount } = await importer.process(options.file, {
+      const cid = await processor.process(options.file, {
         async onHeaders(headers) {
           // Step 3: Display extracted column names immediately
           console.log(chalk.green('\n✓ CSV headers parsed successfully!'));
@@ -87,15 +86,18 @@ program
           }
           console.log(chalk.yellow('\n📊 Starting row-by-row processing...'));
           // Store selected private columns
-          processor.setPrivateColumns(privateColumns);
+          processor.setColumns(publicColumns, privateColumns);
         },
-        onTick(rowCount) {
-          console.log(chalk.blue(`📈 Processed ${rowCount} rows...`));
+        onTick(result) {
+          ++rowCount;
+          const line = Object.values(result).toString();
+          console.log(chalk.blue(line));
         },
       });
-      console.log(chalk.blue('\n📈 Import Summary:'));
-      console.log(chalk.white(`  • Total rows processed: ${rowCount}`));
       console.log(chalk.green('✓ Data processing completed successfully!'));
+      console.log(chalk.blue('\n📈 Processing Summary:'));
+      console.log(chalk.white(`  • Total rows processed: ${rowCount}`));
+      console.log(chalk.white(`  • Output CID: ${cid}`));
     } catch (err) {
       console.log(chalk.red(`❌ Processing Error: ${err.message}`));
     }
