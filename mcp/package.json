@@ -1,0 +1,32 @@
+{
+  "name": "filo-data-broker-mcp-server",
+  "version": "0.1.0",
+  "description": "Filo Data Broker MCP Server",
+  "main": "server.js",
+  "bin": {
+    "filo-data-broker-mcp-server": "./bin/index.js"
+  },
+  "type": "module",
+  "scripts": {
+    "start": "node bin/index.js",
+    "dev": "node --watch bin/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "server"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+}

@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "checkJs": true,
+    "allowJs": true
+  },
+  "include": ["bin/index.js", "lib/**/*.js"]
+} 

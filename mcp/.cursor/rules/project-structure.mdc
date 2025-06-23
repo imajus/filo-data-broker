@@ -1,0 +1,12 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Project Structure Guide
+
+- The main executable entry point is [bin/index.js](mdc:bin/index.js), which starts the MCP server using a transport.
+- The MCP server instance, including tool and resource registration, is defined and exported from [server.js](mdc:server.js).
+- Tools and resources are implemented in the [lib/tools](mdc:lib/tools) and [lib/resources](mdc:lib/resources) directories, respectively.
+- Utility functions are located in [lib/utils.js](mdc:lib/utils.js).
+- The package is configured for npx execution via the `bin` field in [package.json](mdc:package.json).
