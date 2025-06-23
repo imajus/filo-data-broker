@@ -6,6 +6,7 @@ import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import packageJson from '../package.json' with { type: 'json' };
 import { Processor } from '../lib/processor.js';
+import { Uploader } from '../lib/uploader.js';
 
 const program = new Command();
 
@@ -39,7 +40,11 @@ program
     console.log(chalk.blue('Private Key: **********'));
     // Step 2: Create streaming parser for CSV
     console.log(chalk.yellow('\n📄 Setting up CSV stream...'));
-    const processor = new Processor(options);
+    const uploader = new Uploader({
+      apiKey: options.apiKey,
+      privateKey: options.privateKey
+    });
+    const processor = new Processor({ uploader });
     let rowCount = 0;
     try {
       const cid = await processor.process(options.file, {
