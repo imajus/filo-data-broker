@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { LocalDatasetFactory } from '../api/mock/LocalDatasetFactory.js';
+import { LocalDatasetFactory } from '../dataset/mock/LocalDatasetFactory.js';
 
 /**
  * @param {import('@modelcontextprotocol/sdk/server/mcp.js').McpServer} mcp

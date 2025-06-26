@@ -13,15 +13,18 @@ interface ToolDefinition {
   handler: ToolCallback<ZodRawShape>,
 };
 
-interface Dataset {
+interface DatasetMetadata {
   id: string;
   name: string;
   description: string;
   columns: string[];
+}
+
+type Dataset = DatasetMetadata & {
   query: (sql: string) => Promise<any[]>;
 }
 
 interface DatasetFactory {
   get: (id: string) => Promise<Dataset>;
-  list: () => Promise<Dataset[]>;
+  list: () => Promise<DatasetMetadata[]>;
 }

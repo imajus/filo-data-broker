@@ -1,4 +1,4 @@
-import { LocalDatasetFactory } from '../api/mock/LocalDatasetFactory.js';
+import { FilecoinDatasetFactory } from '../dataset/FilecoinDatasetFactory.js';
 
 /**
  * @param {import('@modelcontextprotocol/sdk/server/mcp.js').McpServer} mcp
@@ -6,7 +6,7 @@ import { LocalDatasetFactory } from '../api/mock/LocalDatasetFactory.js';
 export default (mcp) =>
   mcp.tool('list_datasets', 'List all available datasets', {}, async () => {
     // Use DatasetFactory to list all datasets
-    const factory = new LocalDatasetFactory();
+    const factory = new FilecoinDatasetFactory();
     const datasets = await factory.list();
     // Convert Dataset instances to plain objects for JSON response
     return {

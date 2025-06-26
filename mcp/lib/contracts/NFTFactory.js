@@ -1,0 +1,64 @@
+import { ethers } from 'ethers';
+import NFTFactoryData from './NFTFactory.json' with { type: 'json' };
+import { getSigner } from '../signer.js';
+
+//FIXME: This limit (16hrs) is too restrictive
+export async function getFromBlock() {
+  const provider = getSigner().provider;
+  const latestBlock = await provider.getBlockNumber();
+  const blocksPerHour = Math.floor(3600 / 35); // 35s per block
+  const blocks16h = blocksPerHour * 16;
+  const fromBlock = Math.max(0, latestBlock - blocks16h);
+  return fromBlock;
+}
+
+export class NFTFactory {
+  static instance = null;
+
+  constructor() {
+    const provider = getSigner().provider;
+    this.contract = new ethers.Contract(NFTFactoryData.address, NFTFactoryData.abi, provider);
+  }
+
+  static getInstance() {
+    if (!this.instance) {
+      this.instance = new NFTFactory();
+    }
+    return this.instance;
+  }
+  
+  async listDatasets() {
+    const filter = this.contract.filters.CollectionCreated();
+    const events = await this.contract.queryFilter(filter, await getFromBlock());
+    const datasets = events.map(event => {
+      const args = event.args;
+      return {
+        address: args.nftContract,
+        owner: args.owner,
+        name: args.name,
+        symbol: args.symbol,
+        description: args.description,
+        columns: args.columns,
+        collectionId: args.collectionId.toString(),
+        createdAt: args.createdAt.toString(),
+        isActive: args.isActive
+      };
+    });
+    return datasets;
+  }
+
+  async getDatasetMetadata(address) {
+    const info = await this.contract.getCollectionInfo(address);
+    return {
+      address: info.nftContract,
+      owner: info.owner,
+      name: info.name,
+      symbol: info.symbol,
+      description: info.description,
+      columns: info.columns,
+      createdAt: info.createdAt.toString(),
+      isActive: info.isActive
+    };
+  }
+}
+

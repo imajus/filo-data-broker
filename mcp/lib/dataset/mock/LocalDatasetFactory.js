@@ -21,18 +21,4 @@ export class LocalDatasetFactory {
       pick(ds, ['id', 'name', 'description', 'columns'])
     );
   }
-
-  // async search(query) {
-  //   // Get all datasets
-  //   const allDatasets = await this.list();
-  //   // Search for datasets that match the query in name, description, or columns
-  //   const searchTerm = query.trim().toLowerCase();
-  //   return allDatasets
-  //     .filter(({ name, description, columns }) =>
-  //       [name, description, ...columns].some((field) =>
-  //         field.toLowerCase().includes(searchTerm)
-  //       )
-  //     )
-  //     .map((ds) => pick(ds, ['id', 'name', 'description', 'columns']));
-  // }
 }
