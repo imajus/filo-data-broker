@@ -12,14 +12,14 @@ export class FilecoinDataset {
   get id() {
     return this.address;
   }
-  
+
   async _initialize() {}
-  
-  async search(query) {
+
+  async query(sql) {
     return [];
   }
-  
+
   async fetch() {
     return [];
   }
-} 
+}

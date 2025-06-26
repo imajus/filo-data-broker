@@ -21,7 +21,9 @@
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "alasql": "^4.6.6",
     "lodash-es": "^4.17.21",
+    "sqlstring": "^2.3.3",
     "zod": "^3.25.67"
   },
   "devDependencies": {

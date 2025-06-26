@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { FilecoinDataset } from '../api/FilecoinDataset.js';
+import { LocalDatasetFactory } from '../api/mock/LocalDatasetFactory.js';
 
 /**
  * @param {import('@modelcontextprotocol/sdk/server/mcp.js').McpServer} mcp
@@ -9,22 +9,21 @@ export default (mcp) =>
     'query_dataset',
     'Query a specific dataset using SQL',
     {
-      address: z.string().describe('Dataset address or name'),
-      sql: z.string().describe('SQL query to execute'),
+      datasetId: z.string().describe('Dataset ID'),
+      sql: z
+        .string()
+        .describe('SQL query to execute (use ? instead of table name)'),
     },
-    async ({ address, sql }) => {
+    async ({ datasetId, sql }) => {
       // Create Dataset instance and fetch data
-      const dataset = new FilecoinDataset(address);
-      const results = await dataset.fetch();
-      // In a real implementation, you would parse and execute the SQL query
-      // For now, we'll just return all the data from the dataset
+      const factory = new LocalDatasetFactory();
+      const dataset = await factory.get(datasetId);
+      const results = await dataset.query(sql);
       return {
         content: [
           {
             type: 'text',
-            text: `Executed SQL: ${sql}\nDataset: ${address}\nCID: ${
-              dataset.cid
-            }\nResults:\n${JSON.stringify(results, null, 2)}`,
+            text: JSON.stringify(results, null, 2),
           },
         ],
       };

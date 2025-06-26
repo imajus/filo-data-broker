@@ -18,8 +18,7 @@ interface Dataset {
   name: string;
   description: string;
   columns: string[];
-  fetch: () => Promise<any[]>;
-  search: (query: string) => Promise<any[]>;
+  query: (sql: string) => Promise<any[]>;
 }
 
 interface DatasetFactory {

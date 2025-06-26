@@ -9,12 +9,6 @@ export default (mcp) =>
     const factory = new LocalDatasetFactory();
     const datasets = await factory.list();
     // Convert Dataset instances to plain objects for JSON response
-    // const datasetInfo = datasets.map(dataset => ({
-    //   id: dataset.id,
-    //   name: dataset.name,
-    //   description: dataset.description,
-    //   columns: dataset.columns,
-    // }));
     return {
       content: [
         {

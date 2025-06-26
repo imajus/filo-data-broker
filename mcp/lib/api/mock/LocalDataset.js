@@ -1,6 +1,9 @@
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import alasql from 'alasql';
+import SQLString from 'sqlstring';
+import { snakeCase } from 'lodash-es';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -24,8 +27,8 @@ function parseCSV(csvText) {
   return { headers, rows };
 }
 
-function loadDataset(datasetName) {
-  const csvPath = join(LocalDataset.BASE_DIR, `${datasetName}.csv`);
+function loadDataset(fileName) {
+  const csvPath = join(LocalDataset.BASE_DIR, fileName);
   const csvContent = readFileSync(csvPath, 'utf-8');
   return parseCSV(csvContent);
 }
@@ -36,19 +39,19 @@ export class LocalDataset {
 
   static BASE_DIR = join(__dirname, '../../..', 'sample');
 
-  constructor(filename) {
-    this.filename = filename;
+  constructor(fileName) {
+    this.fileName = fileName;
   }
 
-  static async create(filename) {
-    const dataset = new LocalDataset(filename);
+  static async load(fileName) {
+    const dataset = new LocalDataset(fileName);
     await dataset.#initialize();
     return dataset;
   }
 
   async #initialize() {
     // Extract name from address (assuming address is the dataset name for now)
-    this.id = this.name = this.filename.replace('.csv', '');
+    this.id = this.name = this.fileName.replace('.csv', '');
     // Set descriptions based on known datasets
     const descriptions = {
       'customer-transactions':
@@ -58,38 +61,25 @@ export class LocalDataset {
       'inventory-data': 'Product inventory levels and stock movements',
       'marketing-campaigns': 'Marketing campaign performance metrics',
     };
-    this.description = descriptions[this.name] || this.filename;
+    this.description = descriptions[this.name] || this.fileName;
     // Load data to get columns
-    const { headers, rows } = await loadDataset(this.id);
+    const { headers, rows } = await loadDataset(this.fileName);
     this.columns = headers;
     this.rows = rows ?? [];
   }
 
-  async search(query) {
+  async query(sql) {
     // Ensure data is loaded
     if (!this.rows) {
       await this.#initialize();
     }
-    // Simple search implementation - search across all string fields
-    const searchTerm = query.toLowerCase();
-    return this.rows.filter((row) => {
-      return Object.values(row).some((value) => {
-        if (typeof value === 'string') {
-          return value.toLowerCase().includes(searchTerm);
-        }
-        if (typeof value === 'number') {
-          return value.toString().includes(searchTerm);
-        }
-        return false;
-      });
-    });
-  }
-
-  async fetch() {
-    // Ensure data is loaded
-    if (!this.rows) {
-      await this.#initialize();
+    try {
+      // Use AlaSQL to query the in-memory data
+      const result = alasql(sql, [this.rows]);
+      // Ensure we always return an array
+      return Array.isArray(result) ? result : [];
+    } catch (error) {
+      throw new Error(`SQL query failed: ${error.message}`);
     }
-    return this.rows || [];
   }
 }

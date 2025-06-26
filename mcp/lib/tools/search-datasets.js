@@ -16,12 +16,6 @@ export default (mcp) =>
       const factory = new LocalDatasetFactory();
       const datasets = await factory.search(term);
       // Convert Dataset instances to plain objects for JSON response
-      // const datasetInfo = matchingDatasets.map(dataset => ({
-      //   id: dataset.id,
-      //   name: dataset.name,
-      //   description: dataset.description,
-      //   columns: dataset.columns
-      // }));
       return {
         content: [
           {
