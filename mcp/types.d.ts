@@ -22,6 +22,6 @@ interface Dataset {
 }
 
 interface DatasetFactory {
+  get: (id: string) => Promise<Dataset>;
   list: () => Promise<Dataset[]>;
-  search: (query: string) => Promise<Dataset[]>;
 }

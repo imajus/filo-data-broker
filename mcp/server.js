@@ -1,5 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import searchDatasetsTool from './lib/tools/search-datasets.js';
+// import searchDatasetsTool from './lib/tools/search-datasets.js';
 import listDatasetsTool from './lib/tools/list-datasets.js';
 import queryDatasetTool from './lib/tools/query-dataset.js';
 
@@ -16,13 +16,8 @@ const mcp = new McpServer(
 );
 
 // Register dataset tools
-searchDatasetsTool(mcp);
 listDatasetsTool(mcp);
+// searchDatasetsTool(mcp);
 queryDatasetTool(mcp);
-
-// defineTool(server, addTool);
-// defineTool(server, greetTool);
-// defineResource(server, serverInfoResource);
-// defineResource(server, userDataResource);
 
 export { mcp as server };
