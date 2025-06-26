@@ -5,7 +5,8 @@
     "moduleResolution": "node",
     "baseUrl": ".",
     "checkJs": true,
-    "allowJs": true
+    "allowJs": true,
+    "types": ["./types.d.ts"]
   },
-  "include": ["bin/index.js", "lib/**/*.js"]
+  "include": ["./types.d.ts", "bin/index.js", "lib/**/*.js"]
 } 

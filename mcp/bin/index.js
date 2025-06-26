@@ -8,9 +8,15 @@ async function main() {
   try {
     const transport = new StdioServerTransport();
     await server.connect(transport);
-    console.error('MCP server started successfully');
-  } catch (error) {
-    console.error('Failed to start MCP server:', error);
+    server.server.sendLoggingMessage({
+      level: 'info',
+      data: 'FiloDataBroker MCP aerver started successfully',
+    });
+  } catch (err) {
+    server.server.sendLoggingMessage({
+      level: 'critical',
+      data: `FiloDataBroker MCP server failed to start: ${err}`,
+    });
     process.exit(1);
   }
 }

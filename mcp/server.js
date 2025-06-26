@@ -1,18 +1,28 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { addTool } from './lib/tools/add.js';
-import { greetTool } from './lib/tools/greet.js';
-import { serverInfoResource } from './lib/resources/server-info.js';
-import { userDataResource } from './lib/resources/user-data.js';
-import { defineTool, defineResource } from './lib/utils.js';
+import searchDatasetsTool from './lib/tools/search-datasets.js';
+import listDatasetsTool from './lib/tools/list-datasets.js';
+import queryDatasetTool from './lib/tools/query-dataset.js';
 
-const server = new McpServer({
-  name: 'filo-data-broker-mcp-server',
-  version: '0.1.0',
-});
+const mcp = new McpServer(
+  {
+    name: 'filo-data-broker-mcp-server',
+    version: '0.1.0',
+  },
+  {
+    capabilities: {
+      logging: {},
+    },
+  }
+);
 
-defineTool(server, addTool);
-defineTool(server, greetTool);
-defineResource(server, serverInfoResource);
-defineResource(server, userDataResource);
+// Register dataset tools
+searchDatasetsTool(mcp);
+listDatasetsTool(mcp);
+queryDatasetTool(mcp);
 
-export { server }; 
+// defineTool(server, addTool);
+// defineTool(server, greetTool);
+// defineResource(server, serverInfoResource);
+// defineResource(server, userDataResource);
+
+export { mcp as server };
