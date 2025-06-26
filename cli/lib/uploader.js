@@ -2,6 +2,7 @@ import { ethers } from 'ethers';
 import lighthouse from '@lighthouse-web3/sdk';
 import kavach from '@lighthouse-web3/kavach';
 import { once } from 'lodash-es';
+import { NFT } from './contracts/NFT.js';
 
 /**
  * Sign the authentication message
@@ -23,13 +24,13 @@ const signAuthMessage = once(async (signer) => {
  */
 export class Uploader {
   /**
-   * @param {Object} options - The options object
-   * @param {string} options.apiKey - The API key for the Lighthouse API
-   * @param {string} options.privateKey - The private key for the Ethereum account
+   * @param {string} apiKey - The API key for the Lighthouse API
+   * @param {string} privateKey - The private key for the Ethereum account
    */
-  constructor({ apiKey, privateKey }) {
+  constructor(apiKey, privateKey) {
     this.apiKey = apiKey;
     this.privateKey = privateKey;
+    this.nft = new NFT(null, privateKey);
   }
 
   get signer() {
@@ -48,8 +49,7 @@ export class Uploader {
         chain: 'Calibration',
         method: 'balanceOf',
         standardContractType: 'ERC721',
-        //TODO: Replace with contract deployment
-        contractAddress: process.env.NFT_CONTRACT_ADDRESS,
+        contractAddress: this.nft.address,
         returnValueTest: {
           comparator: '>=',
           value: '1',

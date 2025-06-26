@@ -104,6 +104,7 @@ export class Processor {
           if (err) {
             reject(err);
           } else {
+            // Upload public data to IPFS
             const cid = await this.uploader.uploadPublicData(outputPath);
             resolve(cid);
           }

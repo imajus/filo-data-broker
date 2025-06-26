@@ -38,12 +38,22 @@ program
     console.log(chalk.blue(`API Key: ${options.apiKey}`));
     console.log(chalk.blue(`CSV File: ${options.file}`));
     console.log(chalk.blue('Private Key: **********'));
+    // Step x: Request NFT collection details
+    const { name, description } = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'name',
+        message: 'Enter the name of the dataset:',
+      },
+      {
+        type: 'input',
+        name: 'description',
+        message: 'Enter the description of the dataset:',
+      },
+    ]);
     // Step 2: Create streaming parser for CSV
     console.log(chalk.yellow('\n📄 Setting up CSV stream...'));
-    const uploader = new Uploader({
-      apiKey: options.apiKey,
-      privateKey: options.privateKey
-    });
+    const uploader = new Uploader(options.apiKey, options.privateKey);
     const processor = new Processor({ uploader });
     let rowCount = 0;
     try {
@@ -89,9 +99,14 @@ program
               console.log(chalk.green(`  📝 ${column}`));
             });
           }
-          console.log(chalk.yellow('\n📊 Starting row-by-row processing...'));
           // Store selected private columns
           processor.setColumns(publicColumns, privateColumns);
+          // Step 5: Create NFT collection
+          console.log(chalk.yellow('\n🔒 Creating NFT collection...'));
+          await uploader.nft.create(name, description, headers.join(','));
+          console.log(chalk.green('\n✓ NFT collection created successfully!'));
+          console.log(chalk.blue(`NFT collection address: ${uploader.nft.address}`));
+          console.log(chalk.yellow('\n📊 Starting row-by-row processing...'));
         },
         onTick(result) {
           ++rowCount;
@@ -103,6 +118,9 @@ program
       console.log(chalk.blue('\n📈 Processing Summary:'));
       console.log(chalk.white(`  • Total rows processed: ${rowCount}`));
       console.log(chalk.white(`  • Output CID: ${cid}`));
+      // Step 6: Link dataset to NFT collection
+      await uploader.nft.linkDataset(cid);
+      console.log(chalk.green('\n✓ Dataset linked to NFT collection!'));
     } catch (err) {
       console.log(chalk.red(`❌ Processing Error: ${err.message}`));
     }
