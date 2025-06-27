@@ -1,10 +1,11 @@
-import { LocalDatasetFactory } from './mock/LocalDatasetFactory.js';
+import { FilecoinDatasetFactory } from './filecoin/FilecoinDatasetFactory.js';
+// import { LocalDatasetFactory } from './mock/LocalDatasetFactory.js';
 
 let instance = null;
 
 export function getDatasetFactory() {
   if (!instance) {
-    instance = new LocalDatasetFactory();
+    instance = new FilecoinDatasetFactory();
   }
   return instance;
 }

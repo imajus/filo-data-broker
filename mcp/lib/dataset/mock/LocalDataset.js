@@ -2,6 +2,7 @@ import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import alasql from 'alasql';
+import { transformQuery } from '../../sql.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -73,7 +74,7 @@ export class LocalDataset {
     }
     try {
       // Use AlaSQL to query the in-memory data
-      const result = alasql(sql, [this.rows]);
+      const result = alasql(transformQuery(sql), [this.rows]);
       // Ensure we always return an array
       return Array.isArray(result) ? result : [];
     } catch (error) {

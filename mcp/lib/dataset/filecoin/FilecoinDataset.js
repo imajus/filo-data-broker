@@ -9,6 +9,7 @@ import { pipeline } from 'stream/promises';
 import { Readable } from 'stream';
 import { getSigner } from '../../signer.js';
 import { NFTFactory } from '../../contracts/NFTFactory.js';
+import { transformQuery } from '../../sql.js';
 
 alasql.options.cache = true;
 
@@ -123,12 +124,10 @@ export class FilecoinDataset {
       await this.#initialize();
     }
     // Use AlaSQL to query the data array
-    //FIXME: There is a possibility of SQL injection & filesystem access here
-    const result = alasql(sql, [this.rows]);
+    const result = alasql(transformQuery(sql), [this.rows]);
     // Ensure we always return an array
     return await Promise.all(
-      // Limit to at most 10 rows
-      (Array.isArray(result) ? result.slice(0, 10) : []).map(decryptRow)
+      (Array.isArray(result) ? result : []).map(decryptRow)
     );
   }
 }

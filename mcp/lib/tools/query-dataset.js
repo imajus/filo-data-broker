@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { getDatasetFactory } from '../dataset/factory';
+import { getDatasetFactory } from '../dataset/factory.js';
 
 /**
  * @param {import('@modelcontextprotocol/sdk/server/mcp.js').McpServer} mcp
@@ -10,9 +10,7 @@ export default (mcp) =>
     'Query a specific dataset using SQL',
     {
       datasetId: z.string().describe('Dataset ID'),
-      sql: z
-        .string()
-        .describe('SQL query to execute (use ? instead of table name)'),
+      sql: z.string().describe('SQL query to execute'),
     },
     async ({ datasetId, sql }) => {
       // Create Dataset instance and fetch data
