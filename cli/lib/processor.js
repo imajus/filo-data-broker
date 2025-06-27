@@ -49,7 +49,7 @@ export class Processor {
     // Extract private and public data using lodash utilities
     const privateData = pick(record, this.privateColumns);
     const publicData = omit(record, this.privateColumns);
-    // Upload record to the database
+    // Upload private record data and apply access restriction
     const cid = await this.uploader.uploadPrivateData(privateData);
     await this.uploader.applyAccessRestriction(cid);
     return { ...publicData, cid };
@@ -79,13 +79,13 @@ export class Processor {
       });
       const transformer = transform(async (record, callback) => {
         try {
+          // Call the row processor function with error handling
           const result = await this.transform(record);
-          // Show progress every 1000 rows
+          // Show progress
           if (onTick) {
             onTick(result);
           }
-          // Call the row processor function with error handling
-          callback(null);
+          callback(null, result);
         } catch (err) {
           callback(err);
         }

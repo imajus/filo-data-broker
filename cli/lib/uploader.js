@@ -102,9 +102,7 @@ export class Uploader {
    * @returns {Promise<string>} - The CID of the uploaded data
    */
   async uploadPublicData(filePath) {
-    const response = await this.limiter.schedule(() =>
-      lighthouse.upload(filePath, this.apiKey)
-    );
+    const response = await lighthouse.upload(filePath, this.apiKey);
     return response.data.Hash;
   }
 }
