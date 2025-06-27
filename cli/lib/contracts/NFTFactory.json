@@ -1,5 +1,5 @@
 {
-  "address": "0x5876cCA677D6e270ad4169212A17CdCfaA38CD33",
+  "address": "0x9C90E44998343D30977017756d76BBd7f3C113A4",
   "abi": [
     {
       "inputs": [],
@@ -176,6 +176,25 @@
           "internalType": "address[]",
           "name": "",
           "type": "address[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "nftContract",
+          "type": "address"
+        }
+      ],
+      "name": "getCollectionCid",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
         }
       ],
       "stateMutability": "view",

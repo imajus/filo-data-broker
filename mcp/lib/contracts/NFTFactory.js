@@ -28,36 +28,32 @@ export class NFTFactory {
   }
   
   async listDatasets() {
-    const filter = this.contract.filters.CollectionCreated();
-    const events = await this.contract.queryFilter(filter, await getFromBlock());
-    const datasets = events.map(event => {
-      const args = event.args;
+    const collections = await this.contract.getAllCollections();
+    const datasets = Promise.all(collections.map(async address => {
+      const metadata = await this.contract.getCollectionInfo(address);
       return {
-        address: args.nftContract,
-        owner: args.owner,
-        name: args.name,
-        symbol: args.symbol,
-        description: args.description,
-        columns: args.columns,
-        collectionId: args.collectionId.toString(),
-        createdAt: args.createdAt.toString(),
-        isActive: args.isActive
+        address: metadata.nftContract,
+        owner: metadata.owner,
+        name: metadata.name,
+        symbol: metadata.symbol,
+        description: metadata.description,
+        columns: metadata.columns,
+        createdAt: metadata.createdAt.toString(),
       };
-    });
+    }));
     return datasets;
   }
 
   async getDatasetMetadata(address) {
     const info = await this.contract.getCollectionInfo(address);
+    const cid = await this.contract.getCollectionCid(address);
     return {
       address: info.nftContract,
-      owner: info.owner,
       name: info.name,
       symbol: info.symbol,
       description: info.description,
       columns: info.columns,
-      createdAt: info.createdAt.toString(),
-      isActive: info.isActive
+      cid,
     };
   }
 }
