@@ -21,6 +21,7 @@
   "dependencies": {
     "@lighthouse-web3/kavach": "^0.2.1",
     "@lighthouse-web3/sdk": "^0.4.0",
+    "bottleneck": "^2.19.5",
     "chalk": "^4.1.2",
     "commander": "^11.1.0",
     "csv-parse": "^5.6.0",

@@ -2,6 +2,7 @@ import { ethers } from 'ethers';
 import lighthouse from '@lighthouse-web3/sdk';
 import kavach from '@lighthouse-web3/kavach';
 import { once } from 'lodash-es';
+import Bottleneck from 'bottleneck';
 import { NFT } from './contracts/NFT.js';
 
 /**
@@ -31,6 +32,10 @@ export class Uploader {
     this.apiKey = apiKey;
     this.privateKey = privateKey;
     this.nft = new NFT(null, privateKey);
+    this.limiter = new Bottleneck({
+      maxConcurrent: 10,
+      minTime: 1000 / 60,
+    });
   }
 
   get signer() {
@@ -58,12 +63,14 @@ export class Uploader {
       },
     ];
     const aggregator = '([1])';
-    const response = await lighthouse.applyAccessCondition(
-      this.signer.address,
-      cid,
-      await signAuthMessage(this.signer),
-      conditions,
-      aggregator
+    const response = await this.limiter.schedule(async () =>
+      lighthouse.applyAccessCondition(
+        this.signer.address,
+        cid,
+        await signAuthMessage(this.signer),
+        conditions,
+        aggregator
+      )
     );
     if (response.error) {
       throw new Error(response.error);
@@ -77,12 +84,14 @@ export class Uploader {
    * @returns {Promise<string>} - The CID of the uploaded data
    */
   async uploadPrivateData(data) {
-    const response = await lighthouse.textUploadEncrypted(
-      JSON.stringify(data),
-      this.apiKey,
-      this.signer.address,
-      await signAuthMessage(this.signer),
-      'private'
+    const response = await this.limiter.schedule(async () =>
+      lighthouse.textUploadEncrypted(
+        JSON.stringify(data),
+        this.apiKey,
+        this.signer.address,
+        await signAuthMessage(this.signer),
+        'private'
+      )
     );
     return response.data[0].Hash;
   }
@@ -93,7 +102,9 @@ export class Uploader {
    * @returns {Promise<string>} - The CID of the uploaded data
    */
   async uploadPublicData(filePath) {
-    const response = await lighthouse.upload(filePath, this.apiKey);
+    const response = await this.limiter.schedule(() =>
+      lighthouse.upload(filePath, this.apiKey)
+    );
     return response.data.Hash;
   }
 }
