@@ -3,7 +3,6 @@
     "target": "es2022",
     "module": "esnext",
     "moduleResolution": "bundler",
-    "baseUrl": ".",
     "checkJs": true,
     "allowJs": true,
     "types": ["./types.d.ts"]
