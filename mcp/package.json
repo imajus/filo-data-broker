@@ -9,7 +9,7 @@
   "type": "module",
   "scripts": {
     "start": "node bin/index.js",
-    "dev": "node --watch bin/index.js",
+    "dev": "npx @modelcontextprotocol/inspector node --watch bin/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
