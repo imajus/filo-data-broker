@@ -23,7 +23,7 @@ export class NFT {
    * @param {string} columns - The columns of the collection (comma separated)
    * @returns {Promise<TransactionResponse>} - The transaction response
    */
-  async create(name, description, columns) {
+  async createCollection(name, description, columns) {
     const tx = await this.factory.createCollection(name, 'FDB', description, columns);
     const receipt = await tx.wait();
     const event = receipt.logs.find(e => e.eventName === 'CollectionCreated');
@@ -37,6 +37,16 @@ export class NFT {
    */
   async linkDataset(cid) {
     const tx = await this.factory.setCollectionCid(this.address, cid);
+    await tx.wait();
+  }
+
+  /**
+   * Toggle the status of the NFT collection
+   * @param {string} address - The address of the NFT collection
+   * @returns {Promise<void>}
+   */
+  async toggleCollectionStatus() {
+    const tx = await this.factory.toggleCollectionStatus(this.address);
     await tx.wait();
   }
 }

@@ -102,8 +102,8 @@ program
           // Store selected private columns
           processor.setColumns(publicColumns, privateColumns);
           // Step 5: Create NFT collection
-          console.log(chalk.yellow('\n🔒 Creating NFT collection...'));
-          await uploader.nft.create(name, description, headers.join(','));
+          console.log(chalk.yellow('\n▶️ Creating NFT collection...'));
+          await uploader.nft.createCollection(name, description, headers.join(','));
           console.log(chalk.green('\n✅ NFT collection created successfully!'));
           console.log(chalk.blue(`NFT collection address: ${uploader.nft.address}`));
           console.log(chalk.yellow('\n📊 Starting row-by-row processing...'));
@@ -119,11 +119,15 @@ program
       console.log(chalk.white(`  • Total rows processed: ${rowCount}`));
       console.log(chalk.white(`  • Output CID: ${cid}`));
       // Step 6: Link dataset to NFT collection
-      console.log(chalk.yellow('\n🔒 Linking dataset to NFT collection...'));
+      console.log(chalk.yellow('\n▶️ Linking dataset to NFT collection...'));
       await uploader.nft.linkDataset(cid);
       console.log(chalk.green('\n✅ Dataset linked to NFT collection!'));
     } catch (err) {
       console.log(chalk.red(`❌ Processing Error: ${err.message}`));
+      console.log(chalk.yellow('\n▶️ Disabling NFT collection...'));
+      await uploader.nft.toggleCollectionStatus().catch((err) => {
+        console.log(chalk.red(`❌ NFT collection disable failed: ${err.message}`));
+      });
     }
   });
 
