@@ -2,7 +2,7 @@
 
 import dotenv from 'dotenv';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { server } from '../server.js';
+import { mcp } from '../server.js';
 
 // Load environment variables
 dotenv.config({ quiet: true });
@@ -10,21 +10,25 @@ dotenv.config({ quiet: true });
 // Start the server
 async function main() {
   try {
+    const transport = new StdioServerTransport();
+    await mcp.connect(transport);
     if (!process.env.ETHEREUM_PRIVATE_KEY) {
       throw new Error('ETHEREUM_PRIVATE_KEY environment variable is not set');
     }
-    const transport = new StdioServerTransport();
-    await server.connect(transport);
-    server.server.sendLoggingMessage({
+    await mcp.server.sendLoggingMessage({
       level: 'info',
-      data: 'FiloDataBroker MCP aerver started successfully',
+      data: `FiloDataBroker MCP server started successfully (${process.env.ETHEREUM_PRIVATE_KEY})`,
     });
   } catch (err) {
-    server.server.sendLoggingMessage({
-      level: 'error',
-      data: `FiloDataBroker MCP server failed to start: ${err}`,
-    });
-    process.exit(1);
+    if (mcp.isConnected) {
+      await mcp.server.sendLoggingMessage({
+        level: 'critical',
+        data: `Failed to start: ${err.message}`,
+      });
+      await mcp.close();
+    } else {
+      console.error(err);
+    }
   }
 }
 

@@ -28,7 +28,7 @@ export class NFTFactory {
   }
   
   async listDatasets() {
-    const collections = await this.contract.getAllCollections();
+    const collections = await this.contract.getActiveCollections();
     const datasets = Promise.all(collections.map(async address => {
       const metadata = await this.contract.getCollectionInfo(address);
       return {

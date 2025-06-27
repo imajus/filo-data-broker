@@ -3,8 +3,14 @@ import lighthouse from '@lighthouse-web3/sdk';
 import kavach from '@lighthouse-web3/kavach';
 import { ethers } from 'ethers';
 import { omit, once } from 'lodash-es';
+import { parse } from 'csv-parse';
+import { transform } from 'stream-transform';
+import { pipeline } from 'stream/promises';
+import { Readable } from 'stream';
 import { getSigner } from '../signer.js';
 import { NFTFactory } from '../contracts/NFTFactory.js';
+
+alasql.options.cache = true;
 
 /**
  * Sign the authentication message
@@ -24,7 +30,7 @@ const signAuthMessage = once(async (signer) => {
 /**
  * Load a dataset from Filecoin into memory
  * @param {string} cid - The CID of the dataset
- * @returns {Promise<Array>} - Array of data rows (header row omitted)
+ * @returns {Promise<Array>} - Array of data objects with proper field names
  */
 export async function fetchDataset(cid) {
   try {
@@ -35,22 +41,25 @@ export async function fetchDataset(cid) {
     if (!response.ok) {
       throw new Error(response.statusText);
     }
-    // Get the text content
-    const csvText = await response.text();
-    // Parse CSV data
-    const lines = csvText.trim().split('\n');
-    if (lines.length === 0) {
-      return [];
-    }
-    // Skip header row and parse remaining rows
-    const dataRows = lines.slice(1);
-    const rows = dataRows.map((line) => {
-      // Simple CSV parsing - split by comma and trim whitespace
-      return line.split(',').map((cell) => cell.trim().replace(/^"|"$/g, ''));
+    // Convert Web ReadableStream to Node.js Readable
+    const input = Readable.fromWeb(response.body);
+    // Create CSV parser
+    const parser = parse({
+      columns: true, // Use first row as column headers
+      skip_empty_lines: true,
+      trim: true,
     });
-    return rows;
-  } catch (error) {
-    throw new Error(`Failed to load dataset: ${error.message}`);
+    // Collect records using stream-transform
+    const records = [];
+    const collector = transform((record, callback) => {
+      records.push(record);
+      callback();
+    });
+    // Use pipeline to connect streams
+    await pipeline(input, parser, collector);
+    return records;
+  } catch (err) {
+    throw new Error(`Failed to load dataset: ${err.message}`);
   }
 }
 
@@ -61,15 +70,18 @@ export async function fetchDataset(cid) {
  */
 export async function decryptRow(row) {
   const signer = getSigner();
-  const encryptionKey = await lighthouse.fetchEncryptionKey(
+  const encryptionKey = await lighthouse
+    .fetchEncryptionKey(row.cid, signer.address, await signAuthMessage(signer))
+    .catch((err) => {
+      throw new Error(`Encryption key fetch failed: ${err.message.message}`);
+    });
+  const decryptedBuffer = await lighthouse.decryptFile(
     row.cid,
-    signer.address,
-    await signAuthMessage(signer)
+    encryptionKey.data.key,
+    'text/csv'
   );
-  const decrypted = await lighthouse.decryptFile(
-    row.cid,
-    encryptionKey.data.key
-  );
+  const decryptedText = new TextDecoder().decode(decryptedBuffer);
+  const decrypted = JSON.parse(decryptedText);
   return { ...omit(row, 'cid'), ...decrypted };
 }
 
@@ -110,13 +122,13 @@ export class FilecoinDataset {
     if (!this.rows) {
       await this.#initialize();
     }
-    try {
-      // Use AlaSQL to query the data array
-      const result = alasql(sql, [this.rows]);
-      // Ensure we always return an array
-      return (Array.isArray(result) ? result : []).map(decryptRow);
-    } catch (error) {
-      throw new Error(`SQL query failed: ${error.message}`);
-    }
+    // Use AlaSQL to query the data array
+    //FIXME: There is a possibility of SQL injection & filesystem access here
+    const result = alasql(sql, [this.rows]);
+    // Ensure we always return an array
+    return await Promise.all(
+      // Limit to at most 10 rows
+      (Array.isArray(result) ? result.slice(0, 10) : []).map(decryptRow)
+    );
   }
 }
