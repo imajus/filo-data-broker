@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { FilecoinDatasetFactory } from '../dataset/FilecoinDatasetFactory.js';
+import { getDatasetFactory } from '../dataset/factory';
 
 /**
  * @param {import('@modelcontextprotocol/sdk/server/mcp.js').McpServer} mcp
@@ -16,7 +16,7 @@ export default (mcp) =>
     },
     async ({ datasetId, sql }) => {
       // Create Dataset instance and fetch data
-      const factory = new FilecoinDatasetFactory();
+      const factory = getDatasetFactory();
       const dataset = await factory.get(datasetId);
       const results = await dataset.query(sql);
       return {
