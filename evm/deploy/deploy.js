@@ -32,6 +32,14 @@ module.exports = async ({ deployments, network, run }) => {
             console.log("Error verifying NFTFactory contract:", error.message)
         }
     }
+
+    // Run post-deployment script to extract and write contract data
+    try {
+        console.log("Running post-deployment script...")
+        await run("sync-contracts")
+    } catch (error) {
+        console.log("Error running post-deployment script:", error.message)
+    }
 }
 
 module.exports.tags = ["NFTFactory"]

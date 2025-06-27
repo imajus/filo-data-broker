@@ -189,6 +189,11 @@ contract NFTFactory {
         return activeCollections;
     }
 
+    function getCollectionCid(address nftContract) external view returns (string memory) {
+        NFT nft = NFT(nftContract);
+        return nft.getCid();
+    }
+
     function setCollectionCid(address nftContract, string memory cid) external {
         Collection storage collection = s_collectionInfo[nftContract];
         if (collection.owner != msg.sender) {
