@@ -93,6 +93,20 @@ Then use directly:
 npx filo-data-broker-cli import --api-key YOUR_API_KEY --private-key YOUR_PRIVATE_KEY --file ./data.csv
 ```
 
+## Sample Datasets
+
+1. `sample/bali.csv` - Bali Tourism Destinations:
+
+   This dataset contains information about tourist attractions in Bali collected through automated scraping from Google Maps. It covers 761 tourist spots spread across 9 regencies/cities in Bali Island. The dataset aims to provide a comprehensive overview of the locations, categories, and popularity of Bali’s tourist destinations.
+
+1. `sample/quotes.csv` - Famous People Quotes:
+
+   This dataset contains a collection of inspirational quotes scraped from quotes.toscrape.com, a website created specifically for practicing web scraping. It includes the quote text, author names, and associated tags for each quote.
+
+1. `sample/youtube.csv` - YouTube Video Analytics:
+
+   This dataset provides a rich collection of metadata from 2,000+ YouTube videos, offering a unique opportunity to explore how content performs on the world’s largest video-sharing platform. With detailed information on video titles, views, likes, tags, durations, publishing dates, and more, this dataset allows you to dive deep into the world of digital content trends.
+
 ## Dependencies
 
 - **commander**: Command-line argument parsing

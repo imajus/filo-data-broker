@@ -74,7 +74,16 @@ export async function decryptRow(row) {
   const encryptionKey = await lighthouse
     .fetchEncryptionKey(row.cid, signer.address, await signAuthMessage(signer))
     .catch((err) => {
-      throw new Error(`Encryption key fetch failed: ${err.message.message}`);
+      // 🤷‍♂️
+      if (Array.isArray(err.message)) {
+        // WTF???
+        const msgs = err.message.map(({ message }) => message.message);
+        throw new Error(`Encryption key fetch failed: ${msgs.join('; ')}`);
+      } else if (typeof err.message === 'object') {
+        // 🤦‍♂️
+        throw new Error(`Encryption key fetch failed: ${err.message.message}`);
+      }
+      throw err;
     });
   const decryptedBuffer = await lighthouse.decryptFile(
     row.cid,

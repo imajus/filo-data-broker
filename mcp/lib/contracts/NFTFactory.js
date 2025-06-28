@@ -20,13 +20,14 @@ export class NFTFactory {
     this.contract = new ethers.Contract(NFTFactoryData.address, NFTFactoryData.abi, provider);
   }
 
+  /** @returns {NFTFactory} */
   static getInstance() {
     if (!this.instance) {
       this.instance = new NFTFactory();
     }
     return this.instance;
   }
-  
+
   async listDatasets() {
     const collections = await this.contract.getActiveCollections();
     const datasets = Promise.all(collections.map(async address => {
