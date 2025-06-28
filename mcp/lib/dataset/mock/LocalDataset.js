@@ -34,23 +34,13 @@ function loadDataset(fileName) {
 
 /** @implements {Dataset} */
 export class LocalDataset {
-  rows = null;
+  #rows = null;
 
   static BASE_DIR = join(__dirname, '../../..', 'sample');
 
   constructor(fileName) {
-    this.fileName = fileName;
-  }
-
-  static async load(fileName) {
-    const dataset = new LocalDataset(fileName);
-    await dataset.#initialize();
-    return dataset;
-  }
-
-  async #initialize() {
     // Extract name from address (assuming address is the dataset name for now)
-    this.id = this.name = this.fileName.replace('.csv', '');
+    this.id = this.name = fileName.replace('.csv', '');
     // Set descriptions based on known datasets
     const descriptions = {
       'customer-transactions':
@@ -60,21 +50,31 @@ export class LocalDataset {
       'inventory-data': 'Product inventory levels and stock movements',
       'marketing-campaigns': 'Marketing campaign performance metrics',
     };
-    this.description = descriptions[this.name] || this.fileName;
+    this.description = descriptions[this.id] || fileName;
+  }
+
+  static async load(fileName) {
+    const dataset = new LocalDataset(fileName);
+    await dataset.#initialize();
+    return dataset;
+  }
+
+  async #initialize() {
     // Load data to get columns
-    const { headers, rows } = await loadDataset(this.fileName);
-    this.columns = headers;
-    this.rows = rows ?? [];
+    const { headers, rows } = await loadDataset(`${this.id}.csv`);
+    this.publicColumns = headers;
+    this.privateColumns = [];
+    this.#rows = rows ?? [];
   }
 
   async query(sql) {
     // Ensure data is loaded
-    if (!this.rows) {
+    if (!this.#rows) {
       await this.#initialize();
     }
     try {
       // Use AlaSQL to query the in-memory data
-      const result = alasql(transformQuery(sql), [this.rows]);
+      const result = alasql(transformQuery(sql), [this.#rows]);
       // Ensure we always return an array
       return Array.isArray(result) ? result : [];
     } catch (error) {

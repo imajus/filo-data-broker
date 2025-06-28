@@ -1,5 +1,5 @@
 {
-  "address": "0x9C90E44998343D30977017756d76BBd7f3C113A4",
+  "address": "0xfC158062a0aE07e2706e20daC8eB6eE6611cAFeA",
   "abi": [
     {
       "inputs": [],
@@ -52,7 +52,13 @@
         {
           "indexed": false,
           "internalType": "string",
-          "name": "columns",
+          "name": "privateColumns",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "publicColumns",
           "type": "string"
         },
         {
@@ -140,7 +146,12 @@
         },
         {
           "internalType": "string",
-          "name": "columns",
+          "name": "privateColumns",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "publicColumns",
           "type": "string"
         }
       ],
@@ -239,7 +250,12 @@
             },
             {
               "internalType": "string",
-              "name": "columns",
+              "name": "privateColumns",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "publicColumns",
               "type": "string"
             },
             {
@@ -366,7 +382,12 @@
             },
             {
               "internalType": "string",
-              "name": "columns",
+              "name": "privateColumns",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "publicColumns",
               "type": "string"
             },
             {

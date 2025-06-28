@@ -103,7 +103,7 @@ program
           processor.setColumns(publicColumns, privateColumns);
           // Step 5: Create NFT collection
           console.log(chalk.yellow('\n▶️ Creating NFT collection...'));
-          await uploader.nft.createCollection(name, description, headers.join(','));
+          await uploader.nft.createCollection(name, description, publicColumns, privateColumns);
           console.log(chalk.green('\n✅ NFT collection created successfully!'));
           console.log(chalk.blue(`NFT collection address: ${uploader.nft.address}`));
           console.log(chalk.yellow('\n📊 Starting row-by-row processing...'));

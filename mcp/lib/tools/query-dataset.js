@@ -7,10 +7,14 @@ import { getDatasetFactory } from '../dataset/factory.js';
 export default (mcp) =>
   mcp.tool(
     'query_dataset',
-    'Query a specific dataset using SQL',
+    'Query a specific dataset using SQL.',
     {
       datasetId: z.string().describe('Dataset ID'),
-      sql: z.string().describe('SQL query to execute'),
+      sql: z
+        .string()
+        .describe(
+          'SQL query to execute. You can fetch private columns data but query only by public columns.'
+        ),
     },
     async ({ datasetId, sql }) => {
       // Create Dataset instance and fetch data

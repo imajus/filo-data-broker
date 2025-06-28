@@ -17,8 +17,8 @@ export class LocalDatasetFactory {
     const datasets = await Promise.all(
       csvFiles.map((file) => LocalDataset.load(file))
     );
-    return datasets.map((ds) =>
+    return datasets; /* .map((ds) =>
       pick(ds, ['id', 'name', 'description', 'columns'])
-    );
+    ); */
   }
 }

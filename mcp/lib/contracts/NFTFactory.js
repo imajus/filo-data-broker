@@ -37,7 +37,8 @@ export class NFTFactory {
         name: metadata.name,
         symbol: metadata.symbol,
         description: metadata.description,
-        columns: metadata.columns,
+        publicColumns: metadata.publicColumns,
+        privateColumns: metadata.privateColumns,
         createdAt: metadata.createdAt.toString(),
       };
     }));
@@ -52,7 +53,8 @@ export class NFTFactory {
       name: info.name,
       symbol: info.symbol,
       description: info.description,
-      columns: info.columns,
+      publicColumns: info.publicColumns,
+      privateColumns: info.privateColumns,
       cid,
     };
   }

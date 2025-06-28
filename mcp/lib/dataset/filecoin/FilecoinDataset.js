@@ -88,14 +88,11 @@ export async function decryptRow(row) {
 
 /** @implements {Dataset} */
 export class FilecoinDataset {
-  name = null;
-  description = null;
-  columns = [];
-  cid = null;
-  rows = null;
+  #address = null;
+  #rows = null;
 
   constructor(address) {
-    this.address = address;
+    this.#address = address;
   }
 
   static async load(address) {
@@ -105,28 +102,29 @@ export class FilecoinDataset {
   }
 
   get id() {
-    return this.address;
+    return this.#address;
   }
 
   async #initialize() {
     const factory = NFTFactory.getInstance();
-    const metadata = await factory.getDatasetMetadata(this.address);
+    const metadata = await factory.getDatasetMetadata(this.#address);
     this.name = metadata.name;
     this.description = metadata.description;
-    this.columns = metadata.columns;
-    this.cid = metadata.cid;
-    this.rows = await fetchDataset(this.cid);
+    this.publicColumns = metadata.publicColumns;
+    this.privateColumns = metadata.privateColumns;
+    this.#rows = await fetchDataset(metadata.cid);
   }
 
   async query(sql) {
     // Ensure data is loaded
-    if (!this.rows) {
+    if (!this.#rows) {
       await this.#initialize();
     }
     // Use AlaSQL to query the data array
-    const result = alasql(transformQuery(sql), [this.rows]);
+    const result = alasql(transformQuery(sql), [this.#rows]);
     // Ensure we always return an array
     return await Promise.all(
+      // Decrypt each row in result
       (Array.isArray(result) ? result : []).map(decryptRow)
     );
   }

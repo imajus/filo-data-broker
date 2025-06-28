@@ -17,7 +17,8 @@ contract NFTFactory {
         string name;
         string symbol;
         string description;
-        string columns;
+        string privateColumns;
+        string publicColumns;
         uint256 createdAt;
         bool isActive;
     }
@@ -33,7 +34,8 @@ contract NFTFactory {
         string name,
         string symbol,
         string description,
-        string columns,
+        string privateColumns,
+        string publicColumns,
         uint256 indexed collectionId
     );
 
@@ -43,7 +45,8 @@ contract NFTFactory {
         string memory name,
         string memory symbol,
         string memory description,
-        string memory columns
+        string memory privateColumns,
+        string memory publicColumns
     ) external returns (address) {
         if (bytes(name).length == 0) {
             revert NFTFactory__EmptyName();
@@ -52,7 +55,14 @@ contract NFTFactory {
             revert NFTFactory__EmptySymbol();
         }
 
-        NFT newNFT = new NFT(name, symbol, BASE_TOKEN_URI, description, columns);
+        NFT newNFT = new NFT(
+            name,
+            symbol,
+            BASE_TOKEN_URI,
+            description,
+            privateColumns,
+            publicColumns
+        );
         address nftAddress = address(newNFT);
 
         Collection memory newCollection = Collection({
@@ -61,7 +71,8 @@ contract NFTFactory {
             name: name,
             symbol: symbol,
             description: description,
-            columns: columns,
+            privateColumns: privateColumns,
+            publicColumns: publicColumns,
             createdAt: block.timestamp,
             isActive: true
         });
@@ -77,7 +88,8 @@ contract NFTFactory {
             name,
             symbol,
             description,
-            columns,
+            privateColumns,
+            publicColumns,
             s_totalCollections - 1
         );
 

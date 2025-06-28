@@ -8,7 +8,8 @@ contract NFT is ERC721, Ownable {
     string private _baseTokenURI;
     uint256 private _currentTokenId;
     string private _description;
-    string private _columns;
+    string private _privateColumns;
+    string private _publicColumns;
     string private _cid;
 
     constructor(
@@ -16,11 +17,13 @@ contract NFT is ERC721, Ownable {
         string memory symbol,
         string memory baseTokenURI,
         string memory description,
-        string memory columns
+        string memory privateColumns,
+        string memory publicColumns
     ) ERC721(name, symbol) Ownable(msg.sender) {
         _baseTokenURI = baseTokenURI;
         _description = description;
-        _columns = columns;
+        _privateColumns = privateColumns;
+        _publicColumns = publicColumns;
     }
 
     function mint(address to) public onlyOwner returns (uint256) {
@@ -38,8 +41,12 @@ contract NFT is ERC721, Ownable {
         return _description;
     }
 
-    function getColumns() public view returns (string memory) {
-        return _columns;
+    function getPrivateColumns() public view returns (string memory) {
+        return _privateColumns;
+    }
+
+    function getPublicColumns() public view returns (string memory) {
+        return _publicColumns;
     }
 
     function getCid() public view returns (string memory) {
