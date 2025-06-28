@@ -23,7 +23,7 @@ interface DatasetMetadata {
 }
 
 type Dataset = DatasetMetadata & {
-  query: (sql: string) => Promise<any[]>;
+  query: (sql: string, signerAddress: string, signedMessage: string) => Promise<any[]>;
 }
 
 interface DatasetFactory {

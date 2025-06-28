@@ -3,6 +3,10 @@ import { FilecoinDatasetFactory } from './filecoin/FilecoinDatasetFactory.js';
 
 let instance = null;
 
+/**
+ * Get the dataset factory instance
+ * @returns {DatasetFactory} - The dataset factory instance
+ */
 export function getDatasetFactory() {
   if (!instance) {
     instance = new FilecoinDatasetFactory();

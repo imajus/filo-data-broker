@@ -40,22 +40,26 @@ export class FilecoinDataset {
     this.#rows = await fetchPublicDataset(this.#publicCid);
   }
 
-  async #decrypt() {
+  async #decrypt(signerAddress, signedMessage) {
     if (!this.#decrypted) {
-      const rows = await fetchPrivateDataset(this.#privateCid);
+      const rows = await fetchPrivateDataset(
+        this.#privateCid,
+        signerAddress,
+        signedMessage
+      );
       this.#rows = this.#rows.map((row, i) => ({ ...row, ...rows[i] }));
       this.#decrypted = true;
     }
   }
 
-  async query(sql) {
+  async query(sql, signerAddress, signedMessage) {
     // Ensure data is loaded
     if (!this.#rows) {
       await this.#initialize();
     }
     // Ensure data is decrypted
     if (!this.#decrypted) {
-      await this.#decrypt();
+      await this.#decrypt(signerAddress, signedMessage);
     }
     // Use AlaSQL to query the data array
     const result = alasql(transformQuery(sql), [this.#rows]);

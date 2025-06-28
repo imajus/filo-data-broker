@@ -1,12 +1,18 @@
 import { ethers } from 'ethers';
 import NFTFactoryData from './NFTFactory.json' with { type: 'json' };
-import { getSigner } from '../signer.js';
+
+const RPC_URL = `https://api.calibration.node.glif.io/rpc/v1`;
+
+function getProvider() {
+  const provider = new ethers.JsonRpcProvider(RPC_URL);
+  return provider;
+}
 
 export class NFTFactory {
   static instance = null;
 
   constructor() {
-    const provider = getSigner().provider;
+    const provider = getProvider();
     this.contract = new ethers.Contract(NFTFactoryData.address, NFTFactoryData.abi, provider);
   }
 

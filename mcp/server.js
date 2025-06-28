@@ -1,4 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import getAuthMessageTool from './lib/tools/get-auth-message.js';
 import listDatasetsTool from './lib/tools/list-datasets.js';
 import queryDatasetTool from './lib/tools/query-dataset.js';
 import purchaseDatasetTool from './lib/tools/purchase-dataset.js';
@@ -16,6 +17,7 @@ const mcp = new McpServer(
 );
 
 // Register dataset tools
+getAuthMessageTool(mcp);
 listDatasetsTool(mcp);
 queryDatasetTool(mcp);
 purchaseDatasetTool(mcp);

@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { getDatasetFactory } from '../dataset/factory.js';
 
 /**
@@ -17,7 +18,7 @@ export default (mcp) =>
         content: [
           {
             type: 'text',
-            text: JSON.stringify(datasets, null, 2),
+            text: JSON.stringify(datasets),
           },
         ],
       };

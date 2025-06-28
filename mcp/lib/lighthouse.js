@@ -1,7 +1,6 @@
 import lighthouse from '@lighthouse-web3/sdk';
 import kavach from '@lighthouse-web3/kavach';
 import { parse } from 'csv-parse';
-import { getSigner } from './signer.js';
 
 /**
  * Get the authentication message for a signer address
@@ -45,16 +44,15 @@ export async function fetchPublicDataset(cid) {
 }
 
 /**
- * Load a private dataset from Filecoin into memory
- * @param {string} cid - The CID of the data to fetch
- * @returns {Promise<any>} - The decrypted data
+ * Load a dataset from Filecoin into memory
+ * @param {string} cid - The CID of the dataset
+ * @param {string} signerAddress - The address of the signer
+ * @param {string} signedMessage - The signed authentication message
+ * @returns {Promise<Array>} - Array of data objects with proper field names
  */
-export async function fetchPrivateDataset(cid) {
-  const signer = getSigner();
-  const authMessage = await getAuthMessage(signer.address);
-  const signedMessage = await signer.signMessage(authMessage);
+export async function fetchPrivateDataset(cid, signerAddress, signedMessage) {
   const encryptionKey = await lighthouse
-    .fetchEncryptionKey(cid, signer.address, signedMessage)
+    .fetchEncryptionKey(cid, signerAddress, signedMessage)
     .catch((err) => {
       // 🤷‍♂️
       if (Array.isArray(err.message)) {
