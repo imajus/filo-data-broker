@@ -10,7 +10,6 @@ contract NFT is ERC721, Ownable {
     string private _description;
     string private _privateColumns;
     string private _publicColumns;
-    string private _cid;
 
     constructor(
         string memory name,
@@ -47,13 +46,5 @@ contract NFT is ERC721, Ownable {
 
     function getPublicColumns() public view returns (string memory) {
         return _publicColumns;
-    }
-
-    function getCid() public view returns (string memory) {
-        return _cid;
-    }
-
-    function setCid(string memory cid) public onlyOwner {
-        _cid = cid;
     }
 }

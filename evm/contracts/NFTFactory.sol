@@ -19,6 +19,7 @@ contract NFTFactory {
         string description;
         string privateColumns;
         string publicColumns;
+        string cid;
         uint256 createdAt;
         bool isActive;
     }
@@ -73,8 +74,9 @@ contract NFTFactory {
             description: description,
             privateColumns: privateColumns,
             publicColumns: publicColumns,
+            cid: "",
             createdAt: block.timestamp,
-            isActive: true
+            isActive: false
         });
 
         s_userCollections[msg.sender].push(newCollection);
@@ -162,20 +164,6 @@ contract NFTFactory {
         return s_collectionInfo[nftContract].owner == user;
     }
 
-    function getCollectionStats(
-        address nftContract
-    ) external view returns (uint256 totalSupply, address owner, bool isActive, uint256 createdAt) {
-        Collection memory collection = s_collectionInfo[nftContract];
-        // NFT nft = NFT(nftContract);
-
-        return (
-            0, // getCurrentTokenId() removed, replace with 0 or implement totalSupply if needed
-            collection.owner,
-            collection.isActive,
-            collection.createdAt
-        );
-    }
-
     function getUserCollectionCount(address user) external view returns (uint256) {
         return s_userCollections[user].length;
     }
@@ -201,17 +189,16 @@ contract NFTFactory {
         return activeCollections;
     }
 
-    function getCollectionCid(address nftContract) external view returns (string memory) {
-        NFT nft = NFT(nftContract);
-        return nft.getCid();
-    }
-
     function setCollectionCid(address nftContract, string memory cid) external {
         Collection storage collection = s_collectionInfo[nftContract];
         if (collection.owner != msg.sender) {
             revert NFTFactory__NotCollectionOwner();
         }
-        NFT nft = NFT(nftContract);
-        nft.setCid(cid);
+        collection.cid = cid;
+
+        if (!collection.isActive) {
+            collection.isActive = true;
+            emit CollectionStatusUpdated(nftContract, true);
+        }
     }
 }

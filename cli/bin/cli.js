@@ -124,10 +124,6 @@ program
       console.log(chalk.green('\n✅ Dataset linked to NFT collection!'));
     } catch (err) {
       console.log(chalk.red(`❌ Processing Error: ${err.message}`));
-      console.log(chalk.yellow('\n▶️ Disabling NFT collection...'));
-      await uploader.nft.toggleCollectionStatus().catch((err) => {
-        console.log(chalk.red(`❌ NFT collection disable failed: ${err.message}`));
-      });
     }
   });
 
