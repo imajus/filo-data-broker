@@ -6,6 +6,9 @@ import "./NFT.sol";
 error NFTFactory__EmptyName();
 error NFTFactory__EmptySymbol();
 error NFTFactory__NotCollectionOwner();
+error NFTFactory__InsufficientPayment();
+error NFTFactory__InsufficientBalance();
+error NFTFactory__TransferFailed();
 
 contract NFTFactory {
     string public constant BASE_TOKEN_URI =
@@ -20,12 +23,14 @@ contract NFTFactory {
         string privateColumns;
         string publicColumns;
         string cid;
+        uint256 price;
         uint256 createdAt;
         bool isActive;
     }
 
     mapping(address => Collection[]) private s_userCollections;
     mapping(address => Collection) private s_collectionInfo;
+    mapping(address => uint256) private s_balances;
     address[] private s_allCollections;
     uint256 private s_totalCollections;
 
@@ -37,17 +42,28 @@ contract NFTFactory {
         string description,
         string privateColumns,
         string publicColumns,
+        uint256 price,
         uint256 indexed collectionId
     );
 
     event CollectionStatusUpdated(address indexed nftContract, bool isActive);
+
+    event NFTPurchased(
+        address indexed nftContract,
+        address indexed buyer,
+        uint256 indexed tokenId,
+        uint256 price
+    );
+
+    event BalanceWithdrawn(address indexed owner, uint256 amount);
 
     function createCollection(
         string memory name,
         string memory symbol,
         string memory description,
         string memory privateColumns,
-        string memory publicColumns
+        string memory publicColumns,
+        uint256 price
     ) external returns (address) {
         if (bytes(name).length == 0) {
             revert NFTFactory__EmptyName();
@@ -56,14 +72,7 @@ contract NFTFactory {
             revert NFTFactory__EmptySymbol();
         }
 
-        NFT newNFT = new NFT(
-            name,
-            symbol,
-            BASE_TOKEN_URI,
-            description,
-            privateColumns,
-            publicColumns
-        );
+        NFT newNFT = new NFT(name, symbol, BASE_TOKEN_URI);
         address nftAddress = address(newNFT);
 
         Collection memory newCollection = Collection({
@@ -75,6 +84,7 @@ contract NFTFactory {
             privateColumns: privateColumns,
             publicColumns: publicColumns,
             cid: "",
+            price: price,
             createdAt: block.timestamp,
             isActive: false
         });
@@ -92,10 +102,59 @@ contract NFTFactory {
             description,
             privateColumns,
             publicColumns,
+            price,
             s_totalCollections - 1
         );
 
         return nftAddress;
+    }
+
+    function purchase(address nftContract) external payable returns (uint256) {
+        Collection storage collection = s_collectionInfo[nftContract];
+        require(collection.nftContract != address(0), "NFTFactory: Collection does not exist");
+        require(collection.isActive, "NFTFactory: Collection is not active");
+
+        if (msg.value < collection.price) {
+            revert NFTFactory__InsufficientPayment();
+        }
+
+        NFT nft = NFT(nftContract);
+        uint256 tokenId = nft.mint(msg.sender);
+
+        s_balances[collection.owner] += collection.price;
+
+        if (msg.value > collection.price) {
+            payable(msg.sender).transfer(msg.value - collection.price);
+        }
+
+        emit NFTPurchased(nftContract, msg.sender, tokenId, collection.price);
+
+        return tokenId;
+    }
+
+    function withdraw() external {
+        uint256 balance = s_balances[msg.sender];
+        if (balance == 0) {
+            revert NFTFactory__InsufficientBalance();
+        }
+
+        s_balances[msg.sender] = 0;
+
+        (bool success, ) = payable(msg.sender).call{value: balance}("");
+        if (!success) {
+            s_balances[msg.sender] = balance;
+            revert NFTFactory__TransferFailed();
+        }
+
+        emit BalanceWithdrawn(msg.sender, balance);
+    }
+
+    function hasNFT(address nftContract) external view returns (bool) {
+        Collection storage collection = s_collectionInfo[nftContract];
+        require(collection.nftContract != address(0), "NFTFactory: Collection does not exist");
+
+        NFT nft = NFT(nftContract);
+        return nft.balanceOf(msg.sender) > 0;
     }
 
     function mintNFT(address nftContract, address to) external returns (uint256) {
@@ -200,5 +259,9 @@ contract NFTFactory {
             collection.isActive = true;
             emit CollectionStatusUpdated(nftContract, true);
         }
+    }
+
+    function getBalance(address user) external view returns (uint256) {
+        return s_balances[user];
     }
 }
