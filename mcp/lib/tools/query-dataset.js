@@ -7,7 +7,7 @@ import { getDatasetFactory } from '../dataset/factory.js';
 export default (mcp) =>
   mcp.tool(
     'query_dataset',
-    'Query a specific dataset using SQL.',
+    'Query a specific dataset using SQL. You must retrieve and sign the authentication message with your Ethereum wallet first to be able to query the dataset. Datasets access must be purchased before querying.',
     {
       datasetId: z.string().describe('Dataset ID'),
       sql: z

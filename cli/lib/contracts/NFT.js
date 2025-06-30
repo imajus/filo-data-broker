@@ -25,15 +25,17 @@ export class NFT {
    * @param {string} description - The description of the collection
    * @param {string[]} publicColumns - The public columns of the collection
    * @param {string[]} privateColumns - The private columns of the collection
+   * @param {string} price - The price of the collection
    * @returns {Promise<TransactionResponse>} - The transaction response
    */
-  async createCollection(name, description, publicColumns, privateColumns) {
+  async createCollection(name, description, publicColumns, privateColumns, price) {
     const tx = await this.factory.createCollection(
       name,
       'FDB',
       description,
       privateColumns.join(','),
       publicColumns.join(','),
+      price,
     );
     const receipt = await tx.wait();
     const event = receipt.logs.find((e) => e.eventName === 'CollectionCreated');

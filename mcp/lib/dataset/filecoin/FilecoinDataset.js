@@ -121,7 +121,7 @@ export class FilecoinDataset {
     this.description = metadata.description;
     this.publicColumns = metadata.publicColumns;
     this.privateColumns = metadata.privateColumns;
-    this.#rows = await fetchDataset(metadata.cid);
+    this.price = metadata.price;
   }
 
   async query(sql) {

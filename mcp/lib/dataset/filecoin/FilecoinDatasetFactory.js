@@ -15,6 +15,7 @@ export class FilecoinDatasetFactory {
       description: ds.description,
       publicColumns: ds.publicColumns,
       privateColumns: ds.privateColumns,
+      price: ds.price,
     }));
   }
 }

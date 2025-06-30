@@ -18,7 +18,8 @@ interface DatasetMetadata {
   name: string;
   description: string;
   publicColumns: string[];
-  privateColumns: string[];
+  privateColumns: string[]; 
+  price: number;
 }
 
 type Dataset = DatasetMetadata & {
