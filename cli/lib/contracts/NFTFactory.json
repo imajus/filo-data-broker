@@ -1,5 +1,5 @@
 {
-  "address": "0xa139e700Cb92C6D6574e049e752bEeBBb1e34818",
+  "address": "0x60f1658179dc70dE3bcfff042D33913a67C93c97",
   "abi": [
     {
       "inputs": [],
@@ -336,7 +336,12 @@
             },
             {
               "internalType": "string",
-              "name": "cid",
+              "name": "publicCid",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "privateCid",
               "type": "string"
             },
             {
@@ -444,7 +449,12 @@
             },
             {
               "internalType": "string",
-              "name": "cid",
+              "name": "publicCid",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "privateCid",
               "type": "string"
             },
             {
@@ -566,7 +576,12 @@
         },
         {
           "internalType": "string",
-          "name": "cid",
+          "name": "publicCid",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "privateCid",
           "type": "string"
         }
       ],

@@ -22,7 +22,8 @@ contract NFTFactory {
         string description;
         string privateColumns;
         string publicColumns;
-        string cid;
+        string publicCid;
+        string privateCid;
         uint256 price;
         uint256 createdAt;
         bool isActive;
@@ -83,7 +84,8 @@ contract NFTFactory {
             description: description,
             privateColumns: privateColumns,
             publicColumns: publicColumns,
-            cid: "",
+            publicCid: "",
+            privateCid: "",
             price: price,
             createdAt: block.timestamp,
             isActive: false
@@ -248,12 +250,17 @@ contract NFTFactory {
         return activeCollections;
     }
 
-    function setCollectionCid(address nftContract, string memory cid) external {
+    function setCollectionCid(
+        address nftContract,
+        string memory publicCid,
+        string memory privateCid
+    ) external {
         Collection storage collection = s_collectionInfo[nftContract];
         if (collection.owner != msg.sender) {
             revert NFTFactory__NotCollectionOwner();
         }
-        collection.cid = cid;
+        collection.publicCid = publicCid;
+        collection.privateCid = privateCid;
 
         if (!collection.isActive) {
             collection.isActive = true;
