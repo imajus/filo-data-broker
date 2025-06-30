@@ -16,8 +16,8 @@ module.exports = async ({ deployments, network, run }) => {
     console.log(`NFTFactory deployed to: ${nftFactory.address}`)
     // Verify the contract on block explorer
     try {
-        console.log("Waiting for 30 seconds...")
-        await new Promise((resolve) => setTimeout(resolve, 30000))
+        console.log("Waiting for 45 seconds...")
+        await new Promise((resolve) => setTimeout(resolve, 45000))
         console.log("Verifying NFTFactory contract on block explorer...")
         await run("verify:verify", {
             address: nftFactory.address,

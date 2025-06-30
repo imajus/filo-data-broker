@@ -44,11 +44,12 @@ export class NFT {
 
   /**
    * Link a dataset to the NFT collection
-   * @param {string} cid - The CID of the dataset
+   * @param {string} publicCid - The CID of the public dataset
+   * @param {string} privateCid - The CID of the private dataset
    * @returns {Promise<void>}
    */
-  async linkDataset(cid) {
-    const tx = await this.factory.setCollectionCid(this.address, cid);
+  async linkDataset(publicCid, privateCid) {
+    const tx = await this.factory.setCollectionCid(this.address, publicCid, privateCid);
     await tx.wait();
   }
 

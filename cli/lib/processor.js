@@ -1,11 +1,10 @@
 import path from 'path';
 import os from 'os';
 import fs from 'fs-extra';
-import { pipeline } from 'stream';
+import { pipeline, compose } from 'stream';
 import { parse } from 'csv-parse';
 import { stringify } from 'csv-stringify';
 import { transform } from 'stream-transform';
-import { pick, omit } from 'lodash-es';
 
 /**
  * Class for transforming CSV data
@@ -17,99 +16,86 @@ export class Processor {
    */
   constructor({ uploader }) {
     this.uploader = uploader;
-    this.publicColumns = [];
-    this.privateColumns = [];
   }
 
-  /**
-   * Set which columns contain private data
-   * @param {Array} publicColumns - Array of column names that contain public data
-   * @param {Array} privateColumns - Array of column names that contain private data
-   */
-  setColumns(publicColumns, privateColumns) {
-    this.publicColumns = publicColumns;
-    this.privateColumns = privateColumns;
-  }
-
-  /**
-   * Make a temporary output file path
-   * @returns {string} - The path to the temporary output file
-   */
-  makeOutputFilePath() {
-    const tmpDir = os.tmpdir();
-    const uniqueId = Date.now();
-    return path.join(tmpDir, `output-${uniqueId}.csv`);
-  }
-
-  /**
-   * Process a single CSV record
-   * @param {Object} record - The row data object with column names as keys
-   */
-  async transform(record) {
-    // Extract private and public data using lodash utilities
-    const privateData = pick(record, this.privateColumns);
-    const publicData = omit(record, this.privateColumns);
-    // Upload private record data and apply access restriction
-    const cid = await this.uploader.uploadPrivateData(privateData);
-    await this.uploader.applyAccessRestriction(cid);
-    return { ...publicData, cid };
-  }
-
-  async process(inputPath, { onHeaders, onTick }) {
+  async headers(inputPath) {
     return new Promise((resolve, reject) => {
-      const outputPath = this.makeOutputFilePath();
       const parser = parse({
         columns: (headers) => {
-          // Call onHeaders callback when headers are detected
-          if (onHeaders) {
-            parser.pause();
-            onHeaders(headers)
-              .then(() => {
-                parser.resume();
-              })
-              .catch((err) => {
-                parser.destroy();
-                reject(err);
-              });
-          }
-          return headers; // Return headers to be used as column names
+          parser.destroy();
+          resolve(headers);
         },
         skip_empty_lines: true,
         trim: true,
       });
-      const transformer = transform(async (record, callback) => {
+      parser.on('error', reject);
+      fs.createReadStream(inputPath).pipe(parser);
+    });
+  }
+
+  async process(inputPath, { publicColumns, privateColumns, onTick }) {
+    const publicOutputPath = makeOutputFilePath('public');
+    const privateOutputPath = makeOutputFilePath('private');
+    const parser = parse({
+      skip_empty_lines: true,
+      columns: true,
+      trim: true,
+    });
+    const inputStream = compose(
+      fs.createReadStream(inputPath),
+      parser,
+      transform((record, callback) => {
         try {
-          // Call the row processor function with error handling
-          const result = await this.transform(record);
-          // Show progress
-          if (onTick) {
-            onTick(result);
-          }
-          callback(null, result);
+          onTick?.(record);
+          callback(null, record);
         } catch (err) {
           callback(err);
         }
-      });
-      const stringifier = stringify({
-        header: true,
-        quoted: true,
-      });
-      pipeline(
-        fs.createReadStream(inputPath),
-        parser,
-        transformer,
-        stringifier,
-        fs.createWriteStream(outputPath),
-        async (err) => {
-          if (err) {
-            reject(err);
-          } else {
-            // Upload public data to IPFS
-            const cid = await this.uploader.uploadPublicData(outputPath);
-            resolve(cid);
-          }
-        }
-      );
-    });
+      })
+    );
+    // Split CSV into public and private data
+    const [publicCid, privateCid] = await Promise.all([
+      transformData(inputStream, publicColumns, publicOutputPath).then(() =>
+        this.uploader.uploadPublicData(publicOutputPath)
+      ),
+      transformData(inputStream, privateColumns, privateOutputPath).then(() =>
+        this.uploader.uploadPrivateData(privateOutputPath)
+      ),
+    ]);
+    await this.uploader.applyAccessRestriction(privateCid);
+    return { publicCid, privateCid };
   }
+}
+
+/**
+ * Make a temporary output file path
+ * @param {string} suffix - The suffix to add to the output file name
+ * @returns {string} - The path to the temporary output file
+ */
+function makeOutputFilePath(suffix) {
+  const tmpDir = os.tmpdir();
+  const uniqueId = Date.now();
+  return path.join(tmpDir, `output-${uniqueId}-${suffix}.csv`);
+}
+
+/**
+ * Transform data from input stream to output file
+ * @param {import('stream').Readable} inputStream - The input stream
+ * @param {string[]} columns - The columns to include in the output
+ * @param {string} outputPath - The path to the output file
+ * @returns {Promise<void>} - A promise that resolves when the data is transformed
+ */
+function transformData(inputStream, columns, outputPath) {
+  return new Promise((resolve, reject) => {
+    pipeline(
+      inputStream,
+      stringify({
+        quoted: true,
+        header: true,
+        columns,
+      }),
+      fs.createWriteStream(outputPath),
+      (err) => (err ? reject(err) : resolve())
+    );
+  });
 }

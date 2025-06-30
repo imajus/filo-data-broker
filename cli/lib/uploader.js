@@ -1,7 +1,6 @@
 import { ethers } from 'ethers';
 import lighthouse from '@lighthouse-web3/sdk';
 import kavach from '@lighthouse-web3/kavach';
-import { once } from 'lodash-es';
 import Bottleneck from 'bottleneck';
 import { NFT } from './contracts/NFT.js';
 
@@ -10,15 +9,11 @@ import { NFT } from './contracts/NFT.js';
  * @param {ethers.Wallet} signer - The signer to sign the authentication message
  * @returns {Promise<string>} - The JWT token
  */
-const signAuthMessage = once(async (signer) => {
+const signAuthMessage = async (signer) => {
   const authMessage = await kavach.getAuthMessage(signer.address);
   const signedMessage = await signer.signMessage(authMessage.message);
-  const { JWT, error } = await kavach.getJWT(signer.address, signedMessage);
-  if (error) {
-    throw new Error(error);
-  }
-  return JWT;
-});
+  return signedMessage;
+};
 
 /**
  * Class for uploading data to Lighthouse
@@ -51,7 +46,7 @@ export class Uploader {
     const conditions = [
       {
         id: 1,
-        chain: 'Calibration',
+        chain: 'Filecoin_Testnet',
         method: 'balanceOf',
         standardContractType: 'ERC721',
         contractAddress: this.nft.address,
@@ -63,36 +58,37 @@ export class Uploader {
       },
     ];
     const aggregator = '([1])';
-    const response = await this.limiter.schedule(async () =>
-      lighthouse.applyAccessCondition(
-        this.signer.address,
-        cid,
-        await signAuthMessage(this.signer),
-        conditions,
-        aggregator
-      )
+    const signedMessage = await signAuthMessage(this.signer);
+    const { isSuccess, error } = await kavach.accessControl(
+      this.signer.address,
+      cid,
+      signedMessage,
+      conditions,
+      aggregator
     );
-    if (response.error) {
-      throw new Error(response.error);
+    if (error) {
+      throw new Error(`Access restriction failed: ${error}`);
     }
-    return response.isSuccess;
+    if (!isSuccess) {
+      throw new Error('Access restriction failed: Unknown error');
+    }
   }
 
   /**
    * Encrypt and upload private data to Lighthouse
-   * @param {Object} data - The private data object
+   * @param {string} filePath - The path to the private data file
    * @returns {Promise<string>} - The CID of the uploaded data
    */
-  async uploadPrivateData(data) {
-    const response = await this.limiter.schedule(async () =>
-      lighthouse.textUploadEncrypted(
-        JSON.stringify(data),
+  async uploadPrivateData(filePath) {
+    const response = await this.limiter.schedule(async () => {
+      const signedMessage = await signAuthMessage(this.signer);
+      return lighthouse.uploadEncrypted(
+        filePath,
         this.apiKey,
         this.signer.address,
-        await signAuthMessage(this.signer),
-        'private'
-      )
-    );
+        signedMessage
+      );
+    });
     return response.data[0].Hash;
   }
 

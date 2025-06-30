@@ -47,7 +47,8 @@ export class NFTFactory {
       publicColumns: metadata.publicColumns,
       privateColumns: metadata.privateColumns,
       price: Number(ethers.formatEther(metadata.price)),
-      cid: metadata.cid,
+      publicCid: metadata.publicCid,
+      privateCid: metadata.privateCid,
     };
   }
 
