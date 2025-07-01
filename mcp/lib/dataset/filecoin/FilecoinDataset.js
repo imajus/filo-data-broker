@@ -12,6 +12,7 @@ export class FilecoinDataset {
   #privateCid = null;
   #rows = null;
   #decrypted = false;
+  #purchased = false;
 
   constructor(address) {
     this.#address = address;
@@ -48,10 +49,22 @@ export class FilecoinDataset {
     }
   }
 
+  async purchase() {
+    if (!this.#purchased) {
+      const factory = NFTFactory.getInstance();
+      await factory.purchase(this.#address, this.price);
+      this.#purchased = true;
+    }
+  }
+
   async query(sql) {
     // Ensure data is loaded
     if (!this.#rows) {
       await this.#initialize();
+    }
+    // Ensure dataset is purchased
+    if (!this.#purchased) {
+      await this.purchase();
     }
     // Ensure data is decrypted
     if (!this.#decrypted) {
