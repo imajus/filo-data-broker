@@ -1,10 +1,10 @@
 {
-  "name": "filo-data-broker-mcp-server",
+  "name": "filo-data-broker",
   "version": "0.1.0",
   "description": "Filo Data Broker MCP Server",
-  "main": "server.js",
+  "main": "index.js",
   "bin": {
-    "filo-data-broker-mcp-server": "./bin/index.js"
+    "filo-data-broker": "./bin/index.js"
   },
   "type": "module",
   "scripts": {
@@ -15,6 +15,8 @@
   "keywords": [
     "mcp",
     "model-context-protocol",
+    "ipfs",
+    "filecoin",
     "server"
   ],
   "author": "",
