@@ -1,0 +1,60 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# MCP Tool Development Patterns
+
+## Tool Registration Pattern
+Tools are registered in [server.js](mdc:server.js) by importing and calling tool modules:
+```javascript
+import listDatasetsTool from './lib/tools/list-datasets.js';
+import queryDatasetTool from './lib/tools/query-dataset.js';
+
+listDatasetsTool(mcp);
+queryDatasetTool(mcp);
+```
+
+## Tool Module Structure
+Each tool is a default export function that takes the MCP server instance:
+```javascript
+export default (mcp) => mcp.tool(name, description, schema, handler);
+```
+
+## Input Validation with Zod
+- Use Zod schemas for all tool parameters
+- Example from [query-dataset.js](mdc:lib/tools/query-dataset.js):
+```javascript
+{
+  datasetId: z.string().describe('Dataset ID'),
+  sql: z.string().describe('SQL query to execute...')
+}
+```
+
+## Response Format
+All tools must return MCP-compatible responses with content array:
+```javascript
+return {
+  content: [
+    {
+      type: 'text',
+      text: JSON.stringify(results, null, 2),
+    },
+  ],
+};
+```
+
+## Tool Naming Conventions
+- Use snake_case for tool names (e.g., `list_datasets`, `query_dataset`)
+- File names should match tool functionality with kebab-case
+- Provide clear, descriptive tool descriptions for AI model understanding
+
+## Error Handling in Tools
+- Let dataset and factory errors bubble up to the MCP layer
+- Errors will be automatically formatted into MCP error responses
+- Provide context in error messages to help users understand issues
+
+## Tool Dependencies
+- Use the dataset factory pattern via [getDatasetFactory()](mdc:lib/dataset/factory.js)
+- Avoid direct dataset instantiation in tools
+- Keep tools focused on MCP concerns, delegate business logic to dataset layer

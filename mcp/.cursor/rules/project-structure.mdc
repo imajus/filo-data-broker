@@ -1,12 +1,37 @@
 ---
 description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
-# Project Structure Guide
+# Filecoin Data Broker MCP Server Structure
 
-- The main executable entry point is [bin/index.js](mdc:bin/index.js), which starts the MCP server using a transport.
-- The MCP server instance, including tool and resource registration, is defined and exported from [server.js](mdc:server.js).
-- Tools and resources are implemented in the [lib/tools](mdc:lib/tools) and [lib/resources](mdc:lib/resources) directories, respectively.
-- Utility functions are located in [lib/utils.js](mdc:lib/utils.js).
-- The package is configured for npx execution via the `bin` field in [package.json](mdc:package.json).
+## Core Architecture
+- The main executable entry point is [bin/index.js](mdc:bin/index.js), which starts the MCP server with stdio transport
+- The MCP server instance and tool registration is in [server.js](mdc:server.js) 
+- Environment configuration requires `ETHEREUM_PRIVATE_KEY` for blockchain access
+
+## Tools & Functionality
+- MCP tools are implemented in [lib/tools/](mdc:lib/tools) directory:
+  - [list-datasets.js](mdc:lib/tools/list-datasets.js) - Lists available datasets with metadata
+  - [query-dataset.js](mdc:lib/tools/query-dataset.js) - Executes SQL queries on purchased datasets
+- All tools use Zod schemas for input validation and return MCP-compatible responses
+
+## Dataset Layer
+- Dataset abstraction is managed through factory pattern in [lib/dataset/factory.js](mdc:lib/dataset/factory.js)
+- Main implementation: [FilecoinDataset.js](mdc:lib/dataset/filecoin/FilecoinDataset.js) for blockchain-based datasets
+- Mock implementation: [LocalDataset.js](mdc:lib/dataset/mock/LocalDataset.js) for development/testing
+- Type definitions in [types.d.ts](mdc:types.d.ts) define Dataset and DatasetFactory interfaces
+
+## Blockchain Integration
+- NFT contracts handled via [NFTFactory.js](mdc:lib/contracts/NFTFactory.js) singleton
+- Ethereum signer configuration in [lib/signer.js](mdc:lib/signer.js)
+- Contract ABI and address in [NFTFactory.json](mdc:lib/contracts/NFTFactory.json)
+
+## Data Access & Storage
+- IPFS/Filecoin data access via [lighthouse.js](mdc:lib/lighthouse.js) with encryption support
+- SQL query processing and security in [sql.js](mdc:lib/sql.js)
+- Sample datasets in [sample/](mdc:sample) directory for testing
+
+## Configuration
+- Package configuration in [package.json](mdc:package.json) with ESM modules
+- Node.js >=20.0.0 required for private field syntax and modern features
