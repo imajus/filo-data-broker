@@ -5,9 +5,14 @@ import chalk from 'chalk';
 import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import { pick } from 'lodash-es';
+import { ethers } from 'ethers';
 import packageJson from '../package.json' with { type: 'json' };
 import { Processor } from '../lib/processor.js';
 import { Uploader } from '../lib/uploader.js';
+import { SynapsePayment } from '../lib/synapse/payment.js';
+
+const RPC_URL = 'https://api.calibration.node.glif.io/rpc/v1';
+const provider = new ethers.JsonRpcProvider(RPC_URL);
 
 const program = new Command();
 
@@ -19,14 +24,13 @@ program
 program
   .command('import')
   .description('Import data from a CSV file')
-  .requiredOption('-k, --api-key <key>', 'API key for authentication')
   .requiredOption('-p, --private-key <key>', 'Ethereum account private key')
   .requiredOption('-f, --file <path>', 'Path to the CSV file to import')
   .action(async (options) => {
     if (!options.file) {
       console.log(chalk.red('❌ Error: CSV file path is required'));
       console.log(
-        chalk.yellow('Usage: import -k <api-key> -p <key> -f <csv-file-path>')
+        chalk.yellow('Usage: import -p <key> -f <csv-file-path>')
       );
       return;
     }
@@ -35,12 +39,10 @@ program
       console.log(chalk.red(`❌ Error: File not found at ${options.file}`));
       return;
     }
-    console.log(chalk.green('🚀 Starting data import...'));
-    console.log(chalk.blue(`API Key: ${options.apiKey}`));
+    const wallet = new ethers.Wallet(options.privateKey, provider);
     console.log(chalk.blue(`CSV File: ${options.file}`));
-    console.log(chalk.blue('Private Key: **********'));
+    console.log(chalk.blue(`Wallet Address: ${wallet.address}`));
     // Step 2: Request NFT collection details
-    const { ethers } = await import('ethers');
     const { name, description, price } = await inquirer.prompt([
       {
         type: 'input',
@@ -69,9 +71,9 @@ program
         },
       },
     ]);
-    console.log(chalk.yellow('\n📄 Setting up CSV stream...'));
-    const uploader = new Uploader(options.apiKey, options.privateKey);
-    const processor = new Processor({ uploader });
+    console.log(chalk.green('🚀 Starting data import...'));
+    const uploader = new Uploader(wallet);
+    const processor = new Processor(uploader);
     try {
       let rowCount = 0;
       const headers = await processor.headers(options.file);
@@ -117,11 +119,10 @@ program
       }
       // Step 5: Create NFT collection
       console.log(chalk.yellow('\n▶️ Creating NFT collection...'));
-      await uploader.nft.createCollection(name, description, publicColumns, privateColumns, ethers.parseUnits(price, 18));
+      await uploader.nft.createCollection(name, description, publicColumns, privateColumns, price);
       console.log(chalk.green('\n✅ NFT collection created successfully!'));
-      console.log(chalk.blue(`NFT collection address: ${uploader.nft.address}`));
       console.log(chalk.yellow('\n📊 Starting row-by-row processing...'));
-      const { publicCid, privateCid } = await processor.process(options.file, {
+      const { publicData, privateData } = await processor.process(options.file, {
         publicColumns,
         privateColumns,
         onTick(result) {
@@ -130,17 +131,70 @@ program
           console.log(chalk.blue(`${line},******`));
         },
       });
-      console.log(chalk.green('✅ Data processing completed successfully!'));
-      console.log(chalk.blue('\n📈 Processing Summary:'));
+      // Step 6: Upload public & private data (parallel uploads are not supported)
+      console.log(chalk.yellow('\n▶️ Starting public data upload...'));
+      const publicCid = await uploader.uploadPublicData(publicData);
+      console.log(chalk.green('\n✅ Public data uploaded successfully!'));
+      console.log(chalk.yellow('\n▶️ Starting private data upload...'));
+      const privateCid = await uploader.uploadPrivateData(privateData);
+      console.log(chalk.green('\n✅ Private data uploaded successfully!'));
+      // Step 7: Link dataset to NFT collection
+      console.log(chalk.yellow('\n▶️ Linking dataset to NFT collection...'));
+      await uploader.nft.linkDataset(publicCid.toString(), privateCid.toString());
+      console.log(chalk.green('\n✅ Dataset linked to NFT collection!'));
+      console.log(chalk.blue('\n📈 All done! Processing summary:'));
       console.log(chalk.white(`  • Total rows processed: ${rowCount}`));
+      console.log(chalk.white(`  • NFT collection address: ${uploader.nft.address}`));
       console.log(chalk.white(`  • Public CID: ${publicCid}`));
       console.log(chalk.white(`  • Private CID: ${privateCid}`));
-      // Step 6: Link dataset to NFT collection
-      console.log(chalk.yellow('\n▶️ Linking dataset to NFT collection...'));
-      await uploader.nft.linkDataset(publicCid, privateCid);
-      console.log(chalk.green('\n✅ Dataset linked to NFT collection!'));
     } catch (err) {
       console.log(chalk.red(`❌ Processing Error: ${err.message}`));
+    }
+  });
+
+program
+  .command('setup')
+  .description('Set up the payment rail')
+  .requiredOption('-p, --private-key <key>', 'Ethereum account private key')
+  .action(async (options) => {
+    const wallet = new ethers.Wallet(options.privateKey, provider);
+    console.log(chalk.blue(`Wallet Address: ${wallet.address}`));
+    console.log(chalk.yellow('\n▶️ Setting up payment rail...'));
+    try {
+      const payment = await SynapsePayment.create(wallet);
+      const proofset = await payment.selectProofset();
+      console.log(chalk.blue(`Proofset: ${proofset?.pdpVerifierProofSetId ?? 'None'}`));
+      await payment.reserve();
+      console.log(chalk.green('💰 Payment rail set up successfully!'));
+    } catch (err) {
+      console.log(chalk.red(`❌ Setup Error: ${err.message}`));
+    }
+  });
+
+program
+  .command('balance')
+  .description('Check wallet and payment balances')
+  .requiredOption('-p, --private-key <key>', 'Ethereum account private key')
+  .action(async (options) => {
+    console.log(chalk.blue('Private Key: **********'));
+    console.log(chalk.yellow('\n▶️ Fetching balances...'));
+    try {
+      const wallet = new ethers.Wallet(options.privateKey, provider);
+      const payment = await SynapsePayment.create(wallet);
+      const balance = {
+        walletNative: ethers.formatEther(await payment.getWalletBalance()),
+        walletToken: ethers.formatUnits(await payment.getWalletBalanceUSDFC(), 18),
+        paymentToken: ethers.formatUnits(await payment.getBalanceUSDFC(), 18),
+        allowanceToken: ethers.formatUnits(await payment.getPaymentAllowanceUSDFC(), 18),
+      };
+      console.log(chalk.green('\n💰 Balance Information:'));
+      console.log(chalk.blue(`Wallet balance: ${balance.walletNative} FIL, ${balance.walletToken} USDFC`));
+      console.log(chalk.blue(`Deposit balance: ${balance.paymentToken} USDFC`));
+      console.log(chalk.blue(`Deposit allowance: ${balance.allowanceToken} USDFC`));
+      const proofset = await payment.selectProofset();
+      console.log(chalk.blue(`Proofset: ${proofset?.pdpVerifierProofSetId ?? 'None'}`));
+    } catch (err) {
+      console.log(chalk.red(`❌ Balance Error: ${err.message}`));
     }
   });
 
