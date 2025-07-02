@@ -1,16 +1,12 @@
 import { ethers } from 'ethers';
 import NFTFactoryData from './NFTFactory.json' with { type: 'json' };
 
-const RPC_URL = 'https://api.calibration.node.glif.io/rpc/v1';
-
 export class NFT {
   /**
    * @param {string | null} address - The address of the NFT collection
-   * @param {string} privateKey - The private key for the Ethereum account
+   * @param {ethers.Signer} signer - The signer for the Ethereum account
    */
-  constructor(address, privateKey) {
-    const provider = new ethers.JsonRpcProvider(RPC_URL);
-    const signer = new ethers.Wallet(privateKey, provider);
+  constructor(address, signer) {
     this.factory = new ethers.Contract(
       NFTFactoryData.address,
       NFTFactoryData.abi,
@@ -25,15 +21,17 @@ export class NFT {
    * @param {string} description - The description of the collection
    * @param {string[]} publicColumns - The public columns of the collection
    * @param {string[]} privateColumns - The private columns of the collection
+   * @param {number} price - The price of the collection
    * @returns {Promise<TransactionResponse>} - The transaction response
    */
-  async createCollection(name, description, publicColumns, privateColumns) {
+  async createCollection(name, description, publicColumns, privateColumns, price) {
     const tx = await this.factory.createCollection(
       name,
       'FDB',
       description,
       privateColumns.join(','),
       publicColumns.join(','),
+      ethers.parseEther(price),
     );
     const receipt = await tx.wait();
     const event = receipt.logs.find((e) => e.eventName === 'CollectionCreated');
