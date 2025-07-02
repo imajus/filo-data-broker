@@ -115,5 +115,3 @@ npx filo-data-broker-cli import --api-key YOUR_API_KEY --private-key YOUR_PRIVAT
 - **inquirer**: Interactive command line prompts
 - **fs-extra**: Enhanced file system operations
 - **ethers**: Ethereum API
-- **@lighthouse-web3/sdk**: Lighthouse SDK
-- **@lighthouse-web3/kavach**: Lighthouse encryption library
