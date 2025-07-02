@@ -1,0 +1,88 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Filo Data Broker CLI Project Guide
+
+## Project Overview
+
+This is a command-line interface tool for importing CSV data to Filo Data Broker with privacy-aware column selection. The CLI allows users to interactively select which columns contain sensitive data before uploading to the blockchain-based data broker.
+
+## Project Structure
+
+### Entry Points
+- **Main CLI**: [bin/cli.js](mdc:bin/cli.js) - Primary command-line interface entry point
+- **Package Config**: [package.json](mdc:package.json) - Project dependencies and scripts
+
+### Core Modules
+- **Data Processing**: [lib/processor.js](mdc:lib/processor.js) - Main CSV processing and data transformation logic
+- **File Upload**: [lib/uploader.js](mdc:lib/uploader.js) - Handles file upload operations to the data broker
+
+### Blockchain Integration
+- **Smart Contracts**: [lib/contracts/](mdc:lib/contracts) - NFT contract definitions and factory JSON
+  - [lib/contracts/NFT.js](mdc:lib/contracts/NFT.js) - NFT contract interface
+  - [lib/contracts/NFTFactory.json](mdc:lib/contracts/NFTFactory.json) - Factory contract ABI
+
+### Synapse Network Integration
+- **Payment System**: [lib/synapse/payment.js](mdc:lib/synapse/payment.js) - Handles payment processing through Synapse
+- **Storage Interface**: [lib/synapse/storage.js](mdc:lib/synapse/storage.js) - Manages data storage operations
+- **Core Synapse**: [lib/synapse/synapse.js](mdc:lib/synapse/synapse.js) - Main Synapse network integration
+
+### Sample Data
+- **Test Datasets**: [sample/](mdc:sample) - Contains sample CSV files for testing:
+  - [sample/bali.csv](mdc:sample/bali.csv) - Bali tourism destinations dataset
+  - [sample/quotes.csv](mdc:sample/quotes.csv) - Famous quotes collection
+  - [sample/youtube.csv](mdc:sample/youtube.csv) - YouTube video analytics
+  - [sample/mock.csv](mdc:sample/mock.csv) - Mock testing data
+
+## Key Features
+
+### Privacy-Aware Data Import
+- Interactive column selection for privacy classification
+- Automatic CSV header analysis and validation
+- Real-time data summary and statistics
+
+### Blockchain Integration
+- Ethereum wallet integration via ethers.js
+- NFT-based data ownership and access control
+- Smart contract interaction for data registration
+
+### User Experience
+- Commander.js for CLI argument parsing
+- Inquirer.js for interactive prompts
+- Chalk for colored terminal output
+- Comprehensive error handling and validation
+
+## Development Patterns
+
+### Language Preference
+- **JavaScript over TypeScript** - Project uses plain JavaScript as preferred
+- **No empty lines in functions** - Code style preference for compact function bodies
+
+### Dependencies
+- **ethers**: Ethereum blockchain interaction
+- **commander**: CLI framework and argument parsing
+- **inquirer**: Interactive command-line prompts
+- **chalk**: Terminal styling and colors
+- **csv-parse**: CSV file processing
+- **fs-extra**: Enhanced file system operations
+
+## Usage Flow
+
+1. **CSV Analysis**: Parse and validate input CSV file
+2. **Column Discovery**: Extract and display all column headers
+3. **Privacy Selection**: Interactive checkbox for sensitive data marking
+4. **Data Summary**: Show statistics and prepare for upload
+5. **Blockchain Upload**: Submit data with privacy metadata to Filo Data Broker
+
+## Common Commands
+
+```bash
+# Import data with interactive privacy selection
+npm start import -- --api-key KEY --private-key PRIVATE_KEY --file data.csv
+
+# Show help information
+npm start -- --help
+npm start import --help
+```

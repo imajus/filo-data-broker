@@ -1,6 +1,6 @@
 # Filo Data Broker CLI
 
-A command-line interface tool for importing CSV data to Filo Data Broker with privacy-aware column selection.
+A command-line interface tool for importing CSV data to FiloDataBroker registry with privacy-aware column selection, NFT collection creation, and Filecoin network integration for decentralized storage and payments.
 
 ## Installation
 
@@ -11,11 +11,19 @@ npm install
 ## Usage
 
 ```bash
+# Set up payment rail (first time setup)
+npm start setup -- --private-key YOUR_PRIVATE_KEY
+
+# Check wallet and payment balances
+npm start balance -- --private-key YOUR_PRIVATE_KEY
+
 # Import data from a CSV file (interactive mode)
-npm start import -- --api-key YOUR_API_KEY --private-key YOUR_PRIVATE_KEY --file ./data.csv
+npm start import -- --private-key YOUR_PRIVATE_KEY --file ./data.csv
 
 # Show help
 npm start -- --help
+npm start setup --help
+npm start balance --help
 npm start import --help
 ```
 
@@ -23,8 +31,11 @@ npm start import --help
 
 - **CSV Header Analysis**: Automatically reads and displays CSV column names
 - **Interactive Privacy Selection**: Choose which columns contain sensitive/private data
-- **Data Summary**: Shows row count, column count, and privacy breakdown
-- **Error Handling**: Validates file existence and CSV format
+- **NFT Collection Creation**: Creates blockchain-based NFT collections for data ownership
+- **Filecoin Network Integration**: Decentralized storage and payment processing
+- **Payment Rail Management**: USDFC token support with allowances and deposits
+- **Dual Data Upload**: Separate handling of public and private data with IPFS CIDs
+- **Error Handling**: Comprehensive validation and progress reporting
 
 ## Development
 
@@ -38,36 +49,84 @@ npm start -- --help
 
 ## Commands
 
-### import
+### setup
 
-Import data from a CSV file to the Filo Data Broker with interactive privacy configuration.
+Set up the Synapse payment rail for data storage operations.
 
 **Required Arguments:**
 
-- `-k, --api-key <key>` - API key for authentication
+- `-p, --private-key <key>` - Ethereum account private key
+
+**Process:**
+
+1. 💳 **Payment Rail Setup**: Initializes Filecoin payment rail
+2. 🔍 **Proofset Selection**: Selects optimal proofset for storage
+3. 💰 **Reservation**: Reserves storage capacity with USDFC tokens
+
+**Example:**
+
+```bash
+npm start setup -- --private-key YOUR_PRIVATE_KEY
+```
+
+### balance
+
+Check wallet and payment balances across different tokens and services.
+
+**Required Arguments:**
+
+- `-p, --private-key <key>` - Ethereum account private key
+
+**Information Displayed:**
+
+- 💰 **Wallet Balance**: Native FIL and USDFC token balances
+- 🏦 **Deposit Balance**: Available USDFC in payment system
+- 🔒 **Allowance**: Payment allowance for storage operations
+- 📊 **Proofset**: Current proofset information
+
+**Example:**
+
+```bash
+npm start balance -- --private-key YOUR_PRIVATE_KEY
+```
+
+### import
+
+Import data from a CSV file to the Filo Data Broker with NFT collection creation and privacy configuration.
+
+**Required Arguments:**
+
 - `-f, --file <path>` - Path to the CSV file to import
 - `-p, --private-key <key>` - Ethereum account private key
 
 **Interactive Process:**
 
 1. 📄 **CSV Analysis**: Reads and parses the CSV file
-2. 📋 **Column Display**: Shows all available column names
-3. 🔒 **Privacy Selection**: Interactive checkbox to select private data columns
-4. 📈 **Summary**: Displays import statistics and next steps
+2. 📝 **Collection Setup**: Enter dataset name, description, and price
+3. 📋 **Column Display**: Shows all available column names
+4. 🔒 **Privacy Selection**: Interactive checkbox to select private data columns
+5. 🎨 **NFT Creation**: Creates blockchain NFT collection
+6. 📤 **Data Upload**: Uploads public and private data separately
+7. 🔗 **Dataset Linking**: Links uploaded data to NFT collection
 
 **Example:**
 
 ```bash
-npm start import -- --api-key YOUR_API_KEY --private-key YOUR_PRIVATE_KEY --file ./data.csv
+npm start import -- --private-key YOUR_PRIVATE_KEY --file ./data.csv
 ```
 
 **Sample Output:**
 
 ```
 🚀 Starting data import...
-📄 Reading CSV file...
-✓ CSV file parsed successfully!
-📊 Found 150 data rows
+CSV File: ./data.csv
+Wallet Address: 0x...
+
+? Enter the name of the dataset: My Dataset
+? Enter the description of the dataset: A sample dataset for testing
+? Enter the price for the dataset (in FIL): 0.1
+
+✅ CSV headers parsed successfully!
 
 📋 Column names found:
   1. id
@@ -83,14 +142,69 @@ npm start import -- --api-key YOUR_API_KEY --private-key YOUR_PRIVATE_KEY --file
  ◯ email
  ◯ phone
  ◯ address
+
+✅ Private data columns selected:
+  🔒 email
+  🔒 phone
+
+📋 Public data columns:
+  📝 id
+  📝 name
+  📝 address
+
+▶️ Creating NFT collection...
+✅ NFT collection created successfully!
+
+📊 Starting row-by-row processing...
+▶️ Starting public data upload...
+✅ Public data uploaded successfully!
+▶️ Starting private data upload...
+✅ Private data uploaded successfully!
+▶️ Linking dataset to NFT collection...
+✅ Dataset linked to NFT collection!
+
+📈 All done! Processing summary:
+  • Total rows processed: 150
+  • NFT collection address: 0x...
+  • Public CID: Qm...
+  • Private CID: Qm...
 ```
 
-## Global Installation
+## Workflow
+
+### First Time Setup
+
+1. **Setup Payment Rail**:
+
+   ```bash
+   npm start setup -- --private-key YOUR_PRIVATE_KEY
+   ```
+
+2. **Check Balances**:
+
+   ```bash
+   npm start balance -- --private-key YOUR_PRIVATE_KEY
+   ```
+
+3. **Import Data**:
+   ```bash
+   npm start import -- --private-key YOUR_PRIVATE_KEY --file ./data.csv
+   ```
+
+### Global Installation
+
+Install globally for easier usage:
+
+```bash
+npm install -g
+```
 
 Then use directly:
 
 ```bash
-npx filo-data-broker-cli import --api-key YOUR_API_KEY --private-key YOUR_PRIVATE_KEY --file ./data.csv
+filo setup --private-key YOUR_PRIVATE_KEY
+filo balance --private-key YOUR_PRIVATE_KEY
+filo import --private-key YOUR_PRIVATE_KEY --file ./data.csv
 ```
 
 ## Sample Datasets
@@ -109,9 +223,13 @@ npx filo-data-broker-cli import --api-key YOUR_API_KEY --private-key YOUR_PRIVAT
 
 ## Dependencies
 
+- **@filoz/synapse-sdk**: Synapse network integration for decentralized storage and payments
 - **commander**: Command-line argument parsing
 - **chalk**: Terminal colors and styling
-- **csv-parse**: CSV file parsing
+- **csv-parse**: CSV file parsing and **csv-stringify**: CSV file generation
 - **inquirer**: Interactive command line prompts
 - **fs-extra**: Enhanced file system operations
-- **ethers**: Ethereum API
+- **ethers**: Ethereum blockchain interaction
+- **lodash-es**: Utility functions for data manipulation
+- **get-stream**: Stream utilities
+- **stream-transform**: Data stream transformation

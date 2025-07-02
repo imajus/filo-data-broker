@@ -1,6 +1,6 @@
 ---
 description: 
-globs: 
+globs: package.json,jsconfig.json,lib/**/*.js,bin/*.js
 alwaysApply: false
 ---
 # Filo Data Broker CLI - Cursor Rules
