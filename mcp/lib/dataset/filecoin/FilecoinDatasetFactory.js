@@ -1,3 +1,4 @@
+import { ethers } from 'ethers';
 import { NFTFactory } from '../../contracts/NFTFactory.js';
 import { FilecoinDataset } from './FilecoinDataset.js';
 
@@ -15,7 +16,7 @@ export class FilecoinDatasetFactory {
       description: ds.description,
       publicColumns: ds.publicColumns,
       privateColumns: ds.privateColumns,
-      price: ds.price,
+      price: Number(ethers.formatUnits(ds.price, 18)),
     }));
   }
 }

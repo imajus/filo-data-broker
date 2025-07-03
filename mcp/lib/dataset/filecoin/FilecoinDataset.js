@@ -1,17 +1,28 @@
 import alasql from 'alasql';
 import { NFTFactory } from '../../contracts/NFTFactory.js';
 import { transformQuery } from '../../sql.js';
-import { fetchPrivateDataset, fetchPublicDataset } from '../../lighthouse.js';
+import { fetchPrivateDataset, fetchPublicDataset } from '../../synapse.js';
+import { ethers } from 'ethers';
 
 alasql.options.cache = true;
 
 /** @implements {Dataset} */
 export class FilecoinDataset {
+  /** @type {string} */
   #address = null;
+  /** @type {string} */
+  #owner = null;
+  /** @type {string} */
   #publicCid = null;
+  /** @type {string} */
   #privateCid = null;
+  /** @type {BigInt} */
+  #price = null;
+  /** @type {Array} */
   #rows = null;
+  /** @type {boolean} */
   #decrypted = false;
+  /** @type {boolean} */
   #purchased = false;
 
   constructor(address) {
@@ -28,6 +39,10 @@ export class FilecoinDataset {
     return this.#address;
   }
 
+  get price() {
+    return Number(ethers.formatUnits(this.#price.toString(), 18));
+  }
+
   async #initialize() {
     const factory = NFTFactory.getInstance();
     const metadata = await factory.getDatasetMetadata(this.#address);
@@ -35,15 +50,16 @@ export class FilecoinDataset {
     this.description = metadata.description;
     this.publicColumns = metadata.publicColumns;
     this.privateColumns = metadata.privateColumns;
-    this.price = metadata.price;
+    this.#price = metadata.price;
+    this.#owner = metadata.owner;
     this.#publicCid = metadata.publicCid;
     this.#privateCid = metadata.privateCid;
-    this.#rows = await fetchPublicDataset(this.#publicCid);
+    this.#rows = await fetchPublicDataset(this.#owner, this.#publicCid);
   }
 
   async #decrypt() {
     if (!this.#decrypted) {
-      const rows = await fetchPrivateDataset(this.#privateCid);
+      const rows = await fetchPrivateDataset(this.#owner, this.#privateCid);
       this.#rows = this.#rows.map((row, i) => ({ ...row, ...rows[i] }));
       this.#decrypted = true;
     }
@@ -52,7 +68,7 @@ export class FilecoinDataset {
   async purchase() {
     if (!this.#purchased) {
       const factory = NFTFactory.getInstance();
-      await factory.purchase(this.#address, this.price);
+      await factory.purchase(this.#address, this.#price);
       this.#purchased = true;
     }
   }

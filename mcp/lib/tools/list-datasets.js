@@ -6,7 +6,7 @@ import { getDatasetFactory } from '../dataset/factory.js';
 export default (mcp) =>
   mcp.tool(
     'list_datasets',
-    'List all available datasets. Each dataset has private & public columns. Public columns can be used for querying the dataset and private columns will be included in the query results.',
+    'List all available datasets. Each dataset has private & public columns. Public columns can be used for querying the dataset and private columns will be included in the query results. Datasets price is denominated in USDFC (ERC20 token).',
     {},
     async () => {
       // Use DatasetFactory to list all datasets

@@ -1,5 +1,5 @@
 {
-  "address": "0x60f1658179dc70dE3bcfff042D33913a67C93c97",
+  "address": "0x63a10A0B1c22B47b0F6353AA1f5a305100bC2A09",
   "abi": [
     {
       "inputs": [],
@@ -9,6 +9,11 @@
     {
       "inputs": [],
       "name": "NFTFactory__EmptySymbol",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "NFTFactory__InsufficientAllowance",
       "type": "error"
     },
     {
@@ -169,6 +174,19 @@
           "internalType": "string",
           "name": "",
           "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "PAYMENT_TOKEN",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
         }
       ],
       "stateMutability": "view",
@@ -564,7 +582,7 @@
           "type": "uint256"
         }
       ],
-      "stateMutability": "payable",
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {

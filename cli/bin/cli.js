@@ -57,7 +57,7 @@ program
       {
         type: 'input',
         name: 'price',
-        message: 'Enter the price for the dataset (in FIL):',
+        message: 'Enter the price for the dataset (in USDFC):',
         validate: (input) => {
           try {
             const value = ethers.parseUnits(input, 18);
