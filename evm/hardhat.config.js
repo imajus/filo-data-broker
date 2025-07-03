@@ -13,8 +13,8 @@ module.exports = {
         settings: {
             optimizer: {
                 enabled: true,
-                runs: 1000,
-                details: { yul: false },
+                runs: 100,
+                details: { yul: true },
             },
             viaIR: true,
         },

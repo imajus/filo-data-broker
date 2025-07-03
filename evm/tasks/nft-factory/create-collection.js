@@ -1,7 +1,7 @@
 const { task } = require("hardhat/config")
 
 task("create-collection", "Create a new NFT collection")
-    .addParam("factory", "The NFTFactory contract address")
+    .addParam("factory", "The FDBRegistry contract address")
     .addParam("name", "The collection name")
     .addParam("symbol", "The collection symbol")
     .addParam("baseuri", "The base token URI")
@@ -10,11 +10,11 @@ task("create-collection", "Create a new NFT collection")
 
         console.log(`Creating NFT collection: ${name} (${symbol})`)
         console.log(`Base URI: ${baseuri}`)
-        console.log(`Using NFTFactory at: ${factory}`)
+        console.log(`Using FDBRegistry at: ${factory}`)
 
-        const nftFactory = await ethers.getContractAt("NFTFactory", factory)
+        const fdbRegistry = await ethers.getContractAt("FDBRegistry", factory)
 
-        const tx = await nftFactory.createCollection(name, symbol, baseuri)
+        const tx = await fdbRegistry.createCollection(name, symbol, baseuri)
         const receipt = await tx.wait()
 
         console.log(`Transaction hash: ${tx.hash}`)

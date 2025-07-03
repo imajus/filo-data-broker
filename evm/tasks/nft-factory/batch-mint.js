@@ -1,7 +1,7 @@
 const { task } = require("hardhat/config")
 
 task("batch-mint", "Batch mint NFTs to multiple recipients")
-    .addParam("factory", "The NFTFactory contract address")
+    .addParam("factory", "The FDBRegistry contract address")
     .addParam("collection", "The NFT collection contract address")
     .addParam("recipients", "Comma-separated list of recipient addresses")
     .setAction(async (taskArgs) => {
@@ -12,11 +12,11 @@ task("batch-mint", "Batch mint NFTs to multiple recipients")
         console.log(`Batch minting ${recipientList.length} NFTs`)
         console.log(`Collection: ${collection}`)
         console.log(`Recipients: ${recipientList.join(", ")}`)
-        console.log(`Using NFTFactory at: ${factory}`)
+        console.log(`Using FDBRegistry at: ${factory}`)
 
-        const nftFactory = await ethers.getContractAt("NFTFactory", factory)
+        const fdbRegistry = await ethers.getContractAt("FDBRegistry", factory)
 
-        const tx = await nftFactory.batchMintNFTs(collection, recipientList)
+        const tx = await fdbRegistry.batchMintNFTs(collection, recipientList)
         const receipt = await tx.wait()
 
         console.log(`Transaction hash: ${tx.hash}`)

@@ -13,7 +13,7 @@ alwaysApply: false
 ```bash
 # FWS Payments Integration
 PAYMENTS_CONTRACT_ADDRESS=0x...    # Deployed FWS Payments contract address
-PAYMENT_TOKEN_ADDRESS=0x...        # ERC20 token address (e.g., USDFC)
+USDFC_TOKEN_ADDRESS=0x...        # ERC20 token address (e.g., USDFC)
 
 # Network Configuration (in .env)
 PRIVATE_KEY=0x...                  # Deployer private key
