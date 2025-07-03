@@ -1,22 +1,22 @@
 const { task } = require("hardhat/config")
 
 task("collection-stats", "Get detailed statistics for a collection")
-    .addParam("factory", "The NFTFactory contract address")
+    .addParam("factory", "The FDBRegistry contract address")
     .addParam("collection", "The NFT collection contract address")
     .setAction(async (taskArgs) => {
         const { factory, collection } = taskArgs
 
         console.log(`Getting stats for collection: ${collection}`)
-        console.log(`Using NFTFactory at: ${factory}`)
+        console.log(`Using FDBRegistry at: ${factory}`)
 
-        const nftFactory = await ethers.getContractAt("NFTFactory", factory)
+        const fdbRegistry = await ethers.getContractAt("FDBRegistry", factory)
         const nft = await ethers.getContractAt("NFT", collection)
 
         // Get collection info from factory
-        const collectionInfo = await nftFactory.getCollectionInfo(collection)
+        const collectionInfo = await fdbRegistry.getCollectionInfo(collection)
 
         // Get stats from factory
-        const stats = await nftFactory.getCollectionStats(collection)
+        const stats = await fdbRegistry.getCollectionStats(collection)
 
         // Get additional info from NFT contract
         const currentTokenId = await nft.getCurrentTokenId()

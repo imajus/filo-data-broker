@@ -12,7 +12,7 @@ task("sync-contracts", "Syncs contract files from deployment artifacts").setActi
             "..",
             "deployments",
             networkName,
-            "NFTFactory.json"
+            "FDBRegistry.json"
         )
 
         try {
@@ -40,7 +40,7 @@ task("sync-contracts", "Syncs contract files from deployment artifacts").setActi
                     "cli",
                     "lib",
                     "contracts",
-                    "NFTFactory.json"
+                    "FDBRegistry.json"
                 ),
                 path.join(
                     __dirname,
@@ -50,7 +50,7 @@ task("sync-contracts", "Syncs contract files from deployment artifacts").setActi
                     "mcp",
                     "lib",
                     "contracts",
-                    "NFTFactory.json"
+                    "FDBRegistry.json"
                 ),
             ]
 
@@ -68,7 +68,7 @@ task("sync-contracts", "Syncs contract files from deployment artifacts").setActi
             }
 
             console.log(
-                `🎉 Successfully synced NFTFactory contract data from network: ${networkName}`
+                `🎉 Successfully synced FDBRegistry contract data from network: ${networkName}`
             )
             console.log(`📍 Contract address: ${contractData.address}`)
         } catch (error) {

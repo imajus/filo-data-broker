@@ -72,7 +72,7 @@ struct Rail {
 #### Environment Variables Required:
 ```javascript
 const paymentsContract = process.env.PAYMENTS_CONTRACT_ADDRESS
-const paymentToken = process.env.PAYMENT_TOKEN_ADDRESS
+const paymentToken = process.env.USDFC_TOKEN_ADDRESS
 ```
 
 #### Constructor Arguments:

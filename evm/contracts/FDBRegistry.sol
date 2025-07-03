@@ -5,15 +5,15 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./NFT.sol";
 import "./fws/payments/Payments.sol";
 
-error NFTFactory__EmptyName();
-error NFTFactory__EmptySymbol();
-error NFTFactory__NotCollectionOwner();
-error NFTFactory__InsufficientPayment();
-error NFTFactory__InsufficientBalance();
-error NFTFactory__TransferFailed();
-error NFTFactory__InsufficientAllowance();
+error FDBRegistry__EmptyName();
+error FDBRegistry__EmptySymbol();
+error FDBRegistry__NotCollectionOwner();
+error FDBRegistry__InsufficientPayment();
+error FDBRegistry__InsufficientBalance();
+error FDBRegistry__TransferFailed();
+error FDBRegistry__InsufficientAllowance();
 
-contract NFTFactory {
+contract FDBRegistry {
     string public constant BASE_TOKEN_URI =
         "https://pub-f1180ac09e05439c9475cf61f4ce0099.r2.dev/metadata/";
 
@@ -73,9 +73,9 @@ contract NFTFactory {
     constructor(address _paymentsContract, address _paymentToken) {
         require(
             _paymentsContract != address(0),
-            "NFTFactory: Payments contract address cannot be zero"
+            "FDBRegistry: Payments contract address cannot be zero"
         );
-        require(_paymentToken != address(0), "NFTFactory: Payment token address cannot be zero");
+        require(_paymentToken != address(0), "FDBRegistry: Payment token address cannot be zero");
 
         paymentToken = IERC20(_paymentToken);
         paymentsContract = Payments(_paymentsContract);
@@ -91,10 +91,10 @@ contract NFTFactory {
         uint256 price
     ) external returns (address) {
         if (bytes(name).length == 0) {
-            revert NFTFactory__EmptyName();
+            revert FDBRegistry__EmptyName();
         }
         if (bytes(symbol).length == 0) {
-            revert NFTFactory__EmptySymbol();
+            revert FDBRegistry__EmptySymbol();
         }
 
         NFT newNFT = new NFT(name, symbol, BASE_TOKEN_URI);
@@ -137,23 +137,23 @@ contract NFTFactory {
 
     function purchase(address nftContract) external returns (uint256) {
         Collection storage collection = s_collectionInfo[nftContract];
-        require(collection.nftContract != address(0), "NFTFactory: Collection does not exist");
-        require(collection.isActive, "NFTFactory: Collection is not active");
+        require(collection.nftContract != address(0), "FDBRegistry: Collection does not exist");
+        require(collection.isActive, "FDBRegistry: Collection is not active");
 
         // Check if buyer has sufficient token balance
         if (paymentToken.balanceOf(msg.sender) < collection.price) {
-            revert NFTFactory__InsufficientPayment();
+            revert FDBRegistry__InsufficientPayment();
         }
 
         // Check if buyer has given sufficient allowance
         if (paymentToken.allowance(msg.sender, address(this)) < collection.price) {
-            revert NFTFactory__InsufficientAllowance();
+            revert FDBRegistry__InsufficientAllowance();
         }
 
         // Transfer tokens from buyer to contract
         bool success = paymentToken.transferFrom(msg.sender, address(this), collection.price);
         if (!success) {
-            revert NFTFactory__TransferFailed();
+            revert FDBRegistry__TransferFailed();
         }
 
         NFT nft = NFT(nftContract);
@@ -182,7 +182,7 @@ contract NFTFactory {
     function withdraw() external {
         uint256 balance = s_balances[msg.sender];
         if (balance == 0) {
-            revert NFTFactory__InsufficientBalance();
+            revert FDBRegistry__InsufficientBalance();
         }
 
         s_balances[msg.sender] = 0;
@@ -190,7 +190,7 @@ contract NFTFactory {
         bool success = paymentToken.transfer(msg.sender, balance);
         if (!success) {
             s_balances[msg.sender] = balance;
-            revert NFTFactory__TransferFailed();
+            revert FDBRegistry__TransferFailed();
         }
 
         emit BalanceWithdrawn(msg.sender, balance);
@@ -198,7 +198,7 @@ contract NFTFactory {
 
     function hasNFT(address nftContract) external view returns (bool) {
         Collection storage collection = s_collectionInfo[nftContract];
-        require(collection.nftContract != address(0), "NFTFactory: Collection does not exist");
+        require(collection.nftContract != address(0), "FDBRegistry: Collection does not exist");
 
         NFT nft = NFT(nftContract);
         return nft.balanceOf(msg.sender) > 0;
@@ -207,9 +207,9 @@ contract NFTFactory {
     function mintNFT(address nftContract, address to) external returns (uint256) {
         Collection storage collection = s_collectionInfo[nftContract];
         if (collection.owner != msg.sender) {
-            revert NFTFactory__NotCollectionOwner();
+            revert FDBRegistry__NotCollectionOwner();
         }
-        require(collection.isActive, "NFTFactory: Collection is not active");
+        require(collection.isActive, "FDBRegistry: Collection is not active");
 
         NFT nft = NFT(nftContract);
         uint256 tokenId = nft.mint(to);
@@ -223,11 +223,11 @@ contract NFTFactory {
     ) external returns (uint256[] memory) {
         Collection storage collection = s_collectionInfo[nftContract];
         if (collection.owner != msg.sender) {
-            revert NFTFactory__NotCollectionOwner();
+            revert FDBRegistry__NotCollectionOwner();
         }
-        require(collection.isActive, "NFTFactory: Collection is not active");
-        require(recipients.length > 0, "NFTFactory: No recipients provided");
-        require(recipients.length <= 100, "NFTFactory: Too many recipients");
+        require(collection.isActive, "FDBRegistry: Collection is not active");
+        require(recipients.length > 0, "FDBRegistry: No recipients provided");
+        require(recipients.length <= 100, "FDBRegistry: Too many recipients");
 
         NFT nft = NFT(nftContract);
         uint256[] memory tokenIds = new uint256[](recipients.length);
@@ -242,7 +242,7 @@ contract NFTFactory {
     function toggleCollectionStatus(address nftContract) external {
         Collection storage collection = s_collectionInfo[nftContract];
         if (collection.owner != msg.sender) {
-            revert NFTFactory__NotCollectionOwner();
+            revert FDBRegistry__NotCollectionOwner();
         }
 
         collection.isActive = !collection.isActive;
@@ -302,7 +302,7 @@ contract NFTFactory {
     ) external {
         Collection storage collection = s_collectionInfo[nftContract];
         if (collection.owner != msg.sender) {
-            revert NFTFactory__NotCollectionOwner();
+            revert FDBRegistry__NotCollectionOwner();
         }
         collection.publicCid = publicCid;
         collection.privateCid = privateCid;

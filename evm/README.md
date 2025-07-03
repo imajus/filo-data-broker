@@ -26,7 +26,7 @@ ETHERSCAN_API_KEY=your_api_key                     # For contract verification
 
 # FWS Payments Integration (Required for deployment)
 PAYMENTS_CONTRACT_ADDRESS=0x...                    # Deployed FWS Payments contract
-PAYMENT_TOKEN_ADDRESS=0x...                        # ERC20 token address (USDFC)
+USDFC_TOKEN_ADDRESS=0x...                        # ERC20 token address (USDFC)
 ```
 
 **Security Warning**: Never commit `.env` files containing sensitive information like private keys to public repositories!
