@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import "./NFT.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "./NFT.sol";
+import "./fws/payments/Payments.sol";
 
 error NFTFactory__EmptyName();
 error NFTFactory__EmptySymbol();
@@ -17,7 +18,13 @@ contract NFTFactory {
         "https://pub-f1180ac09e05439c9475cf61f4ce0099.r2.dev/metadata/";
 
     // ERC20 token used for payments
-    address public constant PAYMENT_TOKEN = 0xb3042734b608a1B16e9e86B374A3f3e389B4cDf0;
+    IERC20 private immutable paymentToken;
+
+    // Payments contract reference
+    Payments private immutable paymentsContract;
+
+    // Contract deployer address for fee collection
+    address private immutable deployer;
 
     struct Collection {
         address nftContract;
@@ -62,6 +69,18 @@ contract NFTFactory {
     );
 
     event BalanceWithdrawn(address indexed owner, uint256 amount);
+
+    constructor(address _paymentsContract, address _paymentToken) {
+        require(
+            _paymentsContract != address(0),
+            "NFTFactory: Payments contract address cannot be zero"
+        );
+        require(_paymentToken != address(0), "NFTFactory: Payment token address cannot be zero");
+
+        paymentToken = IERC20(_paymentToken);
+        paymentsContract = Payments(_paymentsContract);
+        deployer = msg.sender;
+    }
 
     function createCollection(
         string memory name,
@@ -121,8 +140,6 @@ contract NFTFactory {
         require(collection.nftContract != address(0), "NFTFactory: Collection does not exist");
         require(collection.isActive, "NFTFactory: Collection is not active");
 
-        IERC20 paymentToken = IERC20(PAYMENT_TOKEN);
-
         // Check if buyer has sufficient token balance
         if (paymentToken.balanceOf(msg.sender) < collection.price) {
             revert NFTFactory__InsufficientPayment();
@@ -142,7 +159,20 @@ contract NFTFactory {
         NFT nft = NFT(nftContract);
         uint256 tokenId = nft.mint(msg.sender);
 
-        s_balances[collection.owner] += collection.price;
+        // Split payment: 10% to deployer, 10% to payments contract, 80% to collection owner
+        uint256 deployerFee = (collection.price * 10) / 100;
+        uint256 paymentsFee = (collection.price * 10) / 100;
+        uint256 ownerAmount = collection.price - deployerFee - paymentsFee;
+
+        // Add deployer fee to deployer's balance
+        s_balances[deployer] += deployerFee;
+
+        // Approve and deposit the payments fee to the payments contract
+        paymentToken.approve(address(paymentsContract), paymentsFee);
+        paymentsContract.deposit(address(paymentToken), collection.owner, paymentsFee);
+
+        // Add remaining amount to collection owner's balance
+        s_balances[collection.owner] += ownerAmount;
 
         emit NFTPurchased(nftContract, msg.sender, tokenId, collection.price);
 
@@ -157,7 +187,6 @@ contract NFTFactory {
 
         s_balances[msg.sender] = 0;
 
-        IERC20 paymentToken = IERC20(PAYMENT_TOKEN);
         bool success = paymentToken.transfer(msg.sender, balance);
         if (!success) {
             s_balances[msg.sender] = balance;
@@ -286,5 +315,9 @@ contract NFTFactory {
 
     function getBalance(address user) external view returns (uint256) {
         return s_balances[user];
+    }
+
+    function getPaymentToken() external view returns (address) {
+        return address(paymentToken);
     }
 }

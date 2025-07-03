@@ -1,6 +1,22 @@
 {
-  "address": "0x63a10A0B1c22B47b0F6353AA1f5a305100bC2A09",
+  "address": "0x090fcE8ceB8ea0d75c808FB7398A02BCefb32246",
   "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_paymentsContract",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_paymentToken",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
     {
       "inputs": [],
       "name": "NFTFactory__EmptyName",
@@ -174,19 +190,6 @@
           "internalType": "string",
           "name": "",
           "type": "string"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "PAYMENT_TOKEN",
-      "outputs": [
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
         }
       ],
       "stateMutability": "view",
@@ -381,6 +384,19 @@
           "internalType": "struct NFTFactory.Collection",
           "name": "",
           "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getPaymentToken",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
         }
       ],
       "stateMutability": "view",

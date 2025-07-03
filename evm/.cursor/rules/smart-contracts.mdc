@@ -1,6 +1,6 @@
 ---
 description: 
-globs: 
+globs: contracts/**/*.sol
 alwaysApply: false
 ---
 # Smart Contract Architecture & Patterns
@@ -8,13 +8,16 @@ alwaysApply: false
 ## Contract Overview
 
 ### NFTFactory Contract Pattern
-The **[NFTFactory.sol](mdc:contracts/NFTFactory.sol)** implements a factory pattern for creating NFT collections:
+The **[NFTFactory.sol](mdc:contracts/NFTFactory.sol)** implements a factory pattern for creating NFT collections with integrated payments:
 
 #### Key Features:
 - **Collection Creation**: `createCollection()` deploys new NFT contract instances
+- **Payment Processing**: Integrated ERC20 token payments with fee splitting
+- **FWS Integration**: Direct integration with [FWS Payments](mdc:contracts/fws/payments/Payments.sol)
 - **Access Control**: Only collection owners can mint NFTs in their collections
 - **Batch Operations**: `batchMintNFTs()` for efficient bulk minting
 - **Collection Management**: Toggle active/inactive status, query statistics
+- **Balance Management**: Internal balance tracking and withdrawal system
 - **Event Logging**: Comprehensive events for indexing and tracking
 
 #### Data Structures:
@@ -24,11 +27,22 @@ struct Collection {
     address owner;
     string name;
     string symbol;
-    string baseTokenURI;
+    string description;
+    string privateColumns;
+    string publicColumns;
+    string publicCid;
+    string privateCid;
+    uint256 price;
     uint256 createdAt;
     bool isActive;
 }
 ```
+
+#### Payment Architecture:
+- **Payment Token**: Immutable ERC20 token for all transactions
+- **Payments Contract**: Immutable FWS Payments contract reference
+- **Fee Structure**: 10% deployer, 10% FWS, 80% collection owner
+- **Balance Tracking**: Internal balances with withdrawal mechanism
 
 ### NFT Contract Implementation
 The **[NFT.sol](mdc:contracts/NFT.sol)** is a custom ERC-721 implementation:
@@ -45,6 +59,24 @@ The **[NFT.sol](mdc:contracts/NFT.sol)** is a custom ERC-721 implementation:
 - **State Consistency**: Proper balance and ownership tracking
 - **Access Control**: `onlyOwner` modifier for critical functions
 - **Safe Transfers**: Implements safe transfer checks
+
+### Payment Error Handling
+**[NFTFactory.sol](mdc:contracts/NFTFactory.sol)** includes comprehensive payment error handling:
+
+#### Payment Errors:
+```solidity
+error NFTFactory__InsufficientPayment();    // Buyer lacks token balance
+error NFTFactory__InsufficientAllowance();  // Insufficient ERC20 allowance
+error NFTFactory__TransferFailed();         // Token transfer failed
+error NFTFactory__InsufficientBalance();    // Withdrawal with zero balance
+```
+
+#### Purchase Flow Security:
+1. **Balance Validation**: Check buyer has sufficient tokens
+2. **Allowance Validation**: Verify ERC20 approval amount
+3. **Transfer Execution**: Safe token transfer with failure handling
+4. **State Updates**: Update balances only after successful transfer
+5. **Recovery**: Restore state on transfer failure
 
 ## Development Conventions
 
@@ -73,8 +105,17 @@ The **[NFT.sol](mdc:contracts/NFT.sol)** is a custom ERC-721 implementation:
 3. Factory delegates minting permissions
 4. Users interact through Factory for most operations
 
-### Metadata Strategy:
-- **Base URI**: Set at collection creation
-- **Token URI**: `{baseURI}{tokenId}.json` format
-- **IPFS Integration**: Designed for IPFS metadata storage
+### Metadata & Data Strategy:
+- **Base URI**: Set at collection creation (`BASE_TOKEN_URI` constant)
+- **Token URI**: `{baseURI}{tokenId}.json` format for NFT metadata
+- **Public/Private Data**: Separate CIDs for public and private dataset content
+- **IPFS Integration**: Designed for IPFS metadata storage via CIDs
 - **CAR Files**: Use [go-generate-car tool](mdc:tools/go-generate-car) for Filecoin storage
+- **Column Schema**: Separate tracking of public vs private data columns
+- **Data Activation**: Collections become active when CIDs are set via `setCollectionCid()`
+
+### Dataset Marketplace Features:
+- **Data Collections**: NFT collections represent datasets with public/private data
+- **Access Control**: NFT ownership grants access to private dataset portions
+- **Pricing**: Collection owners set purchase price for dataset access
+- **Revenue Sharing**: Automatic fee distribution to deployer, FWS, and data owner

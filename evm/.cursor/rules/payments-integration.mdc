@@ -1,0 +1,166 @@
+---
+description: 
+globs: contracts/**/*.sol
+alwaysApply: false
+---
+# FWS Payments Integration & Fee System
+
+## Payment System Architecture
+
+### Core Payment Flow
+The NFT marketplace now integrates with **[FWS Payments](mdc:contracts/fws/payments/Payments.sol)** for advanced payment processing:
+
+#### Payment Components:
+- **Payment Token**: ERC20 token (USDFC) for all transactions
+- **NFTFactory Payment Split**: 10% deployer fee, 10% to FWS Payments, 80% to collection owner
+- **FWS Integration**: Advanced payment rails and settlement system
+
+### Updated NFTFactory Payment Logic
+**[NFTFactory.sol](mdc:contracts/NFTFactory.sol)** now handles sophisticated payment processing:
+
+```solidity
+// Payment split in purchase() function (lines 147-173)
+uint256 deployerFee = (collection.price * 10) / 100;
+uint256 paymentsFee = (collection.price * 10) / 100;
+uint256 ownerAmount = collection.price - deployerFee - paymentsFee;
+
+// Deployer fee goes to contract balance
+s_balances[deployer] += deployerFee;
+
+// FWS payment through deposit()
+paymentToken.approve(address(paymentsContract), paymentsFee);
+paymentsContract.deposit(address(paymentToken), collection.owner, paymentsFee);
+
+// Collection owner gets majority
+s_balances[collection.owner] += ownerAmount;
+```
+
+#### Key Payment Features:
+- **ERC20 Token Integration**: Uses IERC20 interface for payment token
+- **Allowance Checking**: Validates sufficient allowance before transfer
+- **Balance Management**: Internal balance tracking for withdrawals
+- **Fee Distribution**: Automatic split across three recipients
+- **FWS Deposits**: Direct integration with FWS payment rails
+
+### FWS Payments Contract
+**[contracts/fws/payments/Payments.sol](mdc:contracts/fws/payments/Payments.sol)** provides enterprise-grade payment infrastructure:
+
+#### Core Features:
+- **Payment Rails**: Streaming payment channels between parties
+- **Lockup Mechanisms**: Time-based fund locking for service guarantees  
+- **Operator Commissions**: Service fee collection with basis point precision
+- **Validation System**: External validator integration for payment verification
+- **Settlement Engine**: Epoch-based payment settlement with rate changes
+
+#### Key Structures:
+```solidity
+struct Rail {
+    address token;           // Payment token address
+    address from;           // Payer address  
+    address to;             // Payee address
+    address operator;       // Service operator
+    address validator;      // Payment validator
+    uint256 paymentRate;    // Rate per epoch
+    uint256 lockupPeriod;   // Lockup duration
+    uint256 commissionRateBps; // Operator fee in basis points
+}
+```
+
+### Deployment Configuration
+**[deploy/deploy.js](mdc:deploy/deploy.js)** updated for payments integration:
+
+#### Environment Variables Required:
+```javascript
+const paymentsContract = process.env.PAYMENTS_CONTRACT_ADDRESS
+const paymentToken = process.env.PAYMENT_TOKEN_ADDRESS
+```
+
+#### Constructor Arguments:
+- **Payments Contract**: Address of deployed FWS Payments contract
+- **Payment Token**: ERC20 token address (typically USDFC)
+
+#### Post-Deployment:
+- **Contract Verification**: Automatic Etherscan verification
+- **Contract Sync**: Updates ABI files for CLI/MCP integration
+
+### JavaScript Integration
+**[mcp/lib/contracts/NFTFactory.js](mdc:mcp/lib/contracts/NFTFactory.js)** provides client-side payment handling:
+
+#### Payment Flow:
+```javascript
+async purchase(address, amount) {
+    // Check if user already owns NFT
+    const hasNFT = await this.contract.hasNFT(address);
+    if (!hasNFT) {
+        // Get payment token and check balance
+        const token = await this.getPaymentToken();
+        const balance = await token.balance();
+        
+        // Approve and purchase
+        await token.approve(contractAddress, amount);
+        const tx = await this.contract.purchase(address);
+        await tx.wait();
+    }
+}
+```
+
+#### ERC20 Token Integration:
+- **Balance Checking**: Validates sufficient USDFC balance
+- **Approval Management**: Handles ERC20 allowance for NFTFactory
+- **Error Handling**: Comprehensive balance and allowance validation
+
+## Payment System Benefits
+
+### For Collection Owners:
+- **Automatic Revenue**: 80% of purchase price deposited to FWS payment rails
+- **Advanced Features**: Access to streaming payments, lockups, and settlement
+- **Fee Transparency**: Clear 20% total fee structure (10% deployer + 10% FWS)
+
+### For Platform:
+- **Sustainable Revenue**: 10% deployer fee on all purchases
+- **FWS Partnership**: 10% fee supports advanced payment infrastructure
+- **Scalable Architecture**: Enterprise-grade payment rails for future features
+
+### For Buyers:
+- **ERC20 Convenience**: Standard token interface for payments
+- **Transparent Pricing**: Clear fee structure visible on-chain
+- **Instant Access**: Immediate NFT minting upon successful payment
+
+## Integration Patterns
+
+### Error Handling:
+```solidity
+error NFTFactory__InsufficientPayment();
+error NFTFactory__InsufficientAllowance(); 
+error NFTFactory__TransferFailed();
+```
+
+### Event Emission:
+```solidity
+event NFTPurchased(
+    address indexed nftContract,
+    address indexed buyer, 
+    uint256 indexed tokenId,
+    uint256 price
+);
+```
+
+### Security Considerations:
+- **Reentrancy Protection**: FWS Payments uses ReentrancyGuard
+- **Access Control**: Owner-only functions with proper validation
+- **Balance Recovery**: Failed transfers restore previous state
+- **Allowance Validation**: Prevents insufficient allowance issues
+
+## Development Notes
+
+### Testing Payment Flows:
+1. Deploy with test payment token and FWS Payments contract
+2. Fund test accounts with payment tokens
+3. Test approval → purchase → withdrawal cycle
+4. Verify fee distribution across all recipients
+
+### Monitoring & Analytics:
+- **Purchase Events**: Track all NFT purchases and pricing
+- **Balance Changes**: Monitor deployer and owner balance accrual  
+- **FWS Deposits**: Track payments flowing into FWS rails
+- **Failed Transactions**: Monitor approval and balance failures
