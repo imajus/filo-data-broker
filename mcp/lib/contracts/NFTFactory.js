@@ -26,7 +26,7 @@ export class NFTFactory {
    */
   async getPaymentToken() {
     if (!this.#token) {
-      const address = await this.contract.PAYMENT_TOKEN();
+      const address = await this.contract.getPaymentToken();
       this.#token = new ERC20Token(address);
     }
     return this.#token;

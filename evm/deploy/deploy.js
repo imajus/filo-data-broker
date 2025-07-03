@@ -7,10 +7,26 @@ const wallet = new ethers.Wallet(private_key, ethers.provider)
 module.exports = async ({ deployments, network, run }) => {
     const { deploy } = deployments
     console.log("Wallet Ethereum Address:", wallet.address)
+
+    // Get constructor arguments from environment variables
+    const paymentsContract = process.env.PAYMENTS_CONTRACT_ADDRESS
+    const paymentToken = process.env.PAYMENT_TOKEN_ADDRESS
+
+    if (!paymentsContract) {
+        throw new Error("PAYMENTS_CONTRACT_ADDRESS environment variable is required")
+    }
+    if (!paymentToken) {
+        throw new Error("PAYMENT_TOKEN_ADDRESS environment variable is required")
+    }
+
+    console.log("Payments Contract Address:", paymentsContract)
+    console.log("Payment Token Address:", paymentToken)
+
     // Deploy NFTFactory
+    const constructorArgs = [paymentsContract, paymentToken]
     const nftFactory = await deploy("NFTFactory", {
         from: wallet.address,
-        args: [],
+        args: constructorArgs,
         log: true,
     })
     console.log(`NFTFactory deployed to: ${nftFactory.address}`)
@@ -21,7 +37,7 @@ module.exports = async ({ deployments, network, run }) => {
         console.log("Verifying NFTFactory contract on block explorer...")
         await run("verify:verify", {
             address: nftFactory.address,
-            constructorArguments: [],
+            constructorArguments: constructorArgs,
             force: true,
         })
         console.log("NFTFactory contract verified successfully!")

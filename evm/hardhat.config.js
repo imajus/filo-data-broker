@@ -16,6 +16,7 @@ module.exports = {
                 runs: 1000,
                 details: { yul: false },
             },
+            viaIR: true,
         },
     },
     defaultNetwork: "calibrationnet",

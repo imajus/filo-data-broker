@@ -1,0 +1,201 @@
+---
+description: Describes environment variables and deployment process.
+globs: 
+alwaysApply: false
+---
+# Deployment Configuration & Environment Setup
+
+## Environment Variables
+
+### Required for Deployment
+**[deploy/deploy.js](mdc:deploy/deploy.js)** requires these environment variables:
+
+```bash
+# FWS Payments Integration
+PAYMENTS_CONTRACT_ADDRESS=0x...    # Deployed FWS Payments contract address
+PAYMENT_TOKEN_ADDRESS=0x...        # ERC20 token address (e.g., USDFC)
+
+# Network Configuration (in .env)
+PRIVATE_KEY=0x...                  # Deployer private key
+RPC_URL=https://...               # Network RPC endpoint
+ETHERSCAN_API_KEY=...             # For contract verification
+```
+
+### Environment Setup:
+1. **Copy Environment Template**: `cp .env.example .env`
+2. **Configure Variables**: Add required addresses and keys
+3. **Network Selection**: Ensure correct network in [hardhat.config.js](mdc:hardhat.config.js)
+4. **Token Deployment**: Deploy payment token if needed before NFTFactory
+
+## Deployment Process
+
+### Automated Deployment Flow
+**[deploy/deploy.js](mdc:deploy/deploy.js)** handles complete deployment automation:
+
+#### Deployment Steps:
+1. **Environment Validation**: Checks for required contract addresses
+2. **Constructor Arguments**: Prepares payments contract and token addresses
+3. **Contract Deployment**: Deploys NFTFactory with proper arguments
+4. **Verification Wait**: 45-second delay for block confirmation
+5. **Contract Verification**: Automatic Etherscan verification
+6. **Contract Sync**: Updates ABI files for CLI/MCP integration
+
+#### Console Output:
+```bash
+Wallet Ethereum Address: 0x...
+Payments Contract Address: 0x...
+Payment Token Address: 0x...
+NFTFactory deployed to: 0x...
+Waiting for 45 seconds...
+Verifying NFTFactory contract on block explorer...
+NFTFactory contract verified successfully!
+Running post-deployment script...
+```
+
+### Post-Deployment Tasks
+The deployment script automatically runs the **sync-contracts** task:
+
+#### Contract Synchronization:
+- **ABI Extraction**: Extracts contract ABI from artifacts
+- **Address Update**: Updates contract addresses in JSON files
+- **CLI Integration**: Updates **[../cli/lib/contracts/NFTFactory.json](mdc:../cli/lib/contracts/NFTFactory.json)**
+- **MCP Integration**: Updates **[../mcp/lib/contracts/NFTFactory.json](mdc:../mcp/lib/contracts/NFTFactory.json)**
+
+#### File Updates:
+```bash
+# Files updated by sync-contracts task
+../cli/lib/contracts/NFTFactory.json    # CLI contract interface
+../mcp/lib/contracts/NFTFactory.js      # MCP contract wrapper  
+../mcp/lib/contracts/NFTFactory.json    # MCP contract ABI
+```
+
+## Network Configuration
+
+### Hardhat Networks
+**[hardhat.config.js](mdc:hardhat.config.js)** supports multiple networks:
+
+#### Network Patterns:
+- **Local**: Hardhat node for development
+- **Testnet**: Calibration, Sepolia for testing
+- **Mainnet**: Filecoin mainnet for production
+
+#### Gas Optimization:
+```javascript
+solidity: {
+    version: "0.8.23",
+    settings: {
+        optimizer: {
+            enabled: true,
+            runs: 1000
+        }
+    }
+}
+```
+
+### Contract Verification
+Automatic verification supports:
+- **Constructor Arguments**: Automatically passed from deployment
+- **Network Detection**: Works across different networks
+- **Error Handling**: Graceful handling of already-verified contracts
+- **Force Verification**: Uses `force: true` to handle edge cases
+
+## Development Workflow
+
+### Local Development:
+```bash
+# Start local node
+npx hardhat node
+
+# Deploy to local network (separate terminal)
+npx hardhat deploy --network localhost
+
+# Verify deployment
+npx hardhat run scripts/verify-deployment.js --network localhost
+```
+
+### Testnet Deployment:
+```bash
+# Deploy to testnet
+npx hardhat deploy --network calibration
+
+# Verify on explorer (automatic)
+# Contract sync runs automatically
+```
+
+### Production Deployment:
+```bash
+# Final deployment to mainnet
+npx hardhat deploy --network filecoin
+
+# Monitor deployment
+npx hardhat run scripts/post-deployment-checks.js --network filecoin
+```
+
+## Integration Testing
+
+### Payment System Testing:
+1. **Deploy Payment Token**: Deploy ERC20 test token
+2. **Deploy FWS Payments**: Deploy payments contract
+3. **Deploy NFTFactory**: Deploy with payment integration
+4. **Fund Test Accounts**: Distribute tokens to test users
+5. **Test Purchase Flow**: End-to-end purchase testing
+
+### Contract Interaction:
+```bash
+# Create test collection
+npx hardhat run tasks/nft-factory/create-collection.js --network testnet
+
+# Test payment flow
+npx hardhat run tasks/nft-factory/test-purchase.js --network testnet
+
+# Verify fee distribution  
+npx hardhat run tasks/nft-factory/check-balances.js --network testnet
+```
+
+## Troubleshooting
+
+### Common Issues:
+
+#### Missing Environment Variables:
+```bash
+Error: PAYMENTS_CONTRACT_ADDRESS environment variable is required
+```
+**Solution**: Ensure all required env vars are set in `.env`
+
+#### Verification Failures:
+```bash
+Error verifying NFTFactory contract: Contract source code already verified
+```
+**Solution**: Normal behavior, deployment continues successfully
+
+#### Gas Estimation Errors:
+```bash
+Error: cannot estimate gas; transaction may fail
+```
+**Solution**: Check payment token balances and contract state
+
+#### Network Connection Issues:
+```bash
+Error: network does not support ENS
+```
+**Solution**: Verify RPC URL and network configuration
+
+### Debugging Deployment:
+- **Check Gas Limits**: Ensure sufficient gas for deployment
+- **Verify Balances**: Deployer must have native token for gas
+- **Network Status**: Confirm network is operational
+- **Contract Dependencies**: Ensure payment contracts are deployed first
+
+## Security Considerations
+
+### Deployment Security:
+- **Private Key Management**: Use hardware wallets for mainnet
+- **Environment Isolation**: Separate .env files per network
+- **Address Verification**: Double-check payment contract addresses
+- **Multi-Signature**: Consider multi-sig for contract ownership
+
+### Post-Deployment:
+- **Ownership Transfer**: Transfer ownership from deployer if needed
+- **Emergency Procedures**: Document emergency response procedures
+- **Monitoring Setup**: Implement contract monitoring and alerting
+- **Backup Procedures**: Backup deployment artifacts and configurations
