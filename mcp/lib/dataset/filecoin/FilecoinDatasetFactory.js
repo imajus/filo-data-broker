@@ -16,7 +16,7 @@ export class FilecoinDatasetFactory {
       description: ds.description,
       publicColumns: ds.publicColumns,
       privateColumns: ds.privateColumns,
-      price: Number(ethers.formatUnits(ds.price, 18)),
+      price: ethers.formatUnits(ds.price, 18),
     }));
   }
 }

@@ -7,6 +7,15 @@ import { mcp } from '../server.js';
 // Load environment variables
 dotenv.config({ quiet: true });
 
+function suppressConsole() {
+  const noop = () => {};
+  console.log = noop;
+  console.error = noop;
+  console.warn = noop;
+  console.info = noop;
+  console.debug = noop;
+}
+
 // Start the server
 async function main() {
   try {
@@ -19,6 +28,7 @@ async function main() {
       level: 'info',
       data: `FiloDataBroker MCP server started successfully (${process.env.ETHEREUM_PRIVATE_KEY})`,
     });
+    suppressConsole();
   } catch (err) {
     if (mcp.isConnected) {
       await mcp.server.sendLoggingMessage({

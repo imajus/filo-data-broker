@@ -23,7 +23,6 @@ export class NFT {
    * @param {string[]} privateColumns - The private columns of the collection
    * @param {number} proofSetId - The proof set ID that holds the data
    * @param {number} price - The price of the collection in USDFC
-   * @param {number} size - The size of the collection in bytes
    * @returns {Promise<TransactionResponse>} - The transaction response
    */
   async createCollection(
@@ -32,8 +31,7 @@ export class NFT {
     publicColumns,
     privateColumns,
     proofSetId,
-    price,
-    size
+    price
   ) {
     const tx = await this.factory.createCollection(
       name,
@@ -42,8 +40,7 @@ export class NFT {
       privateColumns.join(','),
       publicColumns.join(','),
       proofSetId,
-      ethers.parseEther(price),
-      size
+      ethers.parseEther(price)
     );
     const receipt = await tx.wait();
     const event = receipt.logs.find((e) => e.eventName === 'CollectionCreated');

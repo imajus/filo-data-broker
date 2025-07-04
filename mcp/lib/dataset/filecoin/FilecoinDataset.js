@@ -40,7 +40,7 @@ export class FilecoinDataset {
   }
 
   get price() {
-    return Number(ethers.formatUnits(this.#price.toString(), 18));
+    return ethers.formatUnits(this.#price.toString(), 18);
   }
 
   async #initialize() {

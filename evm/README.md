@@ -1,15 +1,17 @@
 # Filecoin Data Broker (FDB) - FEVM Data Marketplace
 
-This project implements a comprehensive data marketplace on Filecoin EVM (FEVM) where dataset collections are represented as NFTs with public/private data access. The system integrates with FWS Payments for enterprise payment processing, PDP verification for data integrity, and provides automated revenue distribution.
+This project implements a comprehensive data marketplace on Filecoin EVM (FEVM) where dataset collections are represented as NFTs with public/private data access. The system integrates with FWS Payments for enterprise payment processing, PDP verification for data integrity, and provides automated revenue distribution with dynamic pricing and guaranteed storage availability.
 
 ## Project Overview
 
 The Filecoin Data Broker combines multiple cutting-edge technologies:
-- **FDBRegistry**: Main data marketplace registry with payment integration
-- **PandoraService**: Enterprise FWS payment rails with PDP verification
-- **PDP Verification**: Cryptographic proof system ensuring data integrity
+- **FDBRegistry**: Main data marketplace registry with enhanced payment integration and reserve cost system
+- **PandoraService**: Enterprise FWS payment rails with PDP verification and service provider registry
+- **PDP Verification**: Cryptographic proof system ensuring data integrity with automated arbitration
 - **NFT Access Control**: Dataset access tokens for private data portions
-- **Automated Payments**: Smart fee distribution with lockup mechanisms
+- **Dynamic Pricing**: Service-tier-based pricing with CDN add-ons (2-3 USDFC/TiB/month)
+- **Reserve Cost System**: 7-day guaranteed storage availability with lockup extensions
+- **Service Provider Registry**: Multi-step approval system for quality storage providers
 
 ## Setup & Installation
 
@@ -54,14 +56,17 @@ Go to the [Calibrationnet testnet faucet](https://faucet.calibration.fildev.netw
 
 #### 1. FDBRegistry.sol
 
-The main data marketplace registry that manages dataset collections with integrated payment processing:
+The main data marketplace registry that manages dataset collections with enhanced payment processing:
 
 - **Collection Management**: Create and configure dataset collections with metadata
-- **Payment Processing**: USDFC token payments with automatic fee distribution (10%/10%/80%)
-- **PandoraService Integration**: Direct integration with FWS payment infrastructure
+- **Enhanced Payment Processing**: USDFC token payments with reserve cost system and automatic fee distribution
+- **Reserve Cost System**: 7-day guaranteed storage availability with dynamic cost calculation
+- **Payment Distribution**: 10% deployer fee, 80% to data owner (including reserve cost)
+- **PandoraService Integration**: Direct integration with FWS payment infrastructure and lockup extensions
 - **Access Control**: NFT ownership grants access to private dataset portions
 - **PDP Integration**: Links collections to proof sets for data verification
 - **Balance Management**: Internal balance tracking with withdrawal functionality
+- **Dynamic Pricing**: Collection price + reserve cost = total effective price
 
 #### 2. NFT.sol
 
@@ -74,13 +79,17 @@ ERC-721 compliant dataset access tokens:
 
 #### 3. PandoraService.sol
 
-Enterprise FWS payment infrastructure with PDP verification:
+Enterprise FWS payment infrastructure with enhanced PDP verification and service provider management:
 
-- **Payment Rails**: Streaming payment channels for storage providers
-- **PDP Integration**: Cryptographic proof verification for data integrity
-- **Service Provider Registry**: Manages approved storage providers
-- **Commission Management**: Dynamic rates (5% basic, 40% CDN service)
-- **Arbitration System**: Automated dispute resolution for failed proofs
+- **Dynamic Payment Rails**: Streaming payment channels with service-tier-based pricing
+- **PDP Integration**: Cryptographic proof verification for data integrity with automated arbitration
+- **Service Provider Registry**: Multi-step approval system for quality storage providers
+- **Dynamic Pricing**: 2 USDFC/TiB/month (basic) vs 3 USDFC/TiB/month (CDN service)
+- **Commission Management**: Service-based rates (5% basic, 40% CDN service)
+- **Lockup Period Management**: Dynamic extensions based on reserve costs (7-day periods)
+- **EIP-712 Signature Verification**: Client signatures required for proof set creation
+- **Enhanced Arbitration**: Automated dispute resolution with payment reductions
+- **Provider Quality Control**: Three approved providers with professional endpoints
 
 ### PDP (Provable Data Possession) System
 
@@ -112,22 +121,28 @@ Enterprise payment infrastructure:
 - **Data Activation**: Collections become purchasable when CIDs are set
 - **PDP Verification**: Cryptographic proofs ensure data integrity and availability
 
-### Payment System Features
+### Enhanced Payment System Features
 
 - **USDFC Integration**: Uses USDFC token for all transactions
-- **Automatic Fee Split**: 10% deployer fee, 10% FWS fee, 80% to collection owner
+- **Reserve Cost System**: 7-day guaranteed storage availability with dynamic cost calculation
+- **Enhanced Fee Split**: 10% deployer fee, 80% to collection owner (including reserve cost)
+- **Dynamic Pricing**: Collection price + reserve cost = total effective price
 - **FWS Payment Rails**: Integration with enterprise payment infrastructure
 - **Balance Management**: Internal balance tracking with withdrawal functionality
-- **Payment Lockups**: Secure fund management with time-based releases
-- **Arbitration**: Automated dispute resolution for payment adjustments
+- **Lockup Period Extensions**: Reserve costs trigger 7-day lockup extensions
+- **Service-Based Pricing**: 2 USDFC/TiB/month (basic) vs 3 USDFC/TiB/month (CDN)
+- **Enhanced Arbitration**: Automated dispute resolution with payment reductions
 
-### PDP Verification Features
+### Enhanced PDP Verification Features
 
 - **Proof Sets**: Data organized into cryptographically verifiable sets
 - **Challenge Generation**: Periodic challenges ensure continuous data availability
-- **Provider Registry**: Managed approval system for storage providers
-- **Fault Handling**: Automatic payment adjustments for failed proofs
-- **Commission Structure**: Dynamic rates based on service levels
+- **Service Provider Registry**: Multi-step approval system with three quality providers
+- **Professional Endpoints**: polynomial.computer, pdp.zapto.org, yablu.net
+- **EIP-712 Signature Verification**: Client signatures required for proof set operations
+- **Enhanced Fault Handling**: Automatic payment adjustments for failed proofs
+- **Service-Based Commission**: 5% basic service, 40% CDN service with enhanced features
+- **Quality Control**: Provider approval process ensures reliable service delivery
 
 ## Deployment
 
@@ -194,6 +209,18 @@ npx hardhat create-collection \
   --price "1000000000000000000" \
   --size "107374182400" \
   --network calibrationnet
+
+# Check effective pricing (collection price + reserve cost)
+npx hardhat get-collection-effective-price \
+  --registry 0x123...abc \
+  --collection 0x456...def \
+  --network calibrationnet
+
+# Check reserve cost breakdown
+npx hardhat get-collection-reserve-cost \
+  --registry 0x123...abc \
+  --collection 0x456...def \
+  --network calibrationnet
 ```
 
 #### 2. Set Dataset CIDs (Activate Collection)
@@ -244,18 +271,30 @@ npx hardhat get-collection-details \
   --network calibrationnet
 ```
 
-#### 2. Purchase Dataset Access
+#### 2. Purchase Dataset Access with Reserve Costs
 
 ```bash
-# First approve token spending
+# Check total effective price (collection + reserve cost)
+npx hardhat get-collection-effective-price \
+  --registry 0x123...abc \
+  --collection 0x456...def \
+  --network calibrationnet
+
+# Approve token spending for total effective price
 npx hardhat approve-token \
   --token 0xabc...123 \
   --spender 0x123...abc \
-  --amount "1000000000000000000" \
+  --amount "1100000000000000000" \
   --network calibrationnet
 
 # Purchase dataset access (mints NFT automatically)
 npx hardhat purchase-dataset \
+  --registry 0x123...abc \
+  --collection 0x456...def \
+  --network calibrationnet
+
+# Check payment breakdown
+npx hardhat get-purchase-breakdown \
   --registry 0x123...abc \
   --collection 0x456...def \
   --network calibrationnet
@@ -280,40 +319,65 @@ npx hardhat get-collections \
 
 ### Storage Provider Workflow
 
-#### 1. Register as Service Provider
+#### 1. Register as Service Provider (Multi-Step Process)
 
 ```bash
+# Step 1: Register provider (pending approval)
 npx hardhat add-service-provider \
   --pandora 0x123...abc \
   --provider 0x456...def \
   --pdp-url "https://storage-provider.com/pdp" \
   --retrieval-url "https://storage-provider.com/retrieve" \
   --network calibrationnet
-```
 
-#### 2. Monitor Approval Status
-
-```bash
-# List all approved providers
-npx hardhat list-providers \
-  --pandora 0x123...abc \
-  --network calibrationnet
-
-# Get specific provider details
-npx hardhat get-provider-details \
+# Step 2: Check registration status
+npx hardhat get-provider-status \
   --pandora 0x123...abc \
   --provider 0x456...def \
   --network calibrationnet
 ```
 
-#### 3. Check Service Pricing
+#### 2. Monitor Approval Status (Admin Required)
 
 ```bash
-# Get pricing for CDN service
+# List all approved providers (current: 3 providers)
+npx hardhat list-providers \
+  --pandora 0x123...abc \
+  --network calibrationnet
+
+# List pending providers awaiting approval
+npx hardhat list-pending-providers \
+  --pandora 0x123...abc \
+  --network calibrationnet
+
+# Admin: Approve pending provider
+npx hardhat approve-provider \
+  --pandora 0x123...abc \
+  --provider 0x456...def \
+  --network calibrationnet
+```
+
+#### 3. Check Service Pricing (Service-Based Rates)
+
+```bash
+# Get pricing for basic service (2 USDFC/TiB/month, 5% commission)
+npx hardhat get-pricing \
+  --pandora 0x123...abc \
+  --size "107374182400" \
+  --with-cdn false \
+  --network calibrationnet
+
+# Get pricing for CDN service (3 USDFC/TiB/month, 40% commission)
 npx hardhat get-pricing \
   --pandora 0x123...abc \
   --size "107374182400" \
   --with-cdn true \
+  --network calibrationnet
+
+# Check provider commission earnings
+npx hardhat get-provider-earnings \
+  --pandora 0x123...abc \
+  --provider 0x456...def \
   --network calibrationnet
 ```
 
@@ -389,16 +453,20 @@ struct Collection {
 }
 ```
 
-### Payment Flow
+### Enhanced Payment Flow
 
-1. **Buyer** approves USDFC token spending to FDBRegistry
-2. **Buyer** calls `purchase()` with collection address
-3. **FDBRegistry** validates balance and allowance
-4. **Tokens transferred** from buyer to FDBRegistry
-5. **Fee split**: 10% to deployer, 10% to FWS Payments (via PandoraService), 80% to owner
-6. **PandoraService** handles payment rail management and lockup increases
-7. **NFT minted** to buyer granting dataset access
-8. **Balances updated** for withdrawals
+1. **Buyer** checks effective price (collection price + reserve cost)
+2. **Buyer** approves USDFC token spending for total effective price
+3. **Buyer** calls `purchase()` with collection address
+4. **FDBRegistry** validates balance and allowance for total payment
+5. **Tokens transferred** from buyer to FDBRegistry (collection price + reserve cost)
+6. **Enhanced Fee Distribution**:
+   - 10% deployer fee (from collection price only)
+   - 80% to collection owner (collection price - deployer fee + full reserve cost)
+7. **PandoraService** handles lockup period extension (7-day increment)
+8. **NFT minted** to buyer granting dataset access
+9. **Balances updated** for withdrawals
+10. **Reserve cost** ensures 7-day guaranteed storage availability
 
 ### PDP Verification Flow
 
@@ -570,19 +638,23 @@ npx hardhat get-balance \
 
 ## Data Marketplace Business Model
 
-### Revenue Streams
+### Enhanced Revenue Streams
 
-- **Data Owners**: Receive 80% of purchase fees plus FWS payment benefits
-- **Platform**: Collects 10% deployer fee from all transactions
-- **FWS Services**: Receives 10% fee for payment infrastructure and PDP verification
-- **Storage Providers**: Earn commissions (5% basic, 40% CDN) for storage services
+- **Data Owners**: Receive 80% of collection price (minus deployer fee) + full reserve cost
+- **Platform**: Collects 10% deployer fee from collection price portion only
+- **Storage Providers**: Earn service-based commissions (5% basic, 40% CDN) plus reserve cost benefits
+- **Quality Assurance**: Multi-step provider approval ensures reliable service delivery
+- **Reserve Cost Benefits**: 7-day guaranteed storage availability increases buyer confidence
 
-### Economic Incentives
+### Enhanced Economic Incentives
 
 - **Data Quality**: PDP verification ensures data availability and integrity
-- **Provider Reliability**: Failed proofs trigger payment reductions
-- **Market Efficiency**: Automated pricing and fee distribution
+- **Provider Reliability**: Failed proofs trigger payment reductions via enhanced arbitration
+- **Storage Guarantee**: 7-day reserve cost system ensures guaranteed availability
+- **Service-Based Pricing**: Dynamic pricing rewards quality providers (5% vs 40% commission)
+- **Market Efficiency**: Automated pricing and enhanced fee distribution
 - **Access Control**: NFT ownership provides verifiable access rights
+- **Quality Assurance**: Multi-step provider approval maintains service standards
 
 ## Troubleshooting
 
@@ -628,7 +700,33 @@ npx hardhat deploy --tags FDBRegistry --network calibrationnet
 # Verify contract initialization
 npx hardhat call FDBRegistry pandoraService --network calibrationnet
 npx hardhat call PandoraService paymentsContractAddress --network calibrationnet
+
+# Verify enhanced features
+npx hardhat call FDBRegistry getCollectionEffectivePrice --network calibrationnet
+npx hardhat call PandoraService getAllApprovedProviders --network calibrationnet
 ```
+
+## Enhanced Features Summary
+
+### Reserve Cost System
+- **7-Day Guarantee**: Reserve costs ensure 7 days of guaranteed storage availability
+- **Dynamic Calculation**: Costs calculated based on proof set size and service type
+- **Lockup Extensions**: Reserve costs trigger automatic 7-day lockup period extensions
+
+### Service Provider Registry
+- **Multi-Step Approval**: Registration → Admin Approval → Active Status
+- **Quality Control**: Three approved providers with professional endpoints
+- **Service Tiers**: Basic (5% commission) vs CDN (40% commission) service levels
+
+### Dynamic Pricing
+- **Service-Based Rates**: 2 USDFC/TiB/month (basic) vs 3 USDFC/TiB/month (CDN)
+- **Effective Pricing**: Collection price + reserve cost = total buyer cost
+- **Enhanced Fee Distribution**: Sophisticated payment splitting with reserve cost benefits
+
+### Enhanced Security
+- **EIP-712 Signatures**: Client signatures required for proof set creation
+- **Payment Validation**: Comprehensive balance and allowance checking
+- **Arbitration System**: Automated dispute resolution with payment adjustments
 
 ## License
 

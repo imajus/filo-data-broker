@@ -1,6 +1,6 @@
 ---
 description: 
-globs: 
+globs: contracts/FDBRegistry.sol
 alwaysApply: false
 ---
 # Filecoin Integration & PDP Verification
@@ -10,9 +10,171 @@ alwaysApply: false
 This project integrates deeply with the Filecoin ecosystem through multiple layers:
 - **FEVM Compatibility**: Runs on Filecoin EVM (calibrationnet/mainnet)  
 - **PDP Verification**: Provable Data Possession ensures data integrity
-- **FWS Payments**: Enterprise payment rails for storage providers
+- **FWS Payments**: Enterprise payment rails with dynamic pricing and commission rates
+- **Service Provider Registry**: Multi-step provider registration and approval system
 - **IPFS Storage**: Content-addressed storage for dataset metadata
 - **CAR Files**: Content Addressable aRchives for efficient data transfer
+
+## Enhanced Payment Architecture
+
+### Reserve Cost System
+
+The system now implements a **7-day reserve cost** mechanism for guaranteed storage availability:
+
+#### Reserve Cost Calculation
+- **Reserve Period**: 7 days (configured in `RESERVE_PERIOD_DAYS`)
+- **Daily Cost**: Retrieved from PandoraService based on proof set size and service type
+- **Total Reserve**: Daily cost × 7 days
+
+#### Purchase Flow with Reserve Costs
+```solidity
+// Enhanced purchase calculation
+uint256 collectionPrice = 1000000000000000000; // 1 USDFC
+uint256 reserveCost = registry.getCollectionReserveCost(collectionAddress);
+uint256 totalPayment = collectionPrice + reserveCost;
+
+// Payment distribution:
+// - 10% deployer fee (from collection price)
+// - 80% to data owner (collection price - deployer fee + reserve cost)
+// - Reserve cost extends lockup period via PandoraService
+```
+
+### Dynamic Commission Rates
+
+**[PandoraService.sol](mdc:contracts/fws/PandoraService.sol)** now supports service-tier-based pricing:
+
+#### Service Types & Pricing
+- **Basic Service**: 2 USDFC per TiB per month (5% commission)
+- **CDN Service**: 3 USDFC per TiB per month (40% commission)
+- **Commission Rates**: Dynamically set based on CDN add-on selection
+
+#### Pricing Constants
+```solidity
+uint256 public constant PRICE_PER_TIB_PER_MONTH_NO_CDN = 2; // 2 USDFC/TiB/month
+uint256 public constant PRICE_PER_TIB_PER_MONTH_WITH_CDN = 3; // 3 USDFC/TiB/month
+uint256 public constant EPOCHS_PER_DAY = 2880;
+uint256 public constant EPOCHS_PER_MONTH = EPOCHS_PER_DAY * 30;
+```
+
+### Enhanced Payment Distribution
+
+**[FDBRegistry.sol](mdc:contracts/FDBRegistry.sol)** now implements sophisticated payment splitting:
+
+#### Payment Flow
+1. **Collection Price**: Set by data owner
+2. **Reserve Cost**: Calculated dynamically based on storage requirements
+3. **Total Payment**: Collection price + reserve cost
+4. **Fee Distribution**:
+   - 10% deployer fee (from collection price only)
+   - 80% to data owner (collection price - deployer fee + full reserve cost)
+   - Reserve cost triggers lockup period extension
+
+#### New Payment Functions
+```javascript
+// Get reserve cost for collection
+const reserveCost = await registry.getCollectionReserveCost(collectionAddress);
+
+// Get effective total price (collection + reserve)
+const totalPrice = await registry.getCollectionEffectivePrice(collectionAddress);
+
+// Check user's pending balance
+const balance = await registry.getBalance(userAddress);
+```
+
+## Service Provider Registry System
+
+### Multi-Step Provider Registration
+
+**[PandoraService.sol](mdc:contracts/fws/PandoraService.sol)** now includes a comprehensive provider registry:
+
+#### Registration Process
+1. **Provider Registration**: Storage provider submits registration
+2. **Admin Approval**: Contract owner approves/rejects providers
+3. **Active Status**: Only approved providers can receive proof sets
+
+#### Provider Information Structure
+```solidity
+struct ApprovedProviderInfo {
+    address owner;           // Provider's address
+    string pdpUrl;          // PDP service endpoint
+    string pieceRetrievalUrl; // Data retrieval endpoint
+    uint256 registeredAt;    // Registration timestamp
+    uint256 approvedAt;      // Approval timestamp
+}
+```
+
+### Current Registered Providers
+
+**[deploy/00_pandora.js](mdc:deploy/00_pandora.js)** automatically registers three providers:
+
+```javascript
+const providers = [
+    {
+        provider: "0xe9bc394383B67aBcEbe86FD9843F53d8B4a2E981",
+        pdpUrl: "https://polynomial.computer/",
+        pieceRetrievalUrl: "https://polynomial.computer/",
+    },
+    {
+        provider: "0x4A628ebAecc32B8779A934ebcEffF1646F517756",
+        pdpUrl: "https://pdp.zapto.org/",
+        pieceRetrievalUrl: "https://pdp.zapto.org/",
+    },
+    {
+        provider: "0x9f5087A1821eb3Ed8a137be368E5e451166EFAAe",
+        pdpUrl: "https://yablu.net",
+        pieceRetrievalUrl: "https://yablu.net",
+    },
+]
+```
+
+### Provider Management Commands
+
+#### Register New Provider
+```bash
+# Register provider (pending approval)
+npx hardhat add-service-provider \
+  --pandora 0x123...abc \
+  --provider 0x456...def \
+  --pdp-url "https://my-provider.com/pdp" \
+  --retrieval-url "https://my-provider.com/retrieve" \
+  --network calibrationnet
+```
+
+#### Approve Provider
+```bash
+# Approve pending provider (admin only)
+npx hardhat approve-provider \
+  --pandora 0x123...abc \
+  --provider 0x456...def \
+  --network calibrationnet
+```
+
+#### List Providers
+```bash
+# List all approved providers
+npx hardhat list-providers \
+  --pandora 0x123...abc \
+  --network calibrationnet
+```
+
+## EIP-712 Signature Verification
+
+### Proof Set Creation with Signatures
+
+The system now requires client signatures for proof set creation:
+
+#### Signature Types
+```solidity
+// EIP-712 type hashes
+bytes32 private constant CREATE_PROOFSET_TYPEHASH =
+    keccak256("CreateProofSet(uint256 clientDataSetId,bool withCDN,address payee)");
+```
+
+#### Signature Verification Process
+1. **Client Signs**: Data owner signs proof set creation parameters
+2. **Provider Submits**: Storage provider submits signed data with proof set
+3. **Contract Verifies**: PandoraService verifies signature authenticity
+4. **Rail Creation**: Only valid signatures create payment rails
 
 ## PDP (Provable Data Possession) System
 
@@ -71,12 +233,13 @@ struct Collection {
 }
 ```
 
-#### Purchase → Verification Flow
+#### Enhanced Purchase → Verification Flow
 When users purchase dataset access:
-1. **Payment Processing**: Fees flow through FWS payment rails
-2. **Lockup Increase**: PandoraService increases payment rail lockup
-3. **Verification Monitoring**: Ongoing PDP verification ensures data availability
-4. **Access Guarantee**: NFT ownership backed by cryptographic proof of data possession
+1. **Payment Processing**: Total payment (collection price + reserve cost)
+2. **Fee Distribution**: 10% deployer fee, 80% to data owner (including reserve cost)
+3. **Lockup Extension**: Reserve cost triggers 7-day lockup period extension
+4. **Verification Monitoring**: Ongoing PDP verification ensures data availability
+5. **Access Guarantee**: NFT ownership backed by cryptographic proof of data possession
 
 ## FWS (Filecoin Web Services) Integration
 
@@ -84,40 +247,33 @@ When users purchase dataset access:
 
 **[PandoraService.sol](mdc:contracts/fws/PandoraService.sol)** provides enterprise-grade payment infrastructure:
 
-#### Core Features:
+#### Enhanced Features:
 - **Upgradeable Proxy**: ERC1967 pattern for contract upgrades
-- **Payment Rails**: Streaming payment channels for storage providers
-- **Commission System**: Dynamic rates (5% basic, 40% CDN service)
-- **Lockup Mechanisms**: Secure fund management with time-based releases
-- **Arbitration**: Automated dispute resolution for failed proofs
+- **Dynamic Payment Rails**: Streaming payment channels with service-based pricing
+- **Multi-Tier Commission**: 5% basic service, 40% CDN service
+- **Service Provider Registry**: Multi-step approval system
+- **Lockup Period Management**: Dynamic lockup extensions based on reserve costs
+- **Enhanced Arbitration**: Automated dispute resolution with payment reductions
 
-#### Service Provider Registry
+#### Service-Based Pricing Structure
 ```javascript
-const providers = [
-    {
-        provider: "0xe9bc394383B67aBcEbe86FD9843F53d8B4a2E981",
-        pdpUrl: "https://polynomial.computer/",
-        pieceRetrievalUrl: "https://polynomial.computer/"
-    },
-    {
-        provider: "0x4A628ebAecc32B8779A934ebcEffF1646F517756",
-        pdpUrl: "https://pdp.zapto.org/",  
-        pieceRetrievalUrl: "https://pdp.zapto.org/"
-    }
-]
-```
+// Basic service pricing
+const basicServiceRate = 2; // USDFC per TiB per month
+const basicCommission = 5; // 5% commission
 
-#### Pricing Structure
-- **Basic Service**: 2 USDFC per TiB per month (no CDN)
-- **CDN Service**: 3 USDFC per TiB per month (with CDN add-on)
-- **Commission Rates**: 5% for basic, 40% for CDN services
-- **Dynamic Lockup**: Adjusts based on data size and service level
+// CDN service pricing  
+const cdnServiceRate = 3; // USDFC per TiB per month
+const cdnCommission = 40; // 40% commission
+
+// Calculate daily costs
+const dailyCost = (monthlyRate * dataSize) / (30 * TIB_IN_BYTES);
+```
 
 ### Payment Rail Management
 
-#### Rail Creation Process
+#### Enhanced Rail Creation Process
 ```bash
-# Create payment rail for storage provider
+# Create payment rail with service selection
 npx hardhat create-rail \
   --pandora 0x123...abc \
   --payer 0x456...def \
@@ -127,13 +283,13 @@ npx hardhat create-rail \
   --network calibrationnet
 ```
 
-#### Lockup Management
+#### Lockup Period Extensions
 ```bash
-# Increase lockup for additional storage
-npx hardhat increase-lockup \
+# Extend lockup period (triggered by purchases)
+npx hardhat increase-lockup-period \
   --pandora 0x123...abc \
   --proof-set-id 12345 \
-  --amount "1000000000000000000" \
+  --epochs 20160 \
   --network calibrationnet
 ```
 
@@ -223,16 +379,17 @@ mainnet: {
 
 #### Typical Gas Usage
 - **Collection Creation**: ~200,000 gas
-- **NFT Purchase**: ~150,000 gas  
+- **NFT Purchase**: ~150,000 gas (now includes reserve cost calculation)
 - **PDP Proof Verification**: ~100,000 gas
 - **Payment Rail Operations**: ~80,000 gas
+- **Provider Registration**: ~60,000 gas
 
 #### Cost Optimization
 - **Batch Operations**: Reduce per-transaction overhead
 - **Storage Packing**: Optimize struct layouts for gas efficiency
 - **Custom Errors**: Replace revert strings for gas savings
 
-## Integration Workflow
+## Enhanced Integration Workflow
 
 ### Data Owner Integration
 
@@ -260,7 +417,7 @@ PUBLIC_CID="QmPublic..."
 PRIVATE_CID="QmPrivate..."
 ```
 
-#### 3. Create Collection with PDP
+#### 3. Create Collection with Enhanced Pricing
 ```bash
 # Create collection with proof set integration
 npx hardhat create-collection \
@@ -270,6 +427,12 @@ npx hardhat create-collection \
   --proof-set-id 12345 \
   --size "107374182400" \
   --price "1000000000000000000" \
+  --network calibrationnet
+
+# Check effective price (collection + reserve cost)
+npx hardhat get-collection-effective-price \
+  --registry 0x123...abc \
+  --collection 0x456...def \
   --network calibrationnet
 
 # Set CIDs to activate
@@ -283,20 +446,28 @@ npx hardhat set-collection-cid \
 
 ### Storage Provider Integration
 
-#### 1. Register with PandoraService
+#### 1. Register with Enhanced Provider Registry
 ```bash
+# Register provider for approval
 npx hardhat add-service-provider \
   --pandora 0x123...abc \
   --provider 0x456...def \
   --pdp-url "https://my-provider.com/pdp" \
   --retrieval-url "https://my-provider.com/retrieve" \
   --network calibrationnet
+
+# Check approval status
+npx hardhat get-provider-status \
+  --pandora 0x123...abc \
+  --provider 0x456...def \
+  --network calibrationnet
 ```
 
-#### 2. Monitor PDP Challenges
+#### 2. Monitor PDP Challenges with Arbitration
 ```javascript
-// Storage provider monitoring system
+// Enhanced storage provider monitoring system
 const pdpVerifier = await ethers.getContractAt("PDPVerifier", verifierAddress);
+const pandoraService = await ethers.getContractAt("PandoraService", pandoraAddress);
 
 pdpVerifier.on("ChallengeGenerated", async (proofSetId, challengeId, deadline) => {
     console.log(`Challenge ${challengeId} for proof set ${proofSetId}`);
@@ -306,10 +477,8 @@ pdpVerifier.on("ChallengeGenerated", async (proofSetId, challengeId, deadline) =
     const proof = await generateProof(proofSetId, challengeId);
     await pdpVerifier.submitProof(challengeId, proof);
 });
-```
 
-#### 3. Handle Arbitration
-```javascript
+// Monitor arbitration events
 pandoraService.on("PaymentArbitrated", async (railId, proofSetId, originalAmount, modifiedAmount) => {
     console.log(`Payment arbitrated for rail ${railId}`);
     console.log(`Amount reduced from ${originalAmount} to ${modifiedAmount}`);
@@ -321,11 +490,17 @@ pandoraService.on("PaymentArbitrated", async (railId, proofSetId, originalAmount
 
 ### Data Consumer Integration
 
-#### 1. Browse Available Datasets
+#### 1. Browse Available Datasets with Pricing
 ```bash
 # Query active collections
 npx hardhat get-active-collections \
   --registry 0x123...abc \
+  --network calibrationnet
+
+# Check enhanced pricing (collection + reserve cost)
+npx hardhat get-collection-effective-price \
+  --registry 0x123...abc \
+  --collection 0x456...def \
   --network calibrationnet
 
 # Check dataset details including PDP status
@@ -335,10 +510,16 @@ npx hardhat get-collection-details \
   --network calibrationnet
 ```
 
-#### 2. Purchase Verified Access
+#### 2. Purchase with Enhanced Payment Flow
 ```bash
-# Purchase dataset access (backed by PDP verification)
+# Purchase dataset access (collection price + reserve cost)
 npx hardhat purchase-dataset \
+  --registry 0x123...abc \
+  --collection 0x456...def \
+  --network calibrationnet
+
+# Check payment breakdown
+npx hardhat get-purchase-breakdown \
   --registry 0x123...abc \
   --collection 0x456...def \
   --network calibrationnet
@@ -346,11 +527,15 @@ npx hardhat purchase-dataset \
 
 #### 3. Access Verified Data
 ```javascript
-// Verify NFT ownership and access private data
+// Enhanced verification and access flow
 const hasAccess = await registry.hasNFT(collectionAddress, userAddress);
 if (hasAccess) {
     const collection = await registry.getCollectionInfo(collectionAddress);
     const privateCid = collection.privateCid;
+    
+    // Verify PDP status before accessing
+    const proofSetStatus = await pandoraService.getProofSetStatus(collection.proofSetId);
+    console.log("PDP verification status:", proofSetStatus);
     
     // Access private data via IPFS
     const privateData = await ipfs.cat(privateCid);
@@ -358,18 +543,18 @@ if (hasAccess) {
 }
 ```
 
-## Monitoring & Analytics
+## Enhanced Monitoring & Analytics
 
-### PDP Verification Status
+### Service Provider Analytics
 ```bash
-# Monitor proof submission status
-npx hardhat get-proof-status \
-  --verifier 0x123...abc \
-  --proof-set-id 12345 \
+# Monitor provider performance
+npx hardhat get-provider-stats \
+  --pandora 0x123...abc \
+  --provider 0x456...def \
   --network calibrationnet
 
-# Check provider reliability
-npx hardhat get-provider-stats \
+# Check provider commission earnings
+npx hardhat get-provider-earnings \
   --pandora 0x123...abc \
   --provider 0x456...def \
   --network calibrationnet
@@ -377,32 +562,38 @@ npx hardhat get-provider-stats \
 
 ### Payment Rail Health
 ```bash
-# Monitor payment rail status
+# Monitor enhanced payment rail status
 npx hardhat get-rail-status \
   --pandora 0x123...abc \
   --rail-id 67890 \
   --network calibrationnet
 
-# Check lockup balances
-npx hardhat get-lockup-balance \
+# Check lockup period extensions
+npx hardhat get-lockup-extensions \
   --pandora 0x123...abc \
   --proof-set-id 12345 \
   --network calibrationnet
 ```
 
-### Collection Performance
+### Reserve Cost Analytics
 ```bash
-# Track collection sales and PDP verification
-npx hardhat collection-analytics \
+# Monitor reserve cost trends
+npx hardhat get-reserve-costs \
+  --registry 0x123...abc \
+  --from-block 1000000 \
+  --network calibrationnet
+
+# Check collection pricing effectiveness
+npx hardhat analyze-pricing \
   --registry 0x123...abc \
   --collection 0x456...def \
-  --from-block 1000000 \
   --network calibrationnet
 ```
 
-This comprehensive Filecoin integration ensures that the data marketplace provides:
-- **Verified Data Availability**: PDP proofs guarantee data possession
-- **Reliable Payment Rails**: FWS infrastructure ensures payment security
-- **Content Integrity**: IPFS addressing prevents data tampering
-- **Scalable Storage**: CAR files enable efficient Filecoin storage
-- **Enterprise Features**: Professional-grade infrastructure for data commerce
+This enhanced Filecoin integration provides:
+- **Dynamic Pricing**: Service-tier-based pricing with CDN add-ons
+- **Guaranteed Storage**: 7-day reserve cost system with lockup extensions
+- **Professional Provider Registry**: Multi-step approval process for quality assurance
+- **Enhanced Payment Security**: Sophisticated fee distribution and arbitration
+- **Signature-Verified Operations**: EIP-712 signature verification for security
+- **Comprehensive Analytics**: Advanced monitoring and cost analysis tools

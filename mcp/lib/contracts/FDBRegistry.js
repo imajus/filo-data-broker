@@ -41,18 +41,19 @@ export class FDBRegistry {
     const datasets = Promise.all(
       collections.map(async (address) => {
         const info = await this.contract.getCollectionInfo(address);
+        const price = await this.contract.getCollectionEffectivePrice(address);
         return {
           address: info.nftContract,
           owner: info.owner,
           name: info.name,
           symbol: info.symbol,
           description: info.description,
-          price: info.price,
           publicColumns: info.publicColumns,
           privateColumns: info.privateColumns,
           publicCid: info.publicCid,
           privateCid: info.privateCid,
           createdAt: info.createdAt.toString(),
+          price,
         };
       })
     );
@@ -61,17 +62,18 @@ export class FDBRegistry {
 
   async getDatasetMetadata(address) {
     const info = await this.contract.getCollectionInfo(address);
+    const price = await this.contract.getCollectionEffectivePrice(address);
     return {
       address: info.nftContract,
       owner: info.owner,
       name: info.name,
       symbol: info.symbol,
       description: info.description,
-      price: info.price,
       publicColumns: info.publicColumns,
       privateColumns: info.privateColumns,
       publicCid: info.publicCid,
       privateCid: info.privateCid,
+      price,
     };
   }
 

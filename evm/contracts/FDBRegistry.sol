@@ -21,6 +21,9 @@ contract FDBRegistry {
     // Fee distribution constants (in percentage)
     uint256 public constant DEPLOYER_FEE_PERCENT = 10; // 10% to deployer
     uint256 public constant PAYMENTS_FEE_PERCENT = 10; // 10% to FWS payments
+    
+    // Reserve cost calculation constants
+    uint256 public constant RESERVE_PERIOD_DAYS = 7; // 7 days reserve period
 
     // ERC20 token used for payments
     IERC20 private immutable paymentToken;
@@ -43,7 +46,6 @@ contract FDBRegistry {
         string privateCid;
         uint256 proofSetId;
         uint256 price;
-        uint256 size;
         uint256 createdAt;
         bool isActive;
     }
@@ -64,7 +66,6 @@ contract FDBRegistry {
         string publicColumns,
         uint256 proofSetId,
         uint256 price,
-        uint256 size,
         uint256 indexed collectionId
     );
 
@@ -95,8 +96,7 @@ contract FDBRegistry {
         string memory privateColumns,
         string memory publicColumns,
         uint256 proofSetId,
-        uint256 price,
-        uint256 size
+        uint256 price
     ) external returns (address) {
         if (bytes(name).length == 0) {
             revert FDBRegistry__EmptyName();
@@ -120,7 +120,6 @@ contract FDBRegistry {
             privateCid: "",
             proofSetId: proofSetId,
             price: price,
-            size: size,
             createdAt: block.timestamp,
             isActive: false
         });
@@ -140,7 +139,6 @@ contract FDBRegistry {
             publicColumns,
             proofSetId,
             price,
-            size,
             s_totalCollections - 1
         );
 
@@ -152,18 +150,22 @@ contract FDBRegistry {
         require(collection.nftContract != address(0), "FDBRegistry: Collection does not exist");
         require(collection.isActive, "FDBRegistry: Collection is not active");
 
+        // Calculate total payment amount (collection price + reserve cost)
+        uint256 reserveCost = this.getCollectionReserveCost(nftContract);
+        uint256 totalPayment = collection.price + reserveCost;
+
         // Check if buyer has sufficient token balance
-        if (paymentToken.balanceOf(msg.sender) < collection.price) {
+        if (paymentToken.balanceOf(msg.sender) < totalPayment) {
             revert FDBRegistry__InsufficientPayment();
         }
 
         // Check if buyer has given sufficient allowance
-        if (paymentToken.allowance(msg.sender, address(this)) < collection.price) {
+        if (paymentToken.allowance(msg.sender, address(this)) < totalPayment) {
             revert FDBRegistry__InsufficientAllowance();
         }
 
         // Transfer tokens from buyer to contract
-        bool success = paymentToken.transferFrom(msg.sender, address(this), collection.price);
+        bool success = paymentToken.transferFrom(msg.sender, address(this), totalPayment);
         if (!success) {
             revert FDBRegistry__TransferFailed();
         }
@@ -171,27 +173,21 @@ contract FDBRegistry {
         NFT nft = NFT(nftContract);
         uint256 tokenId = nft.mint(msg.sender);
 
-        // Split payment: some to deployer, some to FWS payments (via PandoraService), and the rest to the data provider
+        // Split payment: deployer fee from collection price, reserve cost to owner, rest to data provider
         uint256 deployerFee = (collection.price * DEPLOYER_FEE_PERCENT) / 100;
-        uint256 paymentsFee = (collection.price * PAYMENTS_FEE_PERCENT) / 100;
-        uint256 ownerAmount = collection.price - deployerFee - paymentsFee;
+        uint256 lockupPeriodIncrement = pandoraService.EPOCHS_PER_DAY() * RESERVE_PERIOD_DAYS;
+        uint256 ownerAmount = collection.price - deployerFee + reserveCost; // Owner gets collection price portion + reserve cost
 
         // Add deployer fee to deployer's balance
         s_balances[deployer] += deployerFee;
 
-        // Handle payment deposit to collection owner through payments contract
-        address paymentsContractAddr = pandoraService.getPaymentsContract();
-        Payments paymentsContract = Payments(paymentsContractAddr);
-        paymentToken.approve(paymentsContractAddr, paymentsFee);
-        paymentsContract.deposit(address(paymentToken), collection.owner, paymentsFee);
+        // Increase rail lockup period through PandoraService (no token transfer, just period extension)
+        pandoraService.increaseLockupPeriod(collection.proofSetId, lockupPeriodIncrement);
 
-        // Increase rail lockup through PandoraService
-        pandoraService.increaseLockupFixed(collection.proofSetId, paymentsFee);
-
-        // Add remaining amount to collection owner's balance
+        // Add collection amount plus reserve cost to collection owner's balance
         s_balances[collection.owner] += ownerAmount;
 
-        emit NFTPurchased(nftContract, msg.sender, tokenId, collection.price);
+        emit NFTPurchased(nftContract, msg.sender, tokenId, totalPayment);
 
         return tokenId;
     }
@@ -269,7 +265,7 @@ contract FDBRegistry {
 
     function getUserCollections(address user) external view returns (Collection[] memory) {
         return s_userCollections[user];
-    }
+    } 
 
     function getCollectionInfo(address nftContract) external view returns (Collection memory) {
         return s_collectionInfo[nftContract];
@@ -336,5 +332,17 @@ contract FDBRegistry {
 
     function getPaymentToken() external view returns (address) {
         return address(paymentToken);
+    }
+
+    function getCollectionReserveCost(address nftContract) external view returns (uint256) {
+        uint256 proofSetId = s_collectionInfo[nftContract].proofSetId;
+        uint256 dailyCost = pandoraService.getProofSetDailyCost(proofSetId);
+        return dailyCost * RESERVE_PERIOD_DAYS;
+    }
+
+    function getCollectionEffectivePrice(address nftContract) external view returns (uint256) {
+        uint256 collectionPrice = s_collectionInfo[nftContract].price;
+        uint256 reserveCost = this.getCollectionReserveCost(nftContract);
+        return collectionPrice + reserveCost;
     }
 }

@@ -13,7 +13,13 @@ import { SynapsePayment } from '../lib/synapse/payment.js';
 import { SynapseStorage } from '../lib/synapse/storage.js';
 
 const RPC_URL = 'https://api.calibration.node.glif.io/rpc/v1';
+const PROOFSET_BASE_URL = 'https://pdp.vxb.ai/calibration/proofsets/';
+
 const provider = new ethers.JsonRpcProvider(RPC_URL);
+
+function proofSetUrl(proofSetId) {
+  return `${PROOFSET_BASE_URL}${proofSetId}`;
+}
 
 const program = new Command();
 
@@ -52,7 +58,9 @@ program
     }
     console.log(chalk.blue(`🗒️ CSV File: ${options.file}`));
     console.log(chalk.blue(`💳 Wallet Address: ${wallet.address}`));
-    console.log(chalk.blue(`🤝 Proofset: ${proofSet.pdpVerifierProofSetId}`));
+    console.log(
+      chalk.blue(`🤝 Proof Set: ${proofSetUrl(proofSet.pdpVerifierProofSetId)}`)
+    );
     // Step 2: Request NFT collection details
     const { name, description, price } = await inquirer.prompt([
       {
@@ -156,8 +164,7 @@ program
         publicColumns,
         privateColumns,
         proofSet.pdpVerifierProofSetId,
-        price,
-        Buffer.byteLength(publicData) + Buffer.byteLength(privateData)
+        price
       );
       console.log(chalk.green('\n✅ NFT collection created successfully!'));
       // Step 7: Link dataset to NFT collection
@@ -203,7 +210,9 @@ program
       //FIXME: Dirty hack to upsert Proof Set ID
       const storage = await SynapseStorage.create(wallet);
       const { selectedProofSetId } = await storage.preflight(65);
-      console.log(chalk.blue(`\n🤝 Proofset: ${selectedProofSetId}`));
+      console.log(
+        chalk.blue(`\n🤝 Proof Set: ${proofSetUrl(selectedProofSetId)}`)
+      );
       console.log(chalk.green('\n✅ Payment rail set up successfully!'));
     } catch (err) {
       console.log(chalk.red(`❌ Setup Error: ${err.message}`));
