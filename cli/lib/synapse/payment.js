@@ -193,16 +193,17 @@ export class SynapsePayment {
    * Reserve storage
    */
   async reserve() {
-    const usdfcBalance = await this.getWalletBalanceUSDFC();
+    const serviceBalance = await this.getBalanceUSDFC();
+    const walletBalance = await this.getWalletBalanceUSDFC();
     const proofSet = await this.selectProofset();
     const metrics = await this.#calculateStorageMetrics();
     const fee = proofSet ? 0n : SynapsePayment.#PROOF_SET_CREATION_FEE;
     const amount = metrics.depositNeeded + fee;
-    if (amount > 0n) {
-      if (usdfcBalance < amount) {
+    if (amount > serviceBalance) {
+      if (walletBalance < amount) {
         throw new Error(
           `Insufficient USDFC balance: ${ethers.formatEther(
-            usdfcBalance
+            walletBalance
           )} < ${ethers.formatEther(amount)}`
         );
       }
@@ -214,6 +215,7 @@ export class SynapsePayment {
       metrics.totalLockupNeeded + fee
     );
     await tx.wait();
+    return this.#synapse.payments.accountInfo();
   }
 
   /**

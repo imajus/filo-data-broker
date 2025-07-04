@@ -79,10 +79,9 @@ Check wallet and payment balances across different tokens and services.
 
 **Information Displayed:**
 
-- 💰 **Wallet Balance**: Native FIL and USDFC token balances
+- 💰 **Wallet Balance**: USDFC token balance in wallet
 - 🏦 **Deposit Balance**: Available USDFC in payment system
 - 🔒 **Allowance**: Payment allowance for storage operations
-- 📊 **Proofset**: Current proofset information
 
 **Example:**
 
@@ -124,7 +123,7 @@ Wallet Address: 0x...
 
 ? Enter the name of the dataset: My Dataset
 ? Enter the description of the dataset: A sample dataset for testing
-? Enter the price for the dataset (in FIL): 0.1
+? Enter the price for the dataset (in USDFC): 0.1
 
 ✅ CSV headers parsed successfully!
 
@@ -211,7 +210,7 @@ filo import --private-key YOUR_PRIVATE_KEY --file ./data.csv
 
 1. `sample/bali.csv` - Bali Tourism Destinations:
 
-   This dataset contains information about tourist attractions in Bali collected through automated scraping from Google Maps. It covers 761 tourist spots spread across 9 regencies/cities in Bali Island. The dataset aims to provide a comprehensive overview of the locations, categories, and popularity of Bali’s tourist destinations.
+   This dataset contains information about tourist attractions in Bali collected through automated scraping from Google Maps. It covers 761 tourist spots spread across 9 regencies/cities in Bali Island. The dataset aims to provide a comprehensive overview of the locations, categories, and popularity of Bali's tourist destinations.
 
 1. `sample/quotes.csv` - Famous People Quotes:
 
@@ -219,7 +218,7 @@ filo import --private-key YOUR_PRIVATE_KEY --file ./data.csv
 
 1. `sample/youtube.csv` - YouTube Video Analytics:
 
-   This dataset provides a rich collection of metadata from 2,000+ YouTube videos, offering a unique opportunity to explore how content performs on the world’s largest video-sharing platform. With detailed information on video titles, views, likes, tags, durations, publishing dates, and more, this dataset allows you to dive deep into the world of digital content trends.
+   This dataset provides a rich collection of metadata from 2,000+ YouTube videos, offering a unique opportunity to explore how content performs on the world's largest video-sharing platform. With detailed information on video titles, views, likes, tags, durations, publishing dates, and more, this dataset allows you to dive deep into the world of digital content trends.
 
 ## Dependencies
 

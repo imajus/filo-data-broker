@@ -1,21 +1,25 @@
 import { ethers } from 'ethers';
-import NFTFactoryData from './NFTFactory.json' with { type: 'json' };
+import FDBRegistryData from './FDBRegistry.json' assert { type: 'json' };
 import { getSigner } from '../signer.js';
 import { ERC20Token } from './ERC20Token.js';
 
-export class NFTFactory {
+export class FDBRegistry {
   static instance = null;
   /** @type {ERC20Token} */
   #token = null;
 
   constructor() {
-    this.contract = new ethers.Contract(NFTFactoryData.address, NFTFactoryData.abi, getSigner());
+    this.contract = new ethers.Contract(
+      FDBRegistryData.address,
+      FDBRegistryData.abi,
+      getSigner()
+    );
   }
 
-  /** @returns {NFTFactory} */
+  /** @returns {FDBRegistry} */
   static getInstance() {
     if (!this.instance) {
-      this.instance = new NFTFactory();
+      this.instance = new FDBRegistry();
     }
     return this.instance;
   }
@@ -30,26 +34,28 @@ export class NFTFactory {
       this.#token = new ERC20Token(address);
     }
     return this.#token;
-  } 
+  }
 
   async listDatasets() {
     const collections = await this.contract.getActiveCollections();
-    const datasets = Promise.all(collections.map(async address => {
-      const info = await this.contract.getCollectionInfo(address);
-      return {
-        address: info.nftContract,
-        owner: info.owner,
-        name: info.name,
-        symbol: info.symbol,
-        description: info.description,
-        price: info.price,
-        publicColumns: info.publicColumns,
-        privateColumns: info.privateColumns,
-        publicCid: info.publicCid,
-        privateCid: info.privateCid,
-        createdAt: info.createdAt.toString(),
-      };
-    }));
+    const datasets = Promise.all(
+      collections.map(async (address) => {
+        const info = await this.contract.getCollectionInfo(address);
+        return {
+          address: info.nftContract,
+          owner: info.owner,
+          name: info.name,
+          symbol: info.symbol,
+          description: info.description,
+          price: info.price,
+          publicColumns: info.publicColumns,
+          privateColumns: info.privateColumns,
+          publicCid: info.publicCid,
+          privateCid: info.privateCid,
+          createdAt: info.createdAt.toString(),
+        };
+      })
+    );
     return datasets;
   }
 
@@ -90,4 +96,3 @@ export class NFTFactory {
     }
   }
 }
-

@@ -329,6 +329,7 @@ contract PandoraService is
 
         return providers;
     }
+
     // Listener interface methods
     /**
      * @notice Handles proof set creation by creating a payment rail
@@ -875,6 +876,14 @@ contract PandoraService is
     }
 
     /**
+     * @notice Get the payments contract address
+     * @return The address of the payments contract
+     */
+    function getPaymentsContract() external view returns (address) {
+        return paymentsContractAddress;
+    }
+
+    /**
      * @notice Get the effective rates after commission for both service types
      * @return basicServiceFee Service fee for basic service (per TiB per month)
      * @return spPaymentBasic SP payment for basic service (per TiB per month)
@@ -1351,5 +1360,33 @@ contract PandoraService is
                 settleUpto: lastProvenEpoch, // Settle up to the last proven epoch
                 note: ""
             });
+    }
+
+    /**
+     * @notice Increase the fixed lockup amount for a proof set's payment rail
+     * @dev This function only modifies the rail lockup without handling token transfers
+     * @param proofSetId The ID of the proof set associated with the collection
+     * @param amount The amount to add to rail lockup
+     */
+    function increaseLockupFixed(uint256 proofSetId, uint256 amount) external {
+        require(proofSetId != 0, "Proof set ID cannot be zero");
+        require(amount > 0, "Payment amount must be greater than zero");
+
+        // Verify the proof set exists
+        ProofSetInfo storage proofSetData = proofSetInfo[proofSetId];
+        require(proofSetData.railId != 0, "Proof set not found or has no associated rail");
+
+        // Get the payments contract instance
+        Payments payments = Payments(paymentsContractAddress);
+
+        // Get current rail information
+        Payments.RailView memory rail = payments.getRail(proofSetData.railId);
+
+        // Modify rail lockup to include the new payment amount
+        payments.modifyRailLockup(
+            proofSetData.railId,
+            rail.lockupPeriod,
+            rail.lockupFixed + amount
+        );
     }
 }

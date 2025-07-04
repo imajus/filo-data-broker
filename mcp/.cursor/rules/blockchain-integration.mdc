@@ -6,9 +6,9 @@ alwaysApply: false
 # Blockchain Integration Patterns
 
 ## Contract Management
-- Use [NFTFactory.js](mdc:lib/contracts/NFTFactory.js) singleton for all contract interactions
-- Contract address and ABI are stored in [NFTFactory.json](mdc:lib/contracts/NFTFactory.json)
-- Access via `NFTFactory.getInstance()` to ensure single contract instance
+- Use [FDBRegistry.js](mdc:lib/contracts/FDBRegistry.js) singleton for all contract interactions
+- Contract address and ABI are stored in [FDBRegistry.json](mdc:lib/contracts/FDBRegistry.json)
+- Access via `FDBRegistry.getInstance()` to ensure single contract instance
 
 ## Ethereum Signer Configuration
 - Signer setup handled in [lib/signer.js](mdc:lib/signer.js)

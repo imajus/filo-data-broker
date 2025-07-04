@@ -8,5 +8,5 @@ export const getSynapse = async (signer) =>
   Synapse.create({
     signer,
     withCDN: true,
-    pandoraAddress: '0xf7BB5B817a09066A9C623f05522ad3b12289A0B6',
+    pandoraAddress: '0x485da5B22E524F292108F485E5c56a6db6572547',
   });

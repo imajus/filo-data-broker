@@ -1,6 +1,15 @@
-# NFT Data Marketplace - FEVM Hardhat Kit
+# Filecoin Data Broker (FDB) - FEVM Data Marketplace
 
-This project implements a data marketplace on Filecoin EVM (FEVM) where NFT collections represent datasets with public/private data access. The system integrates with FWS Payments for advanced payment processing and revenue distribution.
+This project implements a comprehensive data marketplace on Filecoin EVM (FEVM) where dataset collections are represented as NFTs with public/private data access. The system integrates with FWS Payments for enterprise payment processing, PDP verification for data integrity, and provides automated revenue distribution.
+
+## Project Overview
+
+The Filecoin Data Broker combines multiple cutting-edge technologies:
+- **FDBRegistry**: Main data marketplace registry with payment integration
+- **PandoraService**: Enterprise FWS payment rails with PDP verification
+- **PDP Verification**: Cryptographic proof system ensuring data integrity
+- **NFT Access Control**: Dataset access tokens for private data portions
+- **Automated Payments**: Smart fee distribution with lockup mechanisms
 
 ## Setup & Installation
 
@@ -24,9 +33,13 @@ PRIVATE_KEY=abcdef...                              # Your deployer private key
 RPC_URL=https://api.calibration.node.glif.io/rpc/v1  # Network RPC endpoint
 ETHERSCAN_API_KEY=your_api_key                     # For contract verification
 
-# FWS Payments Integration (Required for deployment)
-PAYMENTS_CONTRACT_ADDRESS=0x...                    # Deployed FWS Payments contract
-USDFC_TOKEN_ADDRESS=0x...                        # ERC20 token address (USDFC)
+# Core Contract Dependencies (Required for deployment)
+PDP_VERIFIER_ADDRESS=0x...                        # PDPVerifier contract address
+PAYMENTS_CONTRACT_ADDRESS=0x...                   # FWS Payments contract address
+USDFC_TOKEN_ADDRESS=0x...                         # Payment token (USDFC) contract address
+
+# Optional Configuration
+INITIAL_OPERATOR_COMMISSION_BPS=500               # Operator commission (default: 5%)
 ```
 
 **Security Warning**: Never commit `.env` files containing sensitive information like private keys to public repositories!
@@ -35,142 +48,203 @@ USDFC_TOKEN_ADDRESS=0x...                        # ERC20 token address (USDFC)
 
 Go to the [Calibrationnet testnet faucet](https://faucet.calibration.fildev.network/), and paste in your Ethereum address. This will send some calibration testnet FIL to the account.
 
-## Contracts
+## Architecture Overview
 
-### 1. NFT.sol
+### Core Contracts
 
-A fully compliant ERC-721 NFT contract that represents dataset access tokens:
+#### 1. FDBRegistry.sol
 
-- Standard ERC-721 functionality (transfer, approve, etc.)
-- ERC-721 Metadata extension for token URIs
-- Owner-only minting (controlled by NFTFactory)
-- Gas-efficient custom error handling
-- Sequential token ID assignment
+The main data marketplace registry that manages dataset collections with integrated payment processing:
 
-### 2. NFTFactory.sol
-
-A factory contract for creating and managing dataset collections with integrated payments:
-
-- **Payment Processing**: ERC20 token payments with automatic fee distribution
-- **FWS Integration**: Direct integration with FWS Payments for advanced payment rails
-- **Dataset Management**: Create collections representing datasets with public/private data
+- **Collection Management**: Create and configure dataset collections with metadata
+- **Payment Processing**: USDFC token payments with automatic fee distribution (10%/10%/80%)
+- **PandoraService Integration**: Direct integration with FWS payment infrastructure
 - **Access Control**: NFT ownership grants access to private dataset portions
-- **Revenue Sharing**: Automatic 10%/10%/80% fee split (deployer/FWS/owner)
-- **Collection Management**: Toggle active status, set pricing, manage CIDs
-- **Batch Operations**: Efficient bulk minting and operations
-- **Balance System**: Internal balance tracking with withdrawal functionality
+- **PDP Integration**: Links collections to proof sets for data verification
+- **Balance Management**: Internal balance tracking with withdrawal functionality
 
-### 3. FWS Payments Integration
+#### 2. NFT.sol
 
-The system integrates with **FWS Payments** (`contracts/fws/payments/Payments.sol`):
+ERC-721 compliant dataset access tokens:
 
-- **Payment Rails**: Enterprise-grade streaming payment channels
-- **Settlement Engine**: Epoch-based payment processing
-- **Lockup Mechanisms**: Time-based fund security
-- **Operator Commissions**: Flexible fee collection system
+- **Dataset Access Rights**: NFTs represent access to private dataset portions
+- **Registry-Controlled**: Only FDBRegistry can mint tokens
+- **Sequential Token IDs**: Auto-incrementing token assignment
+- **Metadata Integration**: Token URIs constructed as `{BASE_TOKEN_URI}{tokenId}.json`
+
+#### 3. PandoraService.sol
+
+Enterprise FWS payment infrastructure with PDP verification:
+
+- **Payment Rails**: Streaming payment channels for storage providers
+- **PDP Integration**: Cryptographic proof verification for data integrity
+- **Service Provider Registry**: Manages approved storage providers
+- **Commission Management**: Dynamic rates (5% basic, 40% CDN service)
+- **Arbitration System**: Automated dispute resolution for failed proofs
+
+### PDP (Provable Data Possession) System
+
+The PDP system provides cryptographic proof that storage providers actually possess the data:
+
+- **PDPVerifier.sol**: Main verification engine with challenge generation
+- **SimplePDPService.sol**: Basic PDP service implementation
+- **Proofs.sol**: Proof generation and validation utilities
+- **Cids.sol**: IPFS CID handling and validation
+- **BitOps.sol**: Bit manipulation operations for proofs
+- **Fees.sol**: PDP fee calculation and management
+
+### FWS Payments Integration
+
+Enterprise payment infrastructure:
+- **Payments.sol**: Streaming payment channels and settlement
+- **RateChangeQueue.sol**: Dynamic payment rate management
+- **Lockup Mechanisms**: Time-based fund security and releases
 
 ## Features
 
-### Dataset Marketplace Features
+### Data Marketplace Features
 
-- **Data Collections**: NFT collections represent datasets with public and private data portions
+- **Dataset Collections**: NFT collections represent datasets with public and private data portions
 - **Access Control**: NFT ownership grants access to private dataset content
 - **Pricing System**: Collection owners set purchase prices for dataset access
 - **Public/Private Data**: Separate IPFS CIDs for public vs private dataset portions
 - **Column Schema**: Track public and private data column definitions
 - **Data Activation**: Collections become purchasable when CIDs are set
+- **PDP Verification**: Cryptographic proofs ensure data integrity and availability
 
 ### Payment System Features
 
-- **ERC20 Integration**: Uses USDFC token for all transactions
+- **USDFC Integration**: Uses USDFC token for all transactions
 - **Automatic Fee Split**: 10% deployer fee, 10% FWS fee, 80% to collection owner
 - **FWS Payment Rails**: Integration with enterprise payment infrastructure
 - **Balance Management**: Internal balance tracking with withdrawal functionality
-- **Allowance Validation**: Comprehensive ERC20 approval checking
-- **Error Recovery**: Failed payments restore previous state
+- **Payment Lockups**: Secure fund management with time-based releases
+- **Arbitration**: Automated dispute resolution for payment adjustments
 
-### NFT Contract Features
+### PDP Verification Features
 
-- **ERC-721 Compliant**: Full implementation of the ERC-721 standard
-- **Dataset Access Tokens**: NFTs represent access rights to private data
-- **Owner Controls**: Only NFTFactory can mint tokens
-- **Auto-incrementing Token IDs**: Sequential token assignment starting from 0
-- **Gas Efficient**: Custom errors and optimized storage patterns
-
-### NFTFactory Features
-
-- **Collection Creation**: Deploy dataset collections with metadata and pricing
-- **Payment Processing**: Handle purchases with automatic fee distribution
-- **Access Control**: Only collection owners can mint and manage their collections
-- **Batch Operations**: Mint multiple NFTs in a single transaction (up to 100)
-- **Collection Management**: Toggle active status, update CIDs, manage pricing
-- **Query Functions**: Get collections, check ownership, view statistics
+- **Proof Sets**: Data organized into cryptographically verifiable sets
+- **Challenge Generation**: Periodic challenges ensure continuous data availability
+- **Provider Registry**: Managed approval system for storage providers
+- **Fault Handling**: Automatic payment adjustments for failed proofs
+- **Commission Structure**: Dynamic rates based on service levels
 
 ## Deployment
 
 ### Prerequisites
 
-1. **FWS Payments Contract**: Deploy or obtain the address of an existing FWS Payments contract
-2. **Payment Token**: Deploy or obtain the address of an ERC20 token (e.g., USDFC)
-3. **Environment Variables**: Configure all required variables in `.env`
+1. **Dependency Contracts**: Ensure these are deployed and addresses are available:
+   - **PDPVerifier**: PDP verification contract
+   - **FWS Payments**: Enterprise payment infrastructure
+   - **USDFC Token**: Payment token contract
+2. **Environment Variables**: Configure all required variables in `.env`
+3. **Network Access**: Ensure deployer has sufficient FIL for gas fees
 
-### Deploy NFTFactory
+### Two-Stage Deployment Process
 
-Deploy the NFTFactory contract with payment integration:
+The deployment uses a sequential process with dependency management:
 
+#### Stage 1: Deploy PandoraService
 ```bash
-npx hardhat deploy --network calibrationnet
+# Deploy PandoraService with proxy pattern and service provider setup
+npx hardhat deploy --tags PandoraService --network calibrationnet
 ```
 
-The deployment process will:
-1. **Validate Environment**: Check for required contract addresses
-2. **Deploy Contract**: Deploy NFTFactory with payments integration
-3. **Verify Contract**: Automatic Etherscan verification (45s delay)
-4. **Sync Contracts**: Update ABI files for CLI/MCP integration
+#### Stage 2: Deploy FDBRegistry
+```bash
+# Deploy FDBRegistry with PandoraService integration
+npx hardhat deploy --tags FDBRegistry --network calibrationnet
+```
+
+#### Full Infrastructure Deployment
+```bash
+# Deploy both contracts in correct order
+npx hardhat deploy --network calibrationnet
+```
 
 ### Expected Output
 
 ```bash
 Wallet Ethereum Address: 0x...
+PDP Verifier Address: 0x...
 Payments Contract Address: 0x...
-Payment Token Address: 0x...
-NFTFactory deployed to: 0x...
-Waiting for 45 seconds...
-Verifying NFTFactory contract on block explorer...
-NFTFactory contract verified successfully!
-Running post-deployment script...
+USDFC Token Address: 0x...
+PandoraService deployed to: 0x...
+PandoraService implementation: 0x...
+FDBRegistry deployed to: 0x...
 ```
 
-Keep note of the deployed NFTFactory address for usage examples.
+Keep note of the deployed contract addresses for usage examples.
 
-## Usage Examples
+## CLI Usage Examples
 
-### 1. Create a Dataset Collection
+### Data Owner Workflow
+
+#### 1. Create a Dataset Collection
 
 ```bash
 npx hardhat create-collection \
-  --factory 0x123...abc \
-  --name "Weather Data 2024" \
-  --symbol "WEATHER24" \
-  --description "Comprehensive weather dataset for 2024" \
-  --publicColumns "timestamp,location,temperature" \
-  --privateColumns "sensor_id,raw_data,calibration" \
+  --registry 0x123...abc \
+  --name "Climate Data 2024" \
+  --symbol "CLIMATE24" \
+  --description "Comprehensive climate dataset for 2024" \
+  --public-columns "timestamp,location,temperature,humidity" \
+  --private-columns "sensor_id,raw_data,calibration,metadata" \
+  --proof-set-id 12345 \
   --price "1000000000000000000" \
+  --size "107374182400" \
   --network calibrationnet
 ```
 
-### 2. Set Dataset CIDs (Activate Collection)
+#### 2. Set Dataset CIDs (Activate Collection)
 
 ```bash
 npx hardhat set-collection-cid \
-  --factory 0x123...abc \
+  --registry 0x123...abc \
   --collection 0x456...def \
-  --publicCid "QmPublicDataHash..." \
-  --privateCid "QmPrivateDataHash..." \
+  --public-cid "QmPublicDataHash..." \
+  --private-cid "QmPrivateDataHash..." \
   --network calibrationnet
 ```
 
-### 3. Purchase Dataset Access
+#### 3. Monitor Sales and Withdraw Earnings
+
+```bash
+# Check collection statistics
+npx hardhat collection-stats \
+  --registry 0x123...abc \
+  --collection 0x456...def \
+  --network calibrationnet
+
+# Check balance and withdraw earnings
+npx hardhat get-balance \
+  --registry 0x123...abc \
+  --user 0x789...ghi \
+  --network calibrationnet
+
+npx hardhat withdraw \
+  --registry 0x123...abc \
+  --network calibrationnet
+```
+
+### Data Buyer Workflow
+
+#### 1. Browse Available Datasets
+
+```bash
+# View all active dataset collections
+npx hardhat get-active-collections \
+  --registry 0x123...abc \
+  --network calibrationnet
+
+# Get details for specific collection
+npx hardhat get-collection-details \
+  --registry 0x123...abc \
+  --collection 0x456...def \
+  --network calibrationnet
+```
+
+#### 2. Purchase Dataset Access
 
 ```bash
 # First approve token spending
@@ -180,95 +254,119 @@ npx hardhat approve-token \
   --amount "1000000000000000000" \
   --network calibrationnet
 
-# Then purchase access
+# Purchase dataset access (mints NFT automatically)
 npx hardhat purchase-dataset \
-  --factory 0x123...abc \
+  --registry 0x123...abc \
   --collection 0x456...def \
   --network calibrationnet
 ```
 
-### 4. Mint NFT to Grant Access
+#### 3. Verify Access
 
 ```bash
+# Check if user has access NFT
+npx hardhat has-nft \
+  --registry 0x123...abc \
+  --collection 0x456...def \
+  --user 0x789...ghi \
+  --network calibrationnet
+
+# Get owned collections
+npx hardhat get-collections \
+  --registry 0x123...abc \
+  --user 0x789...ghi \
+  --network calibrationnet
+```
+
+### Storage Provider Workflow
+
+#### 1. Register as Service Provider
+
+```bash
+npx hardhat add-service-provider \
+  --pandora 0x123...abc \
+  --provider 0x456...def \
+  --pdp-url "https://storage-provider.com/pdp" \
+  --retrieval-url "https://storage-provider.com/retrieve" \
+  --network calibrationnet
+```
+
+#### 2. Monitor Approval Status
+
+```bash
+# List all approved providers
+npx hardhat list-providers \
+  --pandora 0x123...abc \
+  --network calibrationnet
+
+# Get specific provider details
+npx hardhat get-provider-details \
+  --pandora 0x123...abc \
+  --provider 0x456...def \
+  --network calibrationnet
+```
+
+#### 3. Check Service Pricing
+
+```bash
+# Get pricing for CDN service
+npx hardhat get-pricing \
+  --pandora 0x123...abc \
+  --size "107374182400" \
+  --with-cdn true \
+  --network calibrationnet
+```
+
+### NFT Operations
+
+#### Mint Access Tokens
+
+```bash
+# Mint individual NFT
 npx hardhat mint-nft \
-  --factory 0x123...abc \
+  --registry 0x123...abc \
   --collection 0x456...def \
   --to 0x789...ghi \
   --network calibrationnet
-```
 
-### 5. Batch Mint for Multiple Users
-
-```bash
+# Batch mint to multiple recipients
 npx hardhat batch-mint \
-  --factory 0x123...abc \
+  --registry 0x123...abc \
   --collection 0x456...def \
   --recipients "0x789...ghi,0xabc...123,0xdef...456" \
   --network calibrationnet
 ```
 
-### 6. Get User Collections
+### System Administration
+
+#### Contract Synchronization
 
 ```bash
-npx hardhat get-collections \
-  --factory 0x123...abc \
-  --user 0x789...ghi \
+# Sync contract ABIs for CLI/MCP integration
+npx hardhat sync-contracts --network calibrationnet
+
+# Sync specific contract only
+npx hardhat sync-contracts \
+  --contract FDBRegistry \
   --network calibrationnet
 ```
 
-### 7. Get Active Datasets
+#### Provider Management (Admin Only)
 
 ```bash
-npx hardhat get-active-collections \
-  --factory 0x123...abc \
+# Approve pending provider
+npx hardhat approve-provider \
+  --pandora 0x123...abc \
+  --provider 0x456...def \
+  --network calibrationnet
+
+# List pending providers
+npx hardhat list-pending-providers \
+  --pandora 0x123...abc \
   --network calibrationnet
 ```
 
-### 8. Check Dataset Access
-
-```bash
-npx hardhat has-nft \
-  --factory 0x123...abc \
-  --collection 0x456...def \
-  --user 0x789...ghi \
-  --network calibrationnet
-```
-
-### 9. Withdraw Earnings
-
-```bash
-npx hardhat withdraw \
-  --factory 0x123...abc \
-  --network calibrationnet
-```
-
-### 10. Get Balance
-
-```bash
-npx hardhat get-balance \
-  --factory 0x123...abc \
-  --user 0x789...ghi \
-  --network calibrationnet
-```
-
-## Contract Architecture
-
-### NFT Contract (Dataset Access Tokens)
-
-- Uses the factory pattern - created by NFTFactory
-- Owner is set to NFTFactory (only factory can mint)
-- Token URIs constructed as: `{BASE_TOKEN_URI}{tokenId}.json`
-- Represents access rights to private dataset portions
-- Implements safe transfer checks for contract recipients
-
-### NFTFactory Contract (Payment-Integrated Marketplace)
-
-- **Payment System**: Integrates with FWS Payments and ERC20 tokens
-- **Fee Structure**: 10% deployer fee, 10% FWS fee, 80% collection owner
-- **Dataset Management**: Stores public/private CIDs, column schemas, pricing
-- **Access Control**: NFT ownership grants private data access
-- **Balance System**: Internal balance tracking with withdrawal mechanism
-- **Collection Lifecycle**: Creation → CID setting → activation → purchases
+## Data Architecture
 
 ### Collection Data Structure
 
@@ -283,46 +381,46 @@ struct Collection {
     string publicColumns;    // Public data columns
     string publicCid;        // IPFS CID for public data
     string privateCid;       // IPFS CID for private data
-    uint256 price;           // Purchase price in payment token
+    uint256 proofSetId;      // PDP proof set identifier
+    uint256 price;           // Purchase price in USDFC
+    uint256 size;            // Dataset size in bytes
     uint256 createdAt;       // Creation timestamp
-    bool isActive;           // Can be purchased
+    bool isActive;           // Purchase availability
 }
 ```
 
 ### Payment Flow
 
-1. **Buyer** approves ERC20 token spending to NFTFactory
+1. **Buyer** approves USDFC token spending to FDBRegistry
 2. **Buyer** calls `purchase()` with collection address
-3. **NFTFactory** validates balance and allowance
-4. **Tokens transferred** from buyer to NFTFactory
-5. **Fee split**: 10% to deployer, 10% to FWS Payments, 80% to owner
-6. **NFT minted** to buyer granting dataset access
-7. **Balances updated** for withdrawals
+3. **FDBRegistry** validates balance and allowance
+4. **Tokens transferred** from buyer to FDBRegistry
+5. **Fee split**: 10% to deployer, 10% to FWS Payments (via PandoraService), 80% to owner
+6. **PandoraService** handles payment rail management and lockup increases
+7. **NFT minted** to buyer granting dataset access
+8. **Balances updated** for withdrawals
+
+### PDP Verification Flow
+
+1. **Proof Set Creation**: Data organized into proof sets with unique IDs
+2. **Challenge Generation**: PDPVerifier issues periodic cryptographic challenges
+3. **Proof Submission**: Storage providers submit cryptographic proofs
+4. **Verification**: Mathematical validation of proof authenticity
+5. **Payment Adjustments**: Successful proofs maintain payments, failures trigger arbitration
 
 ## Error Handling
 
 The contracts use custom errors for gas efficiency and clear debugging:
 
-### NFT Contract Errors
+### FDBRegistry Errors
 
-- `NFT__TokenDoesNotExist()`: Token ID doesn't exist
-- `NFT__NotOwnerOrApproved()`: Caller not authorized for token operation
-- `NFT__TransferToZeroAddress()`: Cannot transfer to zero address
-- `NFT__ApprovalToCurrentOwner()`: Cannot approve current owner
-- `NFT__TransferToNonERC721Receiver()`: Transfer to non-compliant contract
-
-### NFTFactory Payment Errors
-
-- `NFTFactory__InsufficientPayment()`: Buyer lacks sufficient token balance
-- `NFTFactory__InsufficientAllowance()`: Insufficient ERC20 allowance for purchase
-- `NFTFactory__TransferFailed()`: Token transfer failed during payment
-- `NFTFactory__InsufficientBalance()`: Attempting withdrawal with zero balance
-
-### NFTFactory Collection Errors
-
-- `NFTFactory__EmptyName()`: Collection name cannot be empty
-- `NFTFactory__EmptySymbol()`: Collection symbol cannot be empty
-- `NFTFactory__NotCollectionOwner()`: Caller doesn't own the collection
+- `FDBRegistry__EmptyName()`: Collection name cannot be empty
+- `FDBRegistry__EmptySymbol()`: Collection symbol cannot be empty
+- `FDBRegistry__NotCollectionOwner()`: Caller doesn't own the collection
+- `FDBRegistry__InsufficientPayment()`: Buyer lacks sufficient token balance
+- `FDBRegistry__InsufficientAllowance()`: Insufficient ERC20 allowance for purchase
+- `FDBRegistry__TransferFailed()`: Token transfer failed during payment
+- `FDBRegistry__InsufficientBalance()`: Attempting withdrawal with zero balance
 
 ### Payment Error Recovery
 
@@ -340,23 +438,14 @@ The payment system includes robust error recovery:
 - Custom errors instead of require strings
 - Efficient storage layout
 - Batch operations to reduce transaction costs
+- Proxy pattern for upgradeable contracts
 
 ## Events
 
-### NFT Contract Events
-
-- `Transfer`: Standard ERC-721 transfer event
-- `Approval`: Standard ERC-721 approval event
-- `ApprovalForAll`: Standard ERC-721 approval for all event
-- `TokenMinted`: Custom event for new token mints
-
-### NFTFactory Collection Events
+### FDBRegistry Events
 
 - `CollectionCreated`: Emitted when a new dataset collection is created
 - `CollectionStatusUpdated`: Emitted when collection status changes
-
-### NFTFactory Payment Events
-
 - `NFTPurchased`: Emitted when dataset access is purchased
   ```solidity
   event NFTPurchased(
@@ -366,21 +455,13 @@ The payment system includes robust error recovery:
       uint256 price
   );
   ```
-
 - `BalanceWithdrawn`: Emitted when earnings are withdrawn
-  ```solidity
-  event BalanceWithdrawn(
-      address indexed owner,
-      uint256 amount
-  );
-  ```
 
-### Event Usage for Analytics
+### PandoraService Events
 
-- **Revenue Tracking**: Monitor `NFTPurchased` events for sales analytics
-- **User Activity**: Track `Transfer` events for dataset access patterns
-- **Collection Performance**: Monitor creation and activation events
-- **Payment Flow**: Track balance changes and withdrawals
+- `ProofSetRailCreated`: Emitted when payment rails are created
+- `ProviderApproved`: Emitted when storage providers are approved
+- `PaymentArbitrated`: Emitted when payments are adjusted due to failed proofs
 
 ## Testing
 
@@ -397,43 +478,60 @@ npm run test
 npm run coverage
 ```
 
-### Payment System Testing
-
-For comprehensive payment testing:
-
-1. **Deploy Payment Token**: Deploy ERC20 test token for payments
-2. **Deploy FWS Payments**: Deploy or use existing FWS Payments contract
-3. **Deploy NFTFactory**: Deploy with payment integration
-4. **Fund Test Accounts**: Distribute payment tokens to test users
-5. **Test Purchase Flow**: End-to-end purchase and access testing
-
 ### Integration Testing Workflow
 
 ```bash
 # Deploy to testnet
-npx hardhat deploy --network calibration
+npx hardhat deploy --network calibrationnet
 
 # Create test collection
-npx hardhat create-collection --factory <address> --name "Test" --symbol "TEST" --price "1000000000000000000" --network calibration
+npx hardhat create-collection \
+  --registry <address> \
+  --name "Test Dataset" \
+  --symbol "TEST" \
+  --price "1000000000000000000" \
+  --network calibrationnet
 
 # Set CIDs to activate
-npx hardhat set-collection-cid --factory <address> --collection <address> --publicCid "QmTest..." --privateCid "QmTest..." --network calibration
+npx hardhat set-collection-cid \
+  --registry <address> \
+  --collection <address> \
+  --public-cid "QmTestPublic..." \
+  --private-cid "QmTestPrivate..." \
+  --network calibrationnet
 
 # Test purchase flow
-npx hardhat approve-token --token <address> --spender <factory> --amount "1000000000000000000" --network calibration
-npx hardhat purchase-dataset --factory <address> --collection <address> --network calibration
+npx hardhat approve-token \
+  --token <address> \
+  --spender <registry> \
+  --amount "1000000000000000000" \
+  --network calibrationnet
 
-# Verify balances and access
-npx hardhat get-balance --factory <address> --user <address> --network calibration
-npx hardhat has-nft --factory <address> --collection <address> --user <address> --network calibration
+npx hardhat purchase-dataset \
+  --registry <address> \
+  --collection <address> \
+  --network calibrationnet
+
+# Verify access and balances
+npx hardhat has-nft \
+  --registry <address> \
+  --collection <address> \
+  --user <address> \
+  --network calibrationnet
+
+npx hardhat get-balance \
+  --registry <address> \
+  --user <address> \
+  --network calibrationnet
 ```
 
 ## Security Considerations
 
 ### Access Control
 1. **Collection Ownership**: Only collection owners can mint tokens and manage collections
-2. **Factory Control**: Only NFTFactory can mint tokens in NFT contracts
+2. **Registry Control**: Only FDBRegistry can mint tokens in NFT contracts
 3. **Payment Validation**: Comprehensive balance and allowance checking
+4. **Provider Management**: Approval system for storage providers
 
 ### Payment Security
 1. **Balance Validation**: Check buyer has sufficient tokens before transfer
@@ -442,60 +540,95 @@ npx hardhat has-nft --factory <address> --collection <address> --user <address> 
 4. **State Recovery**: Failed transfers restore previous contract state
 5. **Reentrancy Protection**: FWS Payments contract uses ReentrancyGuard
 
+### PDP Verification Security
+1. **Cryptographic Proofs**: Mathematical validation of data possession
+2. **Challenge Randomness**: Verifiable random challenge generation
+3. **Timing Requirements**: Strict deadlines for proof submission
+4. **Arbitration System**: Automated dispute resolution for failed proofs
+
 ### Smart Contract Security
 1. **Input Validation**: All user inputs are validated and sanitized
 2. **Integer Overflow**: Uses Solidity 0.8+ built-in overflow protection
-3. **Gas Limits**: Batch operations limited to 100 items maximum
+3. **Gas Limits**: Batch operations limited to prevent out-of-gas errors
 4. **Custom Errors**: Gas-efficient error handling over revert strings
 
-### Environment Security
-1. **Private Key Management**: Use hardware wallets for mainnet deployments
-2. **Environment Isolation**: Separate `.env` files per network
-3. **Address Verification**: Double-check payment contract addresses
-4. **Multi-Signature**: Consider multi-sig for contract ownership
+## Filecoin Integration
 
-### Deployment Security
-1. **Contract Verification**: Automatic verification on block explorers
-2. **Constructor Validation**: Environment variable checks before deployment
-3. **Post-Deployment Testing**: Comprehensive testing after deployment
-4. **Emergency Procedures**: Document emergency response procedures
+### IPFS & Content Addressing
 
-## Dataset Marketplace Workflow
-
-### For Data Owners
-
-1. **Create Collection**: Deploy a new dataset collection with metadata
-2. **Upload Data**: Store public and private data on IPFS/Filecoin
-3. **Set CIDs**: Configure public and private data CIDs to activate collection
-4. **Set Pricing**: Define purchase price for dataset access
-5. **Manage Collection**: Toggle active status, update metadata as needed
-6. **Withdraw Earnings**: Collect 80% of purchase fees plus FWS payment benefits
-
-### For Data Buyers
-
-1. **Browse Datasets**: Query active collections to find relevant datasets
-2. **Review Metadata**: Check public data samples and column schemas
-3. **Approve Payment**: Approve USDFC token spending for purchase amount
-4. **Purchase Access**: Buy dataset access NFT through the marketplace
-5. **Access Data**: Use NFT ownership to access private dataset portions
-6. **Transfer Rights**: Optional: transfer NFT to grant access to others
-
-### For Developers
-
-1. **Environment Setup**: Configure `.env` with required contract addresses
-2. **Deploy Infrastructure**: Deploy payment token and FWS Payments if needed
-3. **Deploy Marketplace**: Deploy NFTFactory with payment integration
-4. **Integration**: Use CLI tasks or JavaScript SDK for application integration
-5. **Monitoring**: Track events for analytics and user activity
-
-## IPFS/Filecoin Integration
-
-The marketplace is designed for decentralized storage:
-
-- **Public Data**: Openly accessible dataset samples and metadata
+- **Public Data**: Openly accessible dataset samples and schemas
 - **Private Data**: Full dataset accessible only to NFT owners
 - **CAR Files**: Use [go-generate-car tool](tools/go-generate-car) for Filecoin storage
 - **Content Addressing**: IPFS CIDs ensure data integrity and permanence
+
+### Network Configuration
+
+- **Default network**: Calibration testnet (chainId: 314159)
+- **Local development**: localnet (chainId: 31415926)
+- **Production**: Filecoin mainnet (chainId: 314)
+- **Block explorer**: Filecoin testnet Blockscout for verification
+
+## Data Marketplace Business Model
+
+### Revenue Streams
+
+- **Data Owners**: Receive 80% of purchase fees plus FWS payment benefits
+- **Platform**: Collects 10% deployer fee from all transactions
+- **FWS Services**: Receives 10% fee for payment infrastructure and PDP verification
+- **Storage Providers**: Earn commissions (5% basic, 40% CDN) for storage services
+
+### Economic Incentives
+
+- **Data Quality**: PDP verification ensures data availability and integrity
+- **Provider Reliability**: Failed proofs trigger payment reductions
+- **Market Efficiency**: Automated pricing and fee distribution
+- **Access Control**: NFT ownership provides verifiable access rights
+
+## Troubleshooting
+
+### Common Issues
+
+#### Environment Variable Errors
+```bash
+Error: PDP_VERIFIER_ADDRESS environment variable is required
+```
+**Solution**: Ensure all required environment variables are set in `.env`
+
+#### Contract Not Found
+```bash
+Error: Contract not deployed
+```
+**Solution**: Deploy contracts first or verify contract addresses
+
+#### Gas Estimation Failures
+```bash
+Error: gas required exceeds allowance
+```
+**Solution**: Check gas limits and account balance
+
+#### Network Connection Problems
+```bash
+Error: network does not respond
+```
+**Solution**: Verify RPC URL and network connectivity
+
+### Recovery Procedures
+
+#### Partial Deployment Recovery
+```bash
+# Check existing deployments
+npx hardhat deployments:list --network calibrationnet
+
+# Continue from failed stage
+npx hardhat deploy --tags FDBRegistry --network calibrationnet
+```
+
+#### Contract State Validation
+```bash
+# Verify contract initialization
+npx hardhat call FDBRegistry pandoraService --network calibrationnet
+npx hardhat call PandoraService paymentsContractAddress --network calibrationnet
+```
 
 ## License
 

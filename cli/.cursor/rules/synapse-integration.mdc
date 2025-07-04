@@ -1,0 +1,170 @@
+---
+description: 
+globs: lib/synapse/*.js
+alwaysApply: false
+---
+# Synapse Network Integration - Cursor Rules
+
+## Overview
+The Filo Data Broker CLI integrates with the Synapse network through the @filoz/synapse-sdk for decentralized storage, payment processing, and data persistence. This integration provides blockchain-based storage with proof-of-data-possession and USDFC token payments.
+
+## Core Integration Files
+
+### Main Synapse Module
+- [lib/synapse/synapse.js](mdc:lib/synapse/synapse.js) - Core SDK initialization
+  - Creates Synapse instance with signer and configuration
+  - Enables CDN support for faster data access
+  - Configures Pandora service address for storage operations
+
+### Payment System
+- [lib/synapse/payment.js](mdc:lib/synapse/payment.js) - Payment rail management
+  - **SynapsePayment class** - Main payment orchestration
+  - **USDFC token operations** - Balance checking and allowance management
+  - **Storage capacity calculations** - Rate allowance and lockup metrics
+  - **Proof set management** - Selection and provider ID resolution
+
+### Storage Operations
+- [lib/synapse/storage.js](mdc:lib/synapse/storage.js) - Data storage interface
+  - Handles decentralized storage through Synapse network
+  - Manages data persistence and retrieval operations
+  - Integrates with Pandora service for proof-of-data-possession
+
+## Network Configuration
+
+### Deployment Details
+- **Network**: Filecoin Calibration testnet
+- **RPC Endpoint**: https://api.calibration.node.glif.io/rpc/v1
+- **Pandora Service**: 0x485da5B22E524F292108F485E5c56a6db6572547
+- **FDB Registry**: 0x8bb1d7e08d522246bc9eA24f2A84e67cf74729C5
+
+### Payment Configuration
+- **Payment Token**: USDFC (USD Filecoin)
+- **Storage Pricing**: 3 USDFC per TB per month
+- **Proof Set Creation Fee**: 0.1 USDFC
+- **Minimum Days Threshold**: 10 days of storage persistence
+- **Default Storage Capacity**: 10 GiB
+- **Default Persistence Period**: 30 days
+
+## Payment System Architecture
+
+### SynapsePayment Class Methods
+
+#### Balance Operations
+```javascript
+async getWalletBalance()          // Get native token balance
+async getWalletBalanceUSDFC()     // Get USDFC wallet balance
+async getBalanceUSDFC()           // Get USDFC service balance
+async getPaymentAllowanceUSDFC()  // Get payment allowance for contracts
+```
+
+#### Storage Management
+```javascript
+async selectProofset()            // Pick proof set with most used storage
+async getProviderId(proofSet)     // Get provider ID from proof set
+async reserve()                   // Reserve storage and check capacity
+async deposit(amount)             // Deposit USDFC for payments
+```
+
+#### Metrics Calculation
+- **Rate Allowance**: Calculates storage capacity from rate allowance
+- **Storage Usage**: Current storage usage based on rate consumption
+- **Persistence Days**: Remaining days of storage based on lockup
+- **Sufficiency Checks**: Validates rate and lockup allowances
+
+### Storage Workflow
+
+#### Setup Phase (via setup command)
+1. **Wallet Connection** - Initialize ethers wallet with private key
+2. **Synapse Creation** - Create Synapse instance with CDN support
+3. **Payment Initialization** - Initialize SynapsePayment instance
+4. **Storage Reservation** - Check/create storage capacity and proof sets
+5. **Balance Display** - Show available funds and storage metrics
+
+#### Balance Phase (via balance command)
+1. **Wallet Connection** - Initialize ethers wallet with private key
+2. **Payment System Access** - Connect to Synapse payment system
+3. **Balance Retrieval** - Fetch wallet, deposit, and allowance balances
+4. **Display Metrics** - Show formatted balance information
+
+#### Import Phase (via import command)
+1. **Proof Set Selection** - Select existing proof set for storage
+2. **Capacity Validation** - Ensure sufficient storage capacity
+3. **Data Upload** - Upload data through Synapse storage layer
+4. **Persistence Management** - Handle data persistence periods
+5. **CID Integration** - Link storage CIDs to blockchain records
+
+## Error Handling Patterns
+
+### Payment Errors
+- **Insufficient Balance** - Check USDFC balance before operations
+- **Missing Proof Set** - Redirect users to setup command
+- **Allowance Issues** - Handle token allowance for contract interactions
+- **Lockup Insufficient** - Validate storage persistence requirements
+
+### Storage Errors
+- **Capacity Exceeded** - Validate data size against storage capacity
+- **Persistence Failure** - Handle storage duration and lockup issues
+- **Provider Issues** - Manage proof set and provider availability
+- **Network Connectivity** - Handle RPC and Pandora service connectivity
+
+## Development Guidelines
+
+### SDK Integration Patterns
+- Always initialize Synapse with proper signer and configuration
+- Use async/await for all Synapse operations
+- Handle BigInt arithmetic for token amounts and calculations
+- Implement proper error handling for network operations
+
+### Payment Flow Best Practices
+- Check balances before attempting operations
+- Validate proof sets exist before data operations
+- Display user-friendly metrics for storage capacity
+- Handle token amount formatting (wei to USDFC conversion)
+
+### Storage Best Practices
+- Verify storage capacity before data upload
+- Handle both public and private data separately
+- Maintain CID records for blockchain integration
+- Implement persistence period management
+
+## Testing and Debugging
+
+### Local Development
+- Use Calibration testnet for all operations
+- Ensure wallet has sufficient USDFC balance
+- Test setup flow before import operations
+- Verify proof set creation and selection
+
+### Common Issues
+- **RPC Connection**: Check network connectivity to Calibration
+- **Token Balance**: Ensure USDFC tokens are available in wallet
+- **Proof Sets**: Run setup command if proof sets are missing
+- **Storage Limits**: Monitor storage capacity and usage metrics
+- **Balance Monitoring**: Use balance command to check payment capacity
+
+### Monitoring
+- Track storage usage through rate allowance calculations
+- Monitor persistence days remaining for data availability
+- Check payment allowances for contract interactions
+- Validate proof set selection and provider availability
+- Regular balance checks for wallet and deposit funds
+- Monitor USDFC allowances for payment operations
+
+## SDK Constants Reference
+
+### Time Constants
+- **EPOCHS_PER_DAY**: 2880 epochs per day
+- **EPOCHS_PER_MONTH**: ~86400 epochs per month
+
+### Size Constants
+- **GiB**: 1024^3 bytes (1 Gibibyte)
+- **TiB**: 1024^4 bytes (1 Tebibyte)
+
+### Token Constants
+- **USDFC**: USD Filecoin token for payments
+- **Contract Addresses**: Payment contract addresses per network
+
+### Service Integration
+- **PandoraService**: Proof-of-data-possession service
+- **CDN Support**: Content delivery network for data access
+- **Provider Management**: Storage provider selection and monitoring
