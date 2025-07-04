@@ -1,5 +1,5 @@
 {
-  "address": "0x8bb1d7e08d522246bc9eA24f2A84e67cf74729C5",
+  "address": "0xDB9aD1c0e38567CB5b8334451f235027e9f1c4a4",
   "abi": [
     {
       "inputs": [
@@ -234,6 +234,19 @@
       "type": "function"
     },
     {
+      "inputs": [],
+      "name": "RESERVE_PERIOD_DAYS",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "address",
@@ -364,6 +377,25 @@
           "type": "address"
         }
       ],
+      "name": "getCollectionEffectivePrice",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "nftContract",
+          "type": "address"
+        }
+      ],
       "name": "getCollectionInfo",
       "outputs": [
         {
@@ -442,6 +474,25 @@
           "internalType": "struct FDBRegistry.Collection",
           "name": "",
           "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "nftContract",
+          "type": "address"
+        }
+      ],
+      "name": "getCollectionReserveCost",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
         }
       ],
       "stateMutability": "view",

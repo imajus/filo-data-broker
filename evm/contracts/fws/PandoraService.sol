@@ -41,10 +41,11 @@ contract PandoraService is
     uint256 public constant MIB_IN_BYTES = 1024 * 1024; // 1 MiB in bytes
     uint256 public constant BYTES_PER_LEAF = 32; // Each leaf is 32 bytes
     uint256 public constant COMMISSION_MAX_BPS = 10000; // 100% in basis points
-    uint256 public constant DEFAULT_LOCKUP_PERIOD = 2880 * 10; // 10 days in epochs
+    uint256 public constant EPOCHS_PER_DAY = 2880;
+    uint256 public constant DEFAULT_LOCKUP_PERIOD = EPOCHS_PER_DAY * 10; // 10 days in epochs
     uint256 public constant GIB_IN_BYTES = MIB_IN_BYTES * 1024; // 1 GiB in bytes
     uint256 public constant TIB_IN_BYTES = GIB_IN_BYTES * 1024; // 1 TiB in bytes
-    uint256 public constant EPOCHS_PER_MONTH = 2880 * 30;
+    uint256 public constant EPOCHS_PER_MONTH = EPOCHS_PER_DAY * 30;
 
     // Pricing constants
     uint256 public constant PRICE_PER_TIB_PER_MONTH_NO_CDN = 2; // 2 USDFC per TiB per month without CDN
@@ -796,6 +797,20 @@ contract PandoraService is
         return leafCount * BYTES_PER_LEAF;
     }
 
+    /**
+     * @notice Get the leaf count for a given proof set
+     * @dev Queries PDPVerifier for leaf count
+     * @param proofSetId The ID of the proof set
+     * @return The number of leaves in the proof set
+     */
+    function getProofSetLeafCount(uint256 proofSetId) external view returns (uint256) {
+        // Create PDPVerifier instance and get leaf count
+        PDPVerifier pdpVerifier = PDPVerifier(pdpVerifierAddress);
+        uint256 leafCount = pdpVerifier.getProofSetLeafCount(proofSetId);
+        // Return the leaf count directly
+        return leafCount;
+    }
+
     // --- Public getter functions ---
 
     /**
@@ -910,6 +925,20 @@ contract PandoraService is
         // CDN service (40% commission = 1.2 USDFC service, 1.8 USDFC to SP)
         cdnServiceFee = (cdnTotal * cdnServiceCommissionBps) / COMMISSION_MAX_BPS;
         spPaymentWithCDN = cdnTotal - cdnServiceFee;
+    }
+
+    /**
+     * @notice Calculate the daily cost for a proof set
+     * @dev Calculates cost per day based on proof set size and CDN usage from stored info
+     * @param proofSetId The ID of the proof set
+     * @return dailyCost The total cost per day in the token's smallest unit
+     */
+    function getProofSetDailyCost(uint256 proofSetId) external view returns (uint256 dailyCost) {
+        uint256 leafCount = this.getProofSetLeafCount(proofSetId);
+        uint256 sizeBytes = getProofSetSizeInBytes(leafCount);
+        bool withCDN = proofSetInfo[proofSetId].withCDN;
+        uint256 pricePerEpoch = calculateStorageRatePerEpoch(sizeBytes, withCDN);
+        return pricePerEpoch * EPOCHS_PER_DAY;
     }
 
     /**
@@ -1363,14 +1392,14 @@ contract PandoraService is
     }
 
     /**
-     * @notice Increase the fixed lockup amount for a proof set's payment rail
-     * @dev This function only modifies the rail lockup without handling token transfers
+     * @notice Increase the lockup period for a proof set's payment rail
+     * @dev This function only modifies the rail lockup period without changing the fixed amount
      * @param proofSetId The ID of the proof set associated with the collection
-     * @param amount The amount to add to rail lockup
+     * @param increment The number of epochs to add to the current lockup period
      */
-    function increaseLockupFixed(uint256 proofSetId, uint256 amount) external {
+    function increaseLockupPeriod(uint256 proofSetId, uint256 increment) external {
         require(proofSetId != 0, "Proof set ID cannot be zero");
-        require(amount > 0, "Payment amount must be greater than zero");
+        require(increment > 0, "Lockup period increase must be greater than zero");
 
         // Verify the proof set exists
         ProofSetInfo storage proofSetData = proofSetInfo[proofSetId];
@@ -1382,11 +1411,11 @@ contract PandoraService is
         // Get current rail information
         Payments.RailView memory rail = payments.getRail(proofSetData.railId);
 
-        // Modify rail lockup to include the new payment amount
+        // Modify rail lockup to increase the lockup period while keeping lockupFixed unchanged
         payments.modifyRailLockup(
             proofSetData.railId,
-            rail.lockupPeriod,
-            rail.lockupFixed + amount
+            rail.lockupPeriod + increment,
+            rail.lockupFixed
         );
     }
 }

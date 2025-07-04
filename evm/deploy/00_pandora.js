@@ -98,6 +98,9 @@ module.exports = async ({ deployments, network, run }) => {
             },
         },
         log: true,
+        // Add these options to fix nonce management
+        waitConfirmations: 1,
+        autoMine: true,
     })
 
     console.log(`PandoraService deployed to: ${pandoraService.address}`)

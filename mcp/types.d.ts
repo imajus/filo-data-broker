@@ -1,5 +1,6 @@
-type ToolAnnotations = import("@modelcontextprotocol/sdk/types").ToolAnnotations;
-type ZodRawShape = import("zod").ZodRawShape;
+type ToolAnnotations =
+  import('@modelcontextprotocol/sdk/types').ToolAnnotations;
+type ZodRawShape = import('zod').ZodRawShape;
 
 interface ToolDefinition {
   name: string;
@@ -9,9 +10,9 @@ interface ToolDefinition {
     inputSchema?: ZodRawShape;
     outputSchema?: ZodRawShape;
     annotations?: ToolAnnotations;
-  },
-  handler: ToolCallback<ZodRawShape>,
-};
+  };
+  handler: ToolCallback<ZodRawShape>;
+}
 
 interface DatasetMetadata {
   id: string;
@@ -19,12 +20,12 @@ interface DatasetMetadata {
   description: string;
   publicColumns: string[];
   privateColumns: string[];
-  price: number;
+  price: string;
 }
 
 type Dataset = DatasetMetadata & {
   query: (sql: string) => Promise<any[]>;
-}
+};
 
 interface DatasetFactory {
   get: (id: string) => Promise<Dataset>;
