@@ -7,7 +7,7 @@ alwaysApply: true
 
 ## Project Overview
 
-This is a command-line interface tool for importing CSV data to Filo Data Broker with privacy-aware column selection. The CLI allows users to interactively select which columns contain sensitive data before uploading to the blockchain-based data broker.
+This is a command-line interface tool for importing CSV data to Filo Data Broker with privacy-aware column selection. The CLI allows users to interactively select which columns contain sensitive data before uploading to the blockchain-based data broker using Synapse network integration.
 
 ## Project Structure
 
@@ -20,14 +20,14 @@ This is a command-line interface tool for importing CSV data to Filo Data Broker
 - **File Upload**: [lib/uploader.js](mdc:lib/uploader.js) - Handles file upload operations to the data broker
 
 ### Blockchain Integration
-- **Smart Contracts**: [lib/contracts/](mdc:lib/contracts) - NFT contract definitions and factory JSON
-  - [lib/contracts/NFT.js](mdc:lib/contracts/NFT.js) - NFT contract interface
-  - [lib/contracts/NFTFactory.json](mdc:lib/contracts/NFTFactory.json) - Factory contract ABI
+- **Smart Contracts**: [lib/contracts/](mdc:lib/contracts) - NFT contract definitions and registry JSON
+  - [lib/contracts/NFT.js](mdc:lib/contracts/NFT.js) - NFT contract interface using FDBRegistry
+  - [lib/contracts/FDBRegistry.json](mdc:lib/contracts/FDBRegistry.json) - Registry contract ABI and address
 
 ### Synapse Network Integration
-- **Payment System**: [lib/synapse/payment.js](mdc:lib/synapse/payment.js) - Handles payment processing through Synapse
+- **Payment System**: [lib/synapse/payment.js](mdc:lib/synapse/payment.js) - Handles payment processing through Synapse SDK
 - **Storage Interface**: [lib/synapse/storage.js](mdc:lib/synapse/storage.js) - Manages data storage operations
-- **Core Synapse**: [lib/synapse/synapse.js](mdc:lib/synapse/synapse.js) - Main Synapse network integration
+- **Core Synapse**: [lib/synapse/synapse.js](mdc:lib/synapse/synapse.js) - Main Synapse network integration with Pandora
 
 ### Sample Data
 - **Test Datasets**: [sample/](mdc:sample) - Contains sample CSV files for testing:
@@ -42,17 +42,26 @@ This is a command-line interface tool for importing CSV data to Filo Data Broker
 - Interactive column selection for privacy classification
 - Automatic CSV header analysis and validation
 - Real-time data summary and statistics
+- Parallel upload of public and private data to IPFS
 
 ### Blockchain Integration
 - Ethereum wallet integration via ethers.js
 - NFT-based data ownership and access control
-- Smart contract interaction for data registration
+- FDBRegistry smart contract for collection management
+- Automated dataset linking with CID storage
+
+### Synapse Network Integration
+- Pandora service integration for decentralized storage
+- Payment rail setup and management
+- Proof set selection and storage capacity management
+- USDFC token handling for storage payments
 
 ### User Experience
 - Commander.js for CLI argument parsing
 - Inquirer.js for interactive prompts
 - Chalk for colored terminal output
 - Comprehensive error handling and validation
+- Storage metrics and balance reporting
 
 ## Development Patterns
 
@@ -67,22 +76,52 @@ This is a command-line interface tool for importing CSV data to Filo Data Broker
 - **chalk**: Terminal styling and colors
 - **csv-parse**: CSV file processing
 - **fs-extra**: Enhanced file system operations
+- **@filoz/synapse-sdk**: Synapse network integration
+- **lodash-es**: Utility functions for data manipulation
 
 ## Usage Flow
 
-1. **CSV Analysis**: Parse and validate input CSV file
-2. **Column Discovery**: Extract and display all column headers
-3. **Privacy Selection**: Interactive checkbox for sensitive data marking
-4. **Data Summary**: Show statistics and prepare for upload
-5. **Blockchain Upload**: Submit data with privacy metadata to Filo Data Broker
+1. **Payment Setup**: Initialize payment rail with proof set creation
+2. **Balance Check**: Verify payment capacity and token balances
+3. **CSV Analysis**: Parse and validate input CSV file
+4. **Column Discovery**: Extract and display all column headers
+5. **Privacy Selection**: Interactive checkbox for sensitive data marking
+6. **Data Processing**: Row-by-row processing with progress tracking
+7. **Parallel Upload**: Upload public and private data to IPFS
+8. **NFT Creation**: Create collection via FDBRegistry contract
+9. **Dataset Linking**: Link CIDs to NFT collection
 
 ## Common Commands
 
 ```bash
+# Set up payment rail first (required for new users)
+npm start setup -- --private-key PRIVATE_KEY
+
+# Check wallet and payment balances
+npm start balance -- --private-key PRIVATE_KEY
+
 # Import data with interactive privacy selection
-npm start import -- --api-key KEY --private-key PRIVATE_KEY --file data.csv
+npm start import -- --private-key PRIVATE_KEY --file data.csv
 
 # Show help information
 npm start -- --help
+npm start setup --help
+npm start balance --help
 npm start import --help
 ```
+
+## Contract Architecture
+
+### FDBRegistry Contract
+- **Address**: 0x8bb1d7e08d522246bc9eA24f2A84e67cf74729C5
+- **Functions**:
+  - `createCollection()` - Creates new NFT collection with metadata
+  - `setCollectionCid()` - Links IPFS CIDs to collection
+  - `toggleCollectionStatus()` - Manages collection availability
+  - Payment processing with USDFC token integration
+
+### Storage Integration
+- **Pandora Address**: 0x485da5B22E524F292108F485E5c56a6db6572547
+- **RPC Endpoint**: https://api.calibration.node.glif.io/rpc/v1
+- **Network**: Filecoin Calibration testnet
+- **CDN Support**: Enabled for faster data access

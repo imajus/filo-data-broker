@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { NFTFactory } from '../../contracts/NFTFactory.js';
+import { FDBRegistry } from '../../contracts/FDBRegistry.js';
 import { FilecoinDataset } from './FilecoinDataset.js';
 
 /** @implements {DatasetFactory} */
@@ -9,7 +9,7 @@ export class FilecoinDatasetFactory {
   }
 
   async list() {
-    const datasets = await NFTFactory.getInstance().listDatasets();
+    const datasets = await FDBRegistry.getInstance().listDatasets();
     return datasets.map((ds) => ({
       id: ds.address,
       name: ds.name,

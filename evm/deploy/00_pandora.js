@@ -1,12 +1,55 @@
 require("hardhat-deploy")
 require("hardhat-deploy-ethers")
 
+// Add service providers to the PandoraService
+const providers = [
+    {
+        provider: "0xe9bc394383B67aBcEbe86FD9843F53d8B4a2E981",
+        pdpUrl: "https://polynomial.computer/",
+        pieceRetrievalUrl: "https://polynomial.computer/",
+    },
+    {
+        provider: "0x4A628ebAecc32B8779A934ebcEffF1646F517756",
+        pdpUrl: "https://pdp.zapto.org/",
+        pieceRetrievalUrl: "https://pdp.zapto.org/",
+    },
+    {
+        provider: "0x9f5087A1821eb3Ed8a137be368E5e451166EFAAe",
+        pdpUrl: "https://yablu.net",
+        pieceRetrievalUrl: "https://yablu.net",
+    },
+]
+
+async function addProviders(pandoraService) {
+    // Get the deployed PandoraService contract instance
+    const pandoraServiceContract = await ethers.getContractAt(
+        "PandoraService",
+        pandoraService.address
+    )
+    // Add each provider sequentially
+    for (let i = 0; i < providers.length; i++) {
+        const provider = providers[i]
+        console.log(`Adding provider ${i + 1}/${providers.length}: ${provider.provider}`)
+        try {
+            const tx = await pandoraServiceContract.addServiceProvider(
+                provider.provider,
+                provider.pdpUrl,
+                provider.pieceRetrievalUrl
+            )
+            await tx.wait()
+            console.log(`✓ Successfully added provider ${provider.provider}`)
+        } catch (err) {
+            console.error(`✗ Failed to add provider ${provider.provider}:`, err.message)
+        }
+    }
+}
+
 module.exports = async ({ deployments, network, run }) => {
     const { deploy } = deployments
 
     // Move wallet creation inside the function where network is available
     const private_key = network.config.accounts[0]
-    const wallet = new ethers.Wallet(private_key, ethers.provider)
+    const wallet = new ethers.Wallet(private_key, network.provider)
     console.log("Wallet Ethereum Address:", wallet.address)
 
     // Get constructor arguments from environment variables
@@ -60,53 +103,18 @@ module.exports = async ({ deployments, network, run }) => {
     console.log(`PandoraService deployed to: ${pandoraService.address}`)
     console.log(`PandoraService implementation: ${pandoraService.implementation}`)
 
-    // Add service providers to the PandoraService
-    const providers = [
-        {
-            provider: "0xe9bc394383B67aBcEbe86FD9843F53d8B4a2E981",
-            pdpUrl: "https://polynomial.computer/",
-            pieceRetrievalUrl: "https://polynomial.computer/",
-        },
-        {
-            provider: "0x4A628ebAecc32B8779A934ebcEffF1646F517756",
-            pdpUrl: "https://pdp.zapto.org/",
-            pieceRetrievalUrl: "https://pdp.zapto.org/",
-        },
-        {
-            provider: "0x9f5087A1821eb3Ed8a137be368E5e451166EFAAe",
-            pdpUrl: "https://yablu.net",
-            pieceRetrievalUrl: "https://yablu.net",
-        },
-    ]
-
-    // Get the deployed PandoraService contract instance
-    const pandoraServiceContract = await ethers.getContractAt(
-        "PandoraService",
-        pandoraService.address
-    )
-
-    // Add each provider sequentially
-    for (let i = 0; i < providers.length; i++) {
-        const provider = providers[i]
-        console.log(`Adding provider ${i + 1}/${providers.length}: ${provider.provider}`)
-
-        try {
-            const tx = await pandoraServiceContract.addServiceProvider(
-                provider.provider,
-                provider.pdpUrl,
-                provider.pieceRetrievalUrl
-            )
-            await tx.wait()
-            console.log(`✓ Successfully added provider ${provider.provider}`)
-        } catch (error) {
-            console.error(`✗ Failed to add provider ${provider.provider}:`, error.message)
-        }
+    // Only wait for initial deployment to allow block confirmations
+    if (pandoraService.newlyDeployed) {
+        console.log("Initial deployment detected. Waiting for 45 seconds...")
+        await new Promise((resolve) => setTimeout(resolve, 45000))
+    } else {
+        console.log("Existing deployment detected. Skipping delay.")
     }
+
+    await addProviders(pandoraService)
 
     // Verify the implementation contract on block explorer
     try {
-        console.log("Waiting for 45 seconds...")
-        await new Promise((resolve) => setTimeout(resolve, 45000))
         console.log("Verifying PandoraService implementation contract on block explorer...")
         await run("verify:verify", {
             address: pandoraService.implementation,

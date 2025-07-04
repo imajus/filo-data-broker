@@ -1,5 +1,5 @@
 import alasql from 'alasql';
-import { NFTFactory } from '../../contracts/NFTFactory.js';
+import { FDBRegistry } from '../../contracts/FDBRegistry.js';
 import { transformQuery } from '../../sql.js';
 import { fetchPrivateDataset, fetchPublicDataset } from '../../synapse.js';
 import { ethers } from 'ethers';
@@ -44,7 +44,7 @@ export class FilecoinDataset {
   }
 
   async #initialize() {
-    const factory = NFTFactory.getInstance();
+    const factory = FDBRegistry.getInstance();
     const metadata = await factory.getDatasetMetadata(this.#address);
     this.name = metadata.name;
     this.description = metadata.description;
@@ -67,7 +67,7 @@ export class FilecoinDataset {
 
   async purchase() {
     if (!this.#purchased) {
-      const factory = NFTFactory.getInstance();
+      const factory = FDBRegistry.getInstance();
       await factory.purchase(this.#address, this.#price);
       this.#purchased = true;
     }

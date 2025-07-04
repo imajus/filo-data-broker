@@ -34,7 +34,7 @@ This project implements an MCP server that enables AI agents and applications to
 - **Entry Point**: `bin/index.js` - MCP server startup with stdio transport
 - **Server**: `server.js` - MCP server instance and tool registration
 - **Dataset Factory**: `lib/dataset/factory.js` - Abstract dataset creation and management
-- **Blockchain Integration**: `lib/contracts/NFTFactory.js` - Ethereum contract interactions
+- **Blockchain Integration**: `lib/contracts/FDBRegistry.js` - Ethereum contract interactions
 - **Data Access**: `lib/lighthouse.js` - IPFS/Filecoin data retrieval with encryption support
 
 ### Dataset Implementations
@@ -138,8 +138,8 @@ mcp/
 │   └── index.js                    # Main executable entry point
 ├── lib/
 │   ├── contracts/
-│   │   ├── NFTFactory.js          # Ethereum contract singleton
-│   │   └── NFTFactory.json        # Contract ABI and address
+│   │   ├── FDBRegistry.js          # Ethereum contract singleton
+│   │   └── FDBRegistry.json        # Contract ABI and address
 │   ├── dataset/
 │   │   ├── factory.js             # Dataset factory pattern
 │   │   ├── filecoin/
@@ -231,7 +231,7 @@ interface Dataset {
 
 ### Blockchain Integration
 
-- **Contract Management**: Singleton pattern via `NFTFactory.getInstance()`
+- **Contract Management**: Singleton pattern via `FDBRegistry.getInstance()`
 - **Purchase Flow**: Automatic NFT minting during first private data access
 - **Price Handling**: Prices stored in Wei, converted for display
 - **Error Handling**: Graceful handling of transaction failures

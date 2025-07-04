@@ -7,195 +7,295 @@ alwaysApply: false
 
 ## Environment Variables
 
-### Required for Deployment
-**[deploy/deploy.js](mdc:deploy/deploy.js)** requires these environment variables:
+### Required Variables
 
+#### Core Contract Dependencies
 ```bash
-# FWS Payments Integration
-PAYMENTS_CONTRACT_ADDRESS=0x...    # Deployed FWS Payments contract address
-USDFC_TOKEN_ADDRESS=0x...        # ERC20 token address (e.g., USDFC)
+# PDP Verification System
+PDP_VERIFIER_ADDRESS=0x...                    # PDPVerifier contract address
+PAYMENTS_CONTRACT_ADDRESS=0x...               # FWS Payments contract address
+USDFC_TOKEN_ADDRESS=0x...                     # Payment token (USDFC) contract address
 
-# Network Configuration (in .env)
-PRIVATE_KEY=0x...                  # Deployer private key
-RPC_URL=https://...               # Network RPC endpoint
-ETHERSCAN_API_KEY=...             # For contract verification
+# Optional Configuration
+INITIAL_OPERATOR_COMMISSION_BPS=500           # Operator commission in basis points (5%)
 ```
 
-### Environment Setup:
-1. **Copy Environment Template**: `cp .env.example .env`
-2. **Configure Variables**: Add required addresses and keys
-3. **Network Selection**: Ensure correct network in [hardhat.config.js](mdc:hardhat.config.js)
-4. **Token Deployment**: Deploy payment token if needed before NFTFactory
-
-## Deployment Process
-
-### Automated Deployment Flow
-**[deploy/deploy.js](mdc:deploy/deploy.js)** handles complete deployment automation:
-
-#### Deployment Steps:
-1. **Environment Validation**: Checks for required contract addresses
-2. **Constructor Arguments**: Prepares payments contract and token addresses
-3. **Contract Deployment**: Deploys NFTFactory with proper arguments
-4. **Verification Wait**: 45-second delay for block confirmation
-5. **Contract Verification**: Automatic Etherscan verification
-6. **Contract Sync**: Updates ABI files for CLI/MCP integration
-
-#### Console Output:
+#### Wallet & Network Configuration
 ```bash
-Wallet Ethereum Address: 0x...
-Payments Contract Address: 0x...
-Payment Token Address: 0x...
-NFTFactory deployed to: 0x...
-Waiting for 45 seconds...
-Verifying NFTFactory contract on block explorer...
-NFTFactory contract verified successfully!
-Running post-deployment script...
+# Wallet Configuration
+PRIVATE_KEY=abcdef...                         # Deployer private key
+RPC_URL=https://api.calibration.node.glif.io/rpc/v1  # Network RPC endpoint
+ETHERSCAN_API_KEY=your_api_key               # For contract verification
 ```
 
-### Post-Deployment Tasks
-The deployment script automatically runs the **sync-contracts** task:
+**Security Warning**: Never commit `.env` files containing private keys to public repositories!
 
-#### Contract Synchronization:
-- **ABI Extraction**: Extracts contract ABI from artifacts
-- **Address Update**: Updates contract addresses in JSON files
-- **CLI Integration**: Updates **[../cli/lib/contracts/NFTFactory.json](mdc:../cli/lib/contracts/NFTFactory.json)**
-- **MCP Integration**: Updates **[../mcp/lib/contracts/NFTFactory.json](mdc:../mcp/lib/contracts/NFTFactory.json)**
+### Environment Setup Process
 
-#### File Updates:
-```bash
-# Files updated by sync-contracts task
-../cli/lib/contracts/NFTFactory.json    # CLI contract interface
-../mcp/lib/contracts/NFTFactory.js      # MCP contract wrapper  
-../mcp/lib/contracts/NFTFactory.json    # MCP contract ABI
+1. **Create Environment File**:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Configure Required Variables**: Add all required contract addresses and configuration
+3. **Fund Deployer**: Ensure deployer address has sufficient FIL for gas fees
+4. **Validate Dependencies**: Confirm all referenced contracts exist on target network
+
+## Deployment Architecture
+
+### Two-Stage Deployment Process
+
+The project uses a sequential deployment pattern with dependency management:
+
+#### Stage 1: PandoraService Deployment
+**[deploy/00_pandora.js](mdc:deploy/00_pandora.js)** deploys the core FWS service infrastructure:
+
+```javascript
+// Environment validation
+const pdpVerifierAddress = process.env.PDP_VERIFIER_ADDRESS
+const paymentsContractAddress = process.env.PAYMENTS_CONTRACT_ADDRESS  
+const usdfcTokenAddress = process.env.USDFC_TOKEN_ADDRESS
+const initialOperatorCommissionBps = process.env.INITIAL_OPERATOR_COMMISSION_BPS || "500"
+
+// Deploy with proxy pattern
+const pandoraService = await deploy("PandoraService", {
+    proxy: {
+        proxyContract: "ERC1967Proxy",
+        execute: {
+            init: {
+                methodName: "initialize",
+                args: [pdpVerifierAddress, paymentsContractAddress, usdfcTokenAddress, initialOperatorCommissionBps]
+            }
+        }
+    }
+})
+```
+
+**Features**:
+- **Proxy Pattern**: Uses ERC1967 proxy for upgradability
+- **Service Provider Setup**: Automatically adds pre-configured storage providers
+- **Contract Verification**: Automatic verification on block explorers
+- **Initialization**: Configures PDP integration and payment parameters
+
+#### Stage 2: FDBRegistry Deployment  
+**[deploy/01_registry.js](mdc:deploy/01_registry.js)** deploys the data marketplace registry:
+
+```javascript
+// Dependency resolution
+const pandoraService = await get("PandoraService")
+const paymentToken = process.env.USDFC_TOKEN_ADDRESS
+
+// Deploy registry with dependencies
+const constructorArgs = [paymentToken, pandoraService.address]
+const fdbRegistry = await deploy("FDBRegistry", {
+    args: constructorArgs,
+    dependencies: ["PandoraService"]
+})
+```
+
+**Features**:
+- **Dependency Management**: Requires PandoraService deployment first
+- **Contract Integration**: Links registry to PandoraService for payment processing
+- **ABI Synchronization**: Runs `sync-contracts` task for CLI/MCP integration
+
+### Service Provider Configuration
+
+The deployment process automatically configures storage providers:
+
+```javascript
+const providers = [
+    {
+        provider: "0xe9bc394383B67aBcEbe86FD9843F53d8B4a2E981",
+        pdpUrl: "https://polynomial.computer/",
+        pieceRetrievalUrl: "https://polynomial.computer/"
+    },
+    {
+        provider: "0x4A628ebAecc32B8779A934ebcEffF1646F517756", 
+        pdpUrl: "https://pdp.zapto.org/",
+        pieceRetrievalUrl: "https://pdp.zapto.org/"
+    }
+    // Additional providers...
+]
 ```
 
 ## Network Configuration
 
-### Hardhat Networks
-**[hardhat.config.js](mdc:hardhat.config.js)** supports multiple networks:
+### Supported Networks
 
-#### Network Patterns:
-- **Local**: Hardhat node for development
-- **Testnet**: Calibration, Sepolia for testing
-- **Mainnet**: Filecoin mainnet for production
+#### Filecoin Calibration Testnet (Default)
+```javascript
+calibrationnet: {
+    chainId: 314159,
+    url: "https://api.calibration.node.glif.io/rpc/v1",
+    accounts: [process.env.PRIVATE_KEY],
+    gasPrice: 10000000000, // 10 gwei
+    blockGasLimit: 1000000000
+}
+```
 
-#### Gas Optimization:
+#### Filecoin Mainnet
+```javascript
+mainnet: {
+    chainId: 314,
+    url: "https://api.node.glif.io",
+    accounts: [process.env.PRIVATE_KEY],
+    gasPrice: 10000000000
+}
+```
+
+#### Local Development
+```javascript
+localnet: {
+    chainId: 31415926,
+    url: "http://127.0.0.1:1234/rpc/v1",
+    accounts: [process.env.PRIVATE_KEY]
+}
+```
+
+### Block Explorer Integration
+
+Contracts are automatically verified on appropriate block explorers:
+- **Calibration**: Filecoin testnet Blockscout
+- **Mainnet**: Filecoin mainnet Blockscout
+- **Local**: No verification (development only)
+
+## Deployment Commands
+
+### Full Infrastructure Deployment
+```bash
+# Deploy both PandoraService and FDBRegistry
+npx hardhat deploy --network calibrationnet
+```
+
+### Individual Contract Deployment
+```bash
+# Deploy only PandoraService
+npx hardhat deploy --tags PandoraService --network calibrationnet
+
+# Deploy only FDBRegistry (requires PandoraService)
+npx hardhat deploy --tags FDBRegistry --network calibrationnet
+```
+
+### Deployment Verification
+```bash
+# Check deployment status
+npx hardhat --network calibrationnet etherscan-verify
+
+# Manual contract verification
+npx hardhat verify --network calibrationnet <contract_address> <constructor_args>
+```
+
+## Post-Deployment Integration
+
+### Contract ABI Synchronization
+
+The deployment process automatically runs contract synchronization:
+
+```bash
+# Automatic execution via deploy script
+npx hardhat sync-contracts
+
+# Manual execution if needed
+npx hardhat sync-contracts --network calibrationnet
+```
+
+This updates:
+- **CLI Integration**: Updates contract ABIs in `../cli/lib/contracts/`
+- **MCP Integration**: Updates contract ABIs in `../mcp/lib/contracts/`
+- **JSON Artifacts**: Generates contract JSON files for external integration
+
+### Environment Validation
+
+Before deployment, the system validates:
+
+1. **Contract Dependencies**: All required contract addresses exist
+2. **Network Connectivity**: RPC endpoint accessibility
+3. **Account Balance**: Sufficient FIL for deployment gas costs
+4. **Private Key**: Valid deployer account access
+
+### Deployment Output
+
+Successful deployment provides:
+
+```bash
+Wallet Ethereum Address: 0x...
+PDP Verifier Address: 0x...
+Payments Contract Address: 0x...
+USDFC Token Address: 0x...
+PandoraService deployed to: 0x...
+PandoraService implementation: 0x...
+FDBRegistry deployed to: 0x...
+```
+
+**Important**: Save all deployed contract addresses for CLI and integration usage.
+
+## Gas Optimization
+
+### Deployment Settings
 ```javascript
 solidity: {
     version: "0.8.23",
     settings: {
         optimizer: {
             enabled: true,
-            runs: 1000
+            runs: 1000  // Optimized for frequent contract interaction
         }
     }
 }
 ```
 
-### Contract Verification
-Automatic verification supports:
-- **Constructor Arguments**: Automatically passed from deployment
-- **Network Detection**: Works across different networks
-- **Error Handling**: Graceful handling of already-verified contracts
-- **Force Verification**: Uses `force: true` to handle edge cases
+### Gas Estimation
+- **PandoraService**: ~3-4M gas (proxy + implementation)
+- **FDBRegistry**: ~2-3M gas (main contract)
+- **Service Provider Setup**: ~200k gas per provider
 
-## Development Workflow
-
-### Local Development:
-```bash
-# Start local node
-npx hardhat node
-
-# Deploy to local network (separate terminal)
-npx hardhat deploy --network localhost
-
-# Verify deployment
-npx hardhat run scripts/verify-deployment.js --network localhost
-```
-
-### Testnet Deployment:
-```bash
-# Deploy to testnet
-npx hardhat deploy --network calibration
-
-# Verify on explorer (automatic)
-# Contract sync runs automatically
-```
-
-### Production Deployment:
-```bash
-# Final deployment to mainnet
-npx hardhat deploy --network filecoin
-
-# Monitor deployment
-npx hardhat run scripts/post-deployment-checks.js --network filecoin
-```
-
-## Integration Testing
-
-### Payment System Testing:
-1. **Deploy Payment Token**: Deploy ERC20 test token
-2. **Deploy FWS Payments**: Deploy payments contract
-3. **Deploy NFTFactory**: Deploy with payment integration
-4. **Fund Test Accounts**: Distribute tokens to test users
-5. **Test Purchase Flow**: End-to-end purchase testing
-
-### Contract Interaction:
-```bash
-# Create test collection
-npx hardhat run tasks/nft-factory/create-collection.js --network testnet
-
-# Test payment flow
-npx hardhat run tasks/nft-factory/test-purchase.js --network testnet
-
-# Verify fee distribution  
-npx hardhat run tasks/nft-factory/check-balances.js --network testnet
-```
+### Cost Management
+- **Batch Operations**: Service provider setup in single transaction
+- **Proxy Pattern**: Reduces redeployment costs for PandoraService
+- **Verification Delay**: 45-second delay prevents verification failures
 
 ## Troubleshooting
 
-### Common Issues:
+### Common Issues
 
-#### Missing Environment Variables:
+#### Environment Variable Errors
 ```bash
-Error: PAYMENTS_CONTRACT_ADDRESS environment variable is required
+Error: PDP_VERIFIER_ADDRESS environment variable is required
 ```
-**Solution**: Ensure all required env vars are set in `.env`
+**Solution**: Ensure all required environment variables are set in `.env`
 
-#### Verification Failures:
+#### Deployment Dependency Errors
 ```bash
-Error verifying NFTFactory contract: Contract source code already verified
+Error: Could not find deployment for PandoraService
 ```
-**Solution**: Normal behavior, deployment continues successfully
+**Solution**: Deploy PandoraService first or run full deployment
 
-#### Gas Estimation Errors:
+#### Gas Estimation Failures
 ```bash
-Error: cannot estimate gas; transaction may fail
+Error: gas required exceeds allowance
 ```
-**Solution**: Check payment token balances and contract state
+**Solution**: Increase gas limit or check account balance
 
-#### Network Connection Issues:
+#### Contract Verification Issues
 ```bash
-Error: network does not support ENS
+Error: contract verification failed
 ```
-**Solution**: Verify RPC URL and network configuration
+**Solution**: Wait for block confirmations before verification
 
-### Debugging Deployment:
-- **Check Gas Limits**: Ensure sufficient gas for deployment
-- **Verify Balances**: Deployer must have native token for gas
-- **Network Status**: Confirm network is operational
-- **Contract Dependencies**: Ensure payment contracts are deployed first
+### Recovery Procedures
 
-## Security Considerations
+#### Partial Deployment Recovery
+```bash
+# Check existing deployments
+npx hardhat --network calibrationnet deployments:list
 
-### Deployment Security:
-- **Private Key Management**: Use hardware wallets for mainnet
-- **Environment Isolation**: Separate .env files per network
-- **Address Verification**: Double-check payment contract addresses
-- **Multi-Signature**: Consider multi-sig for contract ownership
+# Continue from failed stage
+npx hardhat deploy --tags FDBRegistry --network calibrationnet
+```
 
-### Post-Deployment:
-- **Ownership Transfer**: Transfer ownership from deployer if needed
-- **Emergency Procedures**: Document emergency response procedures
-- **Monitoring Setup**: Implement contract monitoring and alerting
-- **Backup Procedures**: Backup deployment artifacts and configurations
+#### Contract State Validation
+```bash
+# Verify contract initialization
+npx hardhat --network calibrationnet call PandoraService paymentsContractAddress
+npx hardhat --network calibrationnet call FDBRegistry pandoraService
+```

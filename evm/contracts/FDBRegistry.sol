@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./NFT.sol";
 import "./fws/payments/Payments.sol";
+import "./fws/PandoraService.sol";
 
 error FDBRegistry__EmptyName();
 error FDBRegistry__EmptySymbol();
@@ -17,11 +18,15 @@ contract FDBRegistry {
     string public constant BASE_TOKEN_URI =
         "https://pub-f1180ac09e05439c9475cf61f4ce0099.r2.dev/metadata/";
 
+    // Fee distribution constants (in percentage)
+    uint256 public constant DEPLOYER_FEE_PERCENT = 10; // 10% to deployer
+    uint256 public constant PAYMENTS_FEE_PERCENT = 10; // 10% to FWS payments
+
     // ERC20 token used for payments
     IERC20 private immutable paymentToken;
 
-    // Payments contract reference
-    Payments private immutable paymentsContract;
+    // PandoraService contract reference
+    PandoraService private immutable pandoraService;
 
     // Contract deployer address for fee collection
     address private immutable deployer;
@@ -36,7 +41,9 @@ contract FDBRegistry {
         string publicColumns;
         string publicCid;
         string privateCid;
+        uint256 proofSetId;
         uint256 price;
+        uint256 size;
         uint256 createdAt;
         bool isActive;
     }
@@ -55,7 +62,9 @@ contract FDBRegistry {
         string description,
         string privateColumns,
         string publicColumns,
+        uint256 proofSetId,
         uint256 price,
+        uint256 size,
         uint256 indexed collectionId
     );
 
@@ -70,15 +79,12 @@ contract FDBRegistry {
 
     event BalanceWithdrawn(address indexed owner, uint256 amount);
 
-    constructor(address _paymentsContract, address _paymentToken) {
-        require(
-            _paymentsContract != address(0),
-            "FDBRegistry: Payments contract address cannot be zero"
-        );
+    constructor(address _paymentToken, address _pandoraServer) {
         require(_paymentToken != address(0), "FDBRegistry: Payment token address cannot be zero");
+        require(_pandoraServer != address(0), "FDBRegistry: PandoraServer address cannot be zero");
 
         paymentToken = IERC20(_paymentToken);
-        paymentsContract = Payments(_paymentsContract);
+        pandoraService = PandoraService(_pandoraServer);
         deployer = msg.sender;
     }
 
@@ -88,7 +94,9 @@ contract FDBRegistry {
         string memory description,
         string memory privateColumns,
         string memory publicColumns,
-        uint256 price
+        uint256 proofSetId,
+        uint256 price,
+        uint256 size
     ) external returns (address) {
         if (bytes(name).length == 0) {
             revert FDBRegistry__EmptyName();
@@ -110,7 +118,9 @@ contract FDBRegistry {
             publicColumns: publicColumns,
             publicCid: "",
             privateCid: "",
+            proofSetId: proofSetId,
             price: price,
+            size: size,
             createdAt: block.timestamp,
             isActive: false
         });
@@ -128,7 +138,9 @@ contract FDBRegistry {
             description,
             privateColumns,
             publicColumns,
+            proofSetId,
             price,
+            size,
             s_totalCollections - 1
         );
 
@@ -159,17 +171,22 @@ contract FDBRegistry {
         NFT nft = NFT(nftContract);
         uint256 tokenId = nft.mint(msg.sender);
 
-        // Split payment: 10% to deployer, 10% to payments contract, 80% to collection owner
-        uint256 deployerFee = (collection.price * 10) / 100;
-        uint256 paymentsFee = (collection.price * 10) / 100;
+        // Split payment: some to deployer, some to FWS payments (via PandoraService), and the rest to the data provider
+        uint256 deployerFee = (collection.price * DEPLOYER_FEE_PERCENT) / 100;
+        uint256 paymentsFee = (collection.price * PAYMENTS_FEE_PERCENT) / 100;
         uint256 ownerAmount = collection.price - deployerFee - paymentsFee;
 
         // Add deployer fee to deployer's balance
         s_balances[deployer] += deployerFee;
 
-        // Approve and deposit the payments fee to the payments contract
-        paymentToken.approve(address(paymentsContract), paymentsFee);
+        // Handle payment deposit to collection owner through payments contract
+        address paymentsContractAddr = pandoraService.getPaymentsContract();
+        Payments paymentsContract = Payments(paymentsContractAddr);
+        paymentToken.approve(paymentsContractAddr, paymentsFee);
         paymentsContract.deposit(address(paymentToken), collection.owner, paymentsFee);
+
+        // Increase rail lockup through PandoraService
+        pandoraService.increaseLockupFixed(collection.proofSetId, paymentsFee);
 
         // Add remaining amount to collection owner's balance
         s_balances[collection.owner] += ownerAmount;

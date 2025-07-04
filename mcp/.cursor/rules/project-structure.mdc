@@ -23,9 +23,9 @@ alwaysApply: true
 - Type definitions in [types.d.ts](mdc:types.d.ts) define Dataset and DatasetFactory interfaces
 
 ## Blockchain Integration
-- NFT contracts handled via [NFTFactory.js](mdc:lib/contracts/NFTFactory.js) singleton
+- NFT contracts handled via [FDBRegistry.js](mdc:lib/contracts/FDBRegistry.js) singleton
 - Ethereum signer configuration in [lib/signer.js](mdc:lib/signer.js)
-- Contract ABI and address in [NFTFactory.json](mdc:lib/contracts/NFTFactory.json)
+- Contract ABI and address in [FDBRegistry.json](mdc:lib/contracts/FDBRegistry.json)
 
 ## Data Access & Storage
 - IPFS/Filecoin data access via [lighthouse.js](mdc:lib/lighthouse.js) with encryption support

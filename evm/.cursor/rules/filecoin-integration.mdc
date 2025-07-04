@@ -3,136 +3,406 @@ description:
 globs: 
 alwaysApply: false
 ---
-# Filecoin & IPFS Integration
+# Filecoin Integration & PDP Verification
 
-## Filecoin EVM (FEVM) Integration
+## Overview
 
-This project is specifically designed for the Filecoin ecosystem and leverages FEVM (Filecoin Ethereum Virtual Machine) capabilities.
+This project integrates deeply with the Filecoin ecosystem through multiple layers:
+- **FEVM Compatibility**: Runs on Filecoin EVM (calibrationnet/mainnet)  
+- **PDP Verification**: Provable Data Possession ensures data integrity
+- **FWS Payments**: Enterprise payment rails for storage providers
+- **IPFS Storage**: Content-addressed storage for dataset metadata
+- **CAR Files**: Content Addressable aRchives for efficient data transfer
 
-### Network Configuration
-Configured in [hardhat.config.js](mdc:hardhat.config.js):
+## PDP (Provable Data Possession) System
 
-- **Filecoin Calibration Testnet**: Primary development network
-  - Chain ID: 314159
-  - RPC: `https://api.calibration.node.glif.io/rpc/v1`
-  - Explorer: `https://filecoin-testnet.blockscout.com/`
+### Core Architecture
 
-- **Filecoin Mainnet**: Production network
-  - Chain ID: 314
-  - RPC: `https://api.node.glif.io`
+The PDP system provides cryptographic proof that storage providers actually possess the data they claim to store:
 
-- **Local Network**: Development setup
-  - Chain ID: 31415926
-  - RPC: `http://127.0.0.1:1234/rpc/v1`
+#### Key Components:
+- **[PDPVerifier.sol](mdc:contracts/pdp/PDPVerifier.sol)** - Main verification engine (822 lines)
+- **[SimplePDPService.sol](mdc:contracts/pdp/SimplePDPService.sol)** - Basic PDP service implementation  
+- **[Proofs.sol](mdc:contracts/pdp/Proofs.sol)** - Proof generation and validation utilities
+- **[Cids.sol](mdc:contracts/pdp/Cids.sol)** - IPFS CID handling and validation
+- **[BitOps.sol](mdc:contracts/pdp/BitOps.sol)** - Bit manipulation for proof operations
+- **[Fees.sol](mdc:contracts/pdp/Fees.sol)** - PDP fee calculation and management
 
-### FEVM-Specific Dependencies
-From [package.json](mdc:package.json):
-- `@glif/filecoin-address`: Filecoin address utilities
-- `filecoin-solidity-api`: Solidity API for Filecoin functionality
-- `cids`: Content identifier utilities for IPFS
+### Verification Process
 
-## CAR File Generation Tool
-
-### Overview
-The **[go-generate-car](mdc:tools/go-generate-car)** tool is essential for preparing data for Filecoin storage:
-
-- **Purpose**: Generate CAR (Content Addressed Archive) files
-- **Functionality**: Compute CommP (Piece Commitment) for Filecoin deals
-- **Language**: Go-based CLI tool
-- **Integration**: Supports batch processing of NFT metadata and assets
-
-### Usage Pattern for NFT Metadata
-
-1. **Prepare Metadata**: Create JSON metadata files for NFTs
-2. **Generate File List**: Create input JSON with file paths and sizes
-3. **Generate CAR**: Use go-generate-car to create CAR file
-4. **Upload to Filecoin**: Store CAR file on Filecoin network
-5. **Set Base URI**: Use IPFS hash as baseURI in NFT collection
-
-### Input Format
-The tool expects JSON input with file information:
-```json
-[
-  {
-    "Path": "metadata/1.json",
-    "Size": 1024,
-    "Start": 0,
-    "End": 1024
-  },
-  {
-    "Path": "metadata/2.json", 
-    "Size": 1024
-  }
-]
+#### 1. Proof Set Creation
+Storage providers register data as proof sets with unique identifiers:
+```solidity
+// Data is organized into proof sets with metadata
+uint256 proofSetId = 12345;
+string memory metadata = "Climate dataset Q4 2024";
+uint256 dataSize = 107374182400; // 100 GB
 ```
 
-### Command Examples
-```bash
-# Generate CAR file from file list
-./go-generate-car -i metadata-list.json -o ./car-files
+#### 2. Challenge Generation  
+The PDPVerifier periodically issues cryptographic challenges:
+- **Random Challenges**: Challenges are generated using verifiable randomness
+- **Periodic Schedule**: Regular intervals ensure continuous verification
+- **Challenge Parameters**: Include block ranges and specific data segments
 
-# With temporary directory for faster processing
-./go-generate-car -i metadata-list.json -o ./car-files -t /tmp/fast-storage
+#### 3. Proof Submission
+Storage providers respond with cryptographic proofs:
+- **Merkle Proofs**: Demonstrate possession of specific data segments
+- **Timing Requirements**: Proofs must be submitted within deadline windows
+- **Verification**: Mathematical validation of proof authenticity
 
-# Specify target piece size
-./go-generate-car -i metadata-list.json -s 1073741824 -o ./car-files
-```
+#### 4. Verification Results
+Results trigger payment and reputation adjustments:
+- **Successful Proofs**: Maintain payment flows and provider reputation
+- **Failed Proofs**: Trigger arbitration and payment reductions
+- **Fault Recording**: Track provider reliability over time
 
-## NFT Metadata Strategy
+### Integration with Data Marketplace
 
-### URI Structure
-NFT contracts use the pattern: `{baseURI}{tokenId}.json`
+#### Collection → Proof Set Linking
+Each dataset collection links to a PDP proof set:
 
-Example:
-- Base URI: `ipfs://QmYourHashHere/`
-- Token 1 URI: `ipfs://QmYourHashHere/1.json`
-- Token 2 URI: `ipfs://QmYourHashHere/2.json`
-
-### Metadata Schema
-Standard ERC-721 metadata format:
-```json
-{
-  "name": "NFT Name #1",
-  "description": "NFT Description",
-  "image": "ipfs://QmImageHash",
-  "attributes": [
-    {
-      "trait_type": "Property",
-      "value": "Value"
-    }
-  ]
+```solidity
+struct Collection {
+    // ... other fields
+    uint256 proofSetId;     // Links to PDP verification
+    uint256 size;           // Dataset size for proof parameters
+    bool isActive;          // Depends on PDP verification status
 }
 ```
 
-### Storage Workflow
+#### Purchase → Verification Flow
+When users purchase dataset access:
+1. **Payment Processing**: Fees flow through FWS payment rails
+2. **Lockup Increase**: PandoraService increases payment rail lockup
+3. **Verification Monitoring**: Ongoing PDP verification ensures data availability
+4. **Access Guarantee**: NFT ownership backed by cryptographic proof of data possession
 
-1. **Create Metadata**: Generate JSON files for each NFT
-2. **Prepare Assets**: Organize images and other assets
-3. **Generate CAR**: Use go-generate-car tool
-4. **Store on Filecoin**: Upload CAR file to Filecoin
-5. **Get IPFS Hash**: Extract IPFS hash from CAR file
-6. **Deploy Collection**: Use IPFS hash as baseURI
-7. **Mint NFTs**: Each token automatically gets correct URI
+## FWS (Filecoin Web Services) Integration
 
-## Development Integration
+### PandoraService Architecture
 
-### Local Development
-For testing, you can use any IPFS pinning service or local IPFS node:
-- **Pinata**: Popular IPFS pinning service
-- **Web3.Storage**: Filecoin-backed storage service
-- **Local IPFS**: Run local IPFS node for development
+**[PandoraService.sol](mdc:contracts/fws/PandoraService.sol)** provides enterprise-grade payment infrastructure:
 
-### Production Deployment
-For production on Filecoin:
-1. Use go-generate-car for efficient CAR file creation
-2. Store CAR files on Filecoin through storage providers
-3. Use resulting IPFS hashes for NFT metadata URIs
-4. Leverage Filecoin's verifiable storage guarantees
+#### Core Features:
+- **Upgradeable Proxy**: ERC1967 pattern for contract upgrades
+- **Payment Rails**: Streaming payment channels for storage providers
+- **Commission System**: Dynamic rates (5% basic, 40% CDN service)
+- **Lockup Mechanisms**: Secure fund management with time-based releases
+- **Arbitration**: Automated dispute resolution for failed proofs
 
-## Testing Tools
+#### Service Provider Registry
+```javascript
+const providers = [
+    {
+        provider: "0xe9bc394383B67aBcEbe86FD9843F53d8B4a2E981",
+        pdpUrl: "https://polynomial.computer/",
+        pieceRetrievalUrl: "https://polynomial.computer/"
+    },
+    {
+        provider: "0x4A628ebAecc32B8779A934ebcEffF1646F517756",
+        pdpUrl: "https://pdp.zapto.org/",  
+        pieceRetrievalUrl: "https://pdp.zapto.org/"
+    }
+]
+```
 
-### Go Tool Testing
-The tool includes comprehensive tests in [spec/](mdc:tools/go-generate-car/spec) and [test/](mdc:tools/go-generate-car/test):
-- Unit tests for chunk processing
-- Integration tests with various file scenarios
-- Performance tests for large datasets
+#### Pricing Structure
+- **Basic Service**: 2 USDFC per TiB per month (no CDN)
+- **CDN Service**: 3 USDFC per TiB per month (with CDN add-on)
+- **Commission Rates**: 5% for basic, 40% for CDN services
+- **Dynamic Lockup**: Adjusts based on data size and service level
+
+### Payment Rail Management
+
+#### Rail Creation Process
+```bash
+# Create payment rail for storage provider
+npx hardhat create-rail \
+  --pandora 0x123...abc \
+  --payer 0x456...def \
+  --payee 0x789...ghi \
+  --proof-set-id 12345 \
+  --with-cdn true \
+  --network calibrationnet
+```
+
+#### Lockup Management
+```bash
+# Increase lockup for additional storage
+npx hardhat increase-lockup \
+  --pandora 0x123...abc \
+  --proof-set-id 12345 \
+  --amount "1000000000000000000" \
+  --network calibrationnet
+```
+
+## IPFS & Content Addressing
+
+### Data Storage Strategy
+
+#### Public vs Private Data Separation
+- **Public CID**: Openly accessible dataset samples and schemas
+- **Private CID**: Full dataset accessible only to NFT owners
+- **Content Addressing**: IPFS CIDs ensure data integrity and immutability
+
+#### CID Management in Collections
+```solidity
+struct Collection {
+    string publicCid;       // "QmPublicDataSample..."
+    string privateCid;      // "QmPrivateFullDataset..."
+    string publicColumns;   // "timestamp,location,temperature"
+    string privateColumns;  // "sensor_id,raw_data,calibration"
+}
+```
+
+#### Setting Data CIDs
+```bash
+# Activate collection by setting CIDs
+npx hardhat set-collection-cid \
+  --registry 0x123...abc \
+  --collection 0x456...def \
+  --public-cid "QmPublicDataHash..." \
+  --private-cid "QmPrivateDataHash..." \
+  --network calibrationnet
+```
+
+### CAR File Generation
+
+#### Using go-generate-car Tool
+**[tools/go-generate-car/](mdc:tools/go-generate-car)** provides CAR file generation:
+
+```bash
+# Generate CAR file for dataset
+cd tools/go-generate-car
+
+# Create input JSON
+echo '[
+  {"Path": "public/metadata.json", "Size": 1024},
+  {"Path": "private/dataset.csv", "Size": 1073741824}
+]' > dataset.json
+
+# Generate CAR file
+./go-generate-car -i dataset.json -o dataset.car
+
+# Upload to Filecoin network
+# (Use your preferred method: Lighthouse, Web3.Storage, etc.)
+```
+
+#### CAR File Structure
+- **Manifest**: Describes all files and their relationships
+- **Content Blocks**: IPFS blocks containing actual data
+- **Merkle DAG**: Cryptographic integrity verification
+- **CommP**: Piece commitment for Filecoin storage verification
+
+## Network Configuration
+
+### Filecoin EVM Networks
+
+#### Calibration Testnet (Default Development)
+```javascript
+calibrationnet: {
+    chainId: 314159,
+    url: "https://api.calibration.node.glif.io/rpc/v1",
+    accounts: [process.env.PRIVATE_KEY],
+    blockExplorer: "https://calibration.filfox.info/en"
+}
+```
+
+#### Filecoin Mainnet
+```javascript
+mainnet: {
+    chainId: 314,
+    url: "https://api.node.glif.io",
+    accounts: [process.env.PRIVATE_KEY],
+    blockExplorer: "https://filfox.info/en"
+}
+```
+
+### Gas & Transaction Costs
+
+#### Typical Gas Usage
+- **Collection Creation**: ~200,000 gas
+- **NFT Purchase**: ~150,000 gas  
+- **PDP Proof Verification**: ~100,000 gas
+- **Payment Rail Operations**: ~80,000 gas
+
+#### Cost Optimization
+- **Batch Operations**: Reduce per-transaction overhead
+- **Storage Packing**: Optimize struct layouts for gas efficiency
+- **Custom Errors**: Replace revert strings for gas savings
+
+## Integration Workflow
+
+### Data Owner Integration
+
+#### 1. Prepare Dataset
+```bash
+# Organize data into public/private portions
+mkdir -p dataset/{public,private}
+cp metadata.json dataset/public/
+cp full_dataset.csv dataset/private/
+
+# Generate CAR files
+cd tools/go-generate-car
+./go-generate-car -i dataset_manifest.json -o dataset.car
+```
+
+#### 2. Upload to Filecoin
+```bash
+# Upload via storage provider
+curl -X POST https://api.web3.storage/upload \
+  -H "Authorization: Bearer $API_TOKEN" \
+  -F file=@dataset.car
+
+# Get CIDs for public and private data
+PUBLIC_CID="QmPublic..."
+PRIVATE_CID="QmPrivate..."
+```
+
+#### 3. Create Collection with PDP
+```bash
+# Create collection with proof set integration
+npx hardhat create-collection \
+  --registry 0x123...abc \
+  --name "Weather Dataset 2024" \
+  --symbol "WEATHER24" \
+  --proof-set-id 12345 \
+  --size "107374182400" \
+  --price "1000000000000000000" \
+  --network calibrationnet
+
+# Set CIDs to activate
+npx hardhat set-collection-cid \
+  --registry 0x123...abc \
+  --collection 0x456...def \
+  --public-cid $PUBLIC_CID \
+  --private-cid $PRIVATE_CID \
+  --network calibrationnet
+```
+
+### Storage Provider Integration
+
+#### 1. Register with PandoraService
+```bash
+npx hardhat add-service-provider \
+  --pandora 0x123...abc \
+  --provider 0x456...def \
+  --pdp-url "https://my-provider.com/pdp" \
+  --retrieval-url "https://my-provider.com/retrieve" \
+  --network calibrationnet
+```
+
+#### 2. Monitor PDP Challenges
+```javascript
+// Storage provider monitoring system
+const pdpVerifier = await ethers.getContractAt("PDPVerifier", verifierAddress);
+
+pdpVerifier.on("ChallengeGenerated", async (proofSetId, challengeId, deadline) => {
+    console.log(`Challenge ${challengeId} for proof set ${proofSetId}`);
+    console.log(`Deadline: ${new Date(deadline * 1000)}`);
+    
+    // Generate and submit proof
+    const proof = await generateProof(proofSetId, challengeId);
+    await pdpVerifier.submitProof(challengeId, proof);
+});
+```
+
+#### 3. Handle Arbitration
+```javascript
+pandoraService.on("PaymentArbitrated", async (railId, proofSetId, originalAmount, modifiedAmount) => {
+    console.log(`Payment arbitrated for rail ${railId}`);
+    console.log(`Amount reduced from ${originalAmount} to ${modifiedAmount}`);
+    
+    // Update local accounting and investigate failure
+    await handleArbitration(railId, proofSetId);
+});
+```
+
+### Data Consumer Integration
+
+#### 1. Browse Available Datasets
+```bash
+# Query active collections
+npx hardhat get-active-collections \
+  --registry 0x123...abc \
+  --network calibrationnet
+
+# Check dataset details including PDP status
+npx hardhat get-collection-details \
+  --registry 0x123...abc \
+  --collection 0x456...def \
+  --network calibrationnet
+```
+
+#### 2. Purchase Verified Access
+```bash
+# Purchase dataset access (backed by PDP verification)
+npx hardhat purchase-dataset \
+  --registry 0x123...abc \
+  --collection 0x456...def \
+  --network calibrationnet
+```
+
+#### 3. Access Verified Data
+```javascript
+// Verify NFT ownership and access private data
+const hasAccess = await registry.hasNFT(collectionAddress, userAddress);
+if (hasAccess) {
+    const collection = await registry.getCollectionInfo(collectionAddress);
+    const privateCid = collection.privateCid;
+    
+    // Access private data via IPFS
+    const privateData = await ipfs.cat(privateCid);
+    console.log("Accessing verified private dataset:", privateData);
+}
+```
+
+## Monitoring & Analytics
+
+### PDP Verification Status
+```bash
+# Monitor proof submission status
+npx hardhat get-proof-status \
+  --verifier 0x123...abc \
+  --proof-set-id 12345 \
+  --network calibrationnet
+
+# Check provider reliability
+npx hardhat get-provider-stats \
+  --pandora 0x123...abc \
+  --provider 0x456...def \
+  --network calibrationnet
+```
+
+### Payment Rail Health
+```bash
+# Monitor payment rail status
+npx hardhat get-rail-status \
+  --pandora 0x123...abc \
+  --rail-id 67890 \
+  --network calibrationnet
+
+# Check lockup balances
+npx hardhat get-lockup-balance \
+  --pandora 0x123...abc \
+  --proof-set-id 12345 \
+  --network calibrationnet
+```
+
+### Collection Performance
+```bash
+# Track collection sales and PDP verification
+npx hardhat collection-analytics \
+  --registry 0x123...abc \
+  --collection 0x456...def \
+  --from-block 1000000 \
+  --network calibrationnet
+```
+
+This comprehensive Filecoin integration ensures that the data marketplace provides:
+- **Verified Data Availability**: PDP proofs guarantee data possession
+- **Reliable Payment Rails**: FWS infrastructure ensures payment security
+- **Content Integrity**: IPFS addressing prevents data tampering
+- **Scalable Storage**: CAR files enable efficient Filecoin storage
+- **Enterprise Features**: Professional-grade infrastructure for data commerce
