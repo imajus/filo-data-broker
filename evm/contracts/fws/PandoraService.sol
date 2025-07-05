@@ -899,6 +899,26 @@ contract PandoraService is
     }
 
     /**
+     * @notice Get the lockup period for a proof set's payment rail
+     * @param proofSetId The ID of the proof set
+     * @return The lockup period in epochs for the associated payment rail
+     */
+    function getLockupPeriod(uint256 proofSetId) external view returns (uint256) {
+        // Get the proof set info
+        ProofSetInfo storage proofSetData = proofSetInfo[proofSetId];
+        require(proofSetData.railId != 0, "Proof set not found or has no associated rail");
+
+        // Get the payments contract instance
+        Payments payments = Payments(paymentsContractAddress);
+
+        // Get the rail data from the payments contract
+        Payments.RailView memory rail = payments.getRail(proofSetData.railId);
+
+        // Return the lockup period
+        return rail.lockupPeriod;
+    }
+
+    /**
      * @notice Get the effective rates after commission for both service types
      * @return basicServiceFee Service fee for basic service (per TiB per month)
      * @return spPaymentBasic SP payment for basic service (per TiB per month)
@@ -1418,4 +1438,5 @@ contract PandoraService is
             rail.lockupFixed
         );
     }
+
 }

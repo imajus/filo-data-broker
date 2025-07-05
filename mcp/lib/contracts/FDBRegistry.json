@@ -1,5 +1,5 @@
 {
-  "address": "0xDB9aD1c0e38567CB5b8334451f235027e9f1c4a4",
+  "address": "0x49F1A666406d0532F7032873108cB0bcaCa6e893",
   "abi": [
     {
       "inputs": [
@@ -126,12 +126,6 @@
           "indexed": false,
           "internalType": "uint256",
           "name": "price",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "size",
           "type": "uint256"
         },
         {
@@ -306,11 +300,6 @@
           "internalType": "uint256",
           "name": "price",
           "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "size",
-          "type": "uint256"
         }
       ],
       "name": "createCollection",
@@ -457,11 +446,6 @@
             },
             {
               "internalType": "uint256",
-              "name": "size",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
               "name": "createdAt",
               "type": "uint256"
             },
@@ -474,6 +458,25 @@
           "internalType": "struct FDBRegistry.Collection",
           "name": "",
           "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "nftContract",
+          "type": "address"
+        }
+      ],
+      "name": "getCollectionLockupPeriod",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
         }
       ],
       "stateMutability": "view",
@@ -608,11 +611,6 @@
             {
               "internalType": "uint256",
               "name": "price",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "size",
               "type": "uint256"
             },
             {

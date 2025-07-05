@@ -345,4 +345,9 @@ contract FDBRegistry {
         uint256 reserveCost = this.getCollectionReserveCost(nftContract);
         return collectionPrice + reserveCost;
     }
+
+    function getCollectionLockupPeriod(address nftContract) external view returns (uint256) {
+        uint256 proofSetId = s_collectionInfo[nftContract].proofSetId;
+        return pandoraService.getLockupPeriod(proofSetId);
+    }
 }

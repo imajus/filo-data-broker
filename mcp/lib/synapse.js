@@ -7,7 +7,7 @@ async function getSynapse(address) {
   return Synapse.create({
     signer: new ethers.VoidSigner(address, getProvider()),
     withCDN: true,
-    pandoraAddress: '0xAB187e95508699b36b91b727365E1B24362eFaA6',
+    pandoraAddress: '0x7cc566A5402713f4E09C0669E113Ef21Fd8a2c32',
   });
 }
 
