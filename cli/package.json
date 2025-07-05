@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "bin": {
-    "filo": "./bin/cli.js"
+    "fdb-cli": "./bin/cli.js"
   },
   "scripts": {
     "start": "node bin/cli.js",

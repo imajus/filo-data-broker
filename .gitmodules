@@ -1,3 +1,0 @@
-[submodule "evm/lib/fwd-payments"]
-	path = evm/lib/fwd-payments
-	url = git@github.com:FilOzone/filecoin-services-payments.git

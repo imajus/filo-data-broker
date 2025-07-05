@@ -1,10 +1,10 @@
 {
-  "name": "filo-data-broker",
+  "name": "filo-data-broker-mcp",
   "version": "0.1.0",
   "description": "Filo Data Broker MCP Server",
   "main": "index.js",
   "bin": {
-    "filo-data-broker": "./bin/index.js"
+    "fdb-mcp": "./bin/index.js"
   },
   "type": "module",
   "scripts": {
