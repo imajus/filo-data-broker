@@ -1,0 +1,26 @@
+{
+  "name": "FiloDataBroker",
+  "tagline": "Monetize CSV datasets with NFT-gated access and Filecoin storage",
+  "description": "A proof-of-concept platform that helps data providers monetize their structured CSV datasets while token-gating access to valuable information. Uses Filecoin Web Services (FWS) for decentralized storage, Synapse SDK for seamless integration, FilCDN for fast data retrieval, and NFT-based access control for private data columns. Features include automatic dataset preservation fees, 7-day storage guarantees, and MCP server integration for LLM applications.",
+  "team": [
+    {
+      "name": "Denis Perov",
+      "email": "denis.perov@gmail.com"
+    }
+  ],
+  "demo_url": "https://www.npmjs.com/package/filo-data-broker-cli",
+  "technologies": [
+    "JavaScript",
+    "Node.js",
+    "Solidity",
+    "Filecoin",
+    "Filecoin Web Services",
+    "Synapse SDK",
+    "FilCDN",
+    "Hardhat",
+    "Ethers.js",
+    "NFT",
+    "ERC-721",
+    "MCP"
+  ]
+}
