@@ -1,5 +1,4 @@
 import { ethers } from 'ethers';
-import { NFT } from './contracts/NFT.js';
 import { SynapseStorage } from './synapse/storage.js';
 
 /**
@@ -16,7 +15,6 @@ export class Uploader {
    */
   constructor(wallet) {
     this.#wallet = wallet;
-    this.nft = new NFT(null, wallet);
   }
 
   async getStorage() {

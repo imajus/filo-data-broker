@@ -12,6 +12,7 @@ import { Processor } from '../lib/processor.js';
 import { Uploader } from '../lib/uploader.js';
 import { SynapsePayment } from '../lib/synapse/payment.js';
 import { SynapseStorage } from '../lib/synapse/storage.js';
+import { FDBRegistry } from '../lib/contracts/FDBRegistsry.js';
 
 dotenv.config();
 
@@ -106,6 +107,7 @@ program
       },
     ]);
     console.log(chalk.green('🚀 Starting data import...'));
+    const registry = new FDBRegistry(wallet);
     const uploader = new Uploader(wallet);
     const processor = new Processor(uploader);
     try {
@@ -173,7 +175,7 @@ program
       console.log(chalk.green('\n✅ Private data uploaded successfully!'));
       // Step 6: Create NFT collection
       console.log(chalk.yellow('\n▶️ Creating NFT collection...'));
-      await uploader.nft.createCollection(
+      const address = await registry.createCollection(
         name,
         description,
         publicColumns,
@@ -185,16 +187,15 @@ program
       // Step 7: Link dataset to NFT collection
       console.log(chalk.yellow('\n▶️ Linking dataset to NFT collection...'));
       //TODO: Merge into createCollection
-      await uploader.nft.linkDataset(
+      await registry.linkDataset(
+        address,
         publicCid.toString(),
         privateCid.toString()
       );
       console.log(chalk.green('\n✅ Dataset linked to NFT collection!'));
       console.log(chalk.blue('\n📈 All done! Processing summary:'));
       console.log(chalk.white(`  • Total rows processed: ${rowCount}`));
-      console.log(
-        chalk.white(`  • NFT collection address: ${uploader.nft.address}`)
-      );
+      console.log(chalk.white(`  • NFT collection address: ${address}`));
       console.log(chalk.white(`  • Public CID: ${publicCid}`));
       console.log(chalk.white(`  • Private CID: ${privateCid}`));
     } catch (err) {
@@ -260,6 +261,33 @@ program
       console.log(chalk.blue(`Deposit allowance: ${allowanceToken} USDFC`));
     } catch (err) {
       console.log(chalk.red(`❌ Balance Error: ${err.message}`));
+    }
+  });
+
+program
+  .command('datasets')
+  .description('List all available datasets')
+  .action(async (options) => {
+    const wallet = getWallet();
+    console.log(chalk.blue(`Wallet Address: ${wallet.address}`));
+    console.log(chalk.yellow('\n▶️ Fetching datasets...'));
+    try {
+      const registry = new FDBRegistry(wallet);
+      const datasets = await registry.listDatasets();
+      if (datasets.length === 0) {
+        console.log(chalk.yellow('\n📋 No datasets found.'));
+        return;
+      }
+      console.log(chalk.green('\n📊 Available Datasets:'));
+      datasets.forEach((dataset, index) => {
+        const priceInUSDFC = ethers.formatUnits(dataset.price, 18);
+        const lockupDays = (Number(dataset.lockupPeriod) / 2880).toFixed(2);
+        console.log(chalk.white(`\n  ${index + 1}. ${dataset.name}`));
+        console.log(chalk.cyan(`     Price: ${priceInUSDFC} USDFC`));
+        console.log(chalk.cyan(`     Lockup: ${lockupDays} days`));
+      });
+    } catch (err) {
+      console.log(chalk.red(`❌ Datasets Error: ${err.message}`));
     }
   });
 

@@ -1,18 +1,16 @@
 import { ethers } from 'ethers';
 import FDBRegistryData from './FDBRegistry.json' assert { type: 'json' };
 
-export class NFT {
+export class FDBRegistry {
   /**
-   * @param {string | null} address - The address of the NFT collection
    * @param {ethers.Signer} signer - The signer for the Ethereum account
    */
-  constructor(address, signer) {
+  constructor(signer) {
     this.factory = new ethers.Contract(
       FDBRegistryData.address,
       FDBRegistryData.abi,
       signer
     );
-    this.address = address;
   }
 
   /**
@@ -23,7 +21,7 @@ export class NFT {
    * @param {string[]} privateColumns - The private columns of the collection
    * @param {number} proofSetId - The proof set ID that holds the data
    * @param {number} price - The price of the collection in USDFC
-   * @returns {Promise<TransactionResponse>} - The transaction response
+   * @returns {Promise<string>} - The address of the NFT collection
    */
   async createCollection(
     name,
@@ -44,18 +42,19 @@ export class NFT {
     );
     const receipt = await tx.wait();
     const event = receipt.logs.find((e) => e.eventName === 'CollectionCreated');
-    this.address = event.args.nftContract;
+    return event.args.nftContract;
   }
 
   /**
    * Link a dataset to the NFT collection
+   * @param {string} address - The address of the NFT collection
    * @param {string} publicCid - The CID of the public dataset
    * @param {string} privateCid - The CID of the private dataset
    * @returns {Promise<void>}
    */
-  async linkDataset(publicCid, privateCid) {
+  async linkDataset(address, publicCid, privateCid) {
     const tx = await this.factory.setCollectionCid(
-      this.address,
+      address,
       publicCid,
       privateCid
     );
@@ -63,12 +62,19 @@ export class NFT {
   }
 
   /**
-   * Toggle the status of the NFT collection
-   * @param {string} address - The address of the NFT collection
-   * @returns {Promise<void>}
+   * List all active datasets with their lockup periods
+   * @returns {Promise<Array>} - Array of dataset objects with lockup periods
    */
-  async toggleCollectionStatus() {
-    const tx = await this.factory.toggleCollectionStatus(this.address);
-    await tx.wait();
+  async listDatasets() {
+    const collections = await this.factory.getActiveCollections();
+    return Promise.all(
+      collections.map(async (address) => {
+        const info = await this.factory.getCollectionInfo(address);
+        const lockupPeriod = await this.factory.getCollectionLockupPeriod(
+          address
+        );
+        return { ...info, lockupPeriod };
+      })
+    );
   }
 }
