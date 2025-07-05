@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import FDBRegistryData from './FDBRegistry.json' assert { type: 'json' };
+import FDBRegistryData from './FDBRegistry.json' with { type: 'json' };
 
 export class FDBRegistry {
   /**

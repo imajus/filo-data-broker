@@ -7,14 +7,14 @@ import inquirer from 'inquirer';
 import { pick } from 'lodash-es';
 import { ethers } from 'ethers';
 import dotenv from 'dotenv';
-import packageJson from '../package.json' assert { type: 'json' };
+import packageJson from '../package.json' with { type: 'json' };
 import { Processor } from '../lib/processor.js';
 import { Uploader } from '../lib/uploader.js';
 import { SynapsePayment } from '../lib/synapse/payment.js';
 import { SynapseStorage } from '../lib/synapse/storage.js';
 import { FDBRegistry } from '../lib/contracts/FDBRegistsry.js';
 
-dotenv.config();
+dotenv.config({ quiet: true });
 
 const RPC_URL = 'https://api.calibration.node.glif.io/rpc/v1';
 const PROOFSET_BASE_URL = 'https://pdp.vxb.ai/calibration/proofsets/';
