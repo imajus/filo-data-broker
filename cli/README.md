@@ -8,23 +8,41 @@ A command-line interface tool for importing CSV data to FiloDataBroker registry 
 npm install
 ```
 
+## Environment Setup
+
+The CLI requires a private key for Ethereum wallet operations. You can provide this in two ways:
+
+### Option 1: Environment Variable (Recommended)
+
+Create a `.env` file in the project root:
+
+```bash
+echo "PRIVATE_KEY=your_private_key_here" > .env
+```
+
+### Option 2: Inline Environment Variable
+
+```bash
+PRIVATE_KEY=your_private_key_here npm start <command>
+```
+
 ## Usage
 
 ```bash
 # Set up payment rail (first time setup)
-npx fdb-cli setup --private-key YOUR_PRIVATE_KEY
+npm start setup
 
 # Check wallet and payment balances
-npx fdb-cli balance --private-key YOUR_PRIVATE_KEY
+npm start balance
 
 # Import data from a CSV file (interactive mode)
-npx fdb-cli import --private-key YOUR_PRIVATE_KEY --file ./data.csv
+npm start import -- --file ./data.csv
 
 # Show help
-npx fdb-cli --help
-npx fdb-cli setup --help
-npx fdb-cli balance --help
-npx fdb-cli import --help
+npm start -- --help
+npm start setup --help
+npm start balance --help
+npm start import --help
 ```
 
 ## Features
@@ -35,6 +53,7 @@ npx fdb-cli import --help
 - **Filecoin Network Integration**: Decentralized storage and payment processing
 - **Payment Rail Management**: USDFC token support with allowances and deposits
 - **Dual Data Upload**: Separate handling of public and private data with IPFS CIDs
+- **Environment Variable Support**: Secure private key handling via .env files
 - **Error Handling**: Comprehensive validation and progress reporting
 
 ## Development
@@ -53,9 +72,9 @@ npm start -- --help
 
 Set up the Synapse payment rail for data storage operations.
 
-**Required Arguments:**
+**Required Environment Variables:**
 
-- `-p, --private-key <key>` - Ethereum account private key
+- `PRIVATE_KEY` - Ethereum account private key
 
 **Process:**
 
@@ -66,16 +85,16 @@ Set up the Synapse payment rail for data storage operations.
 **Example:**
 
 ```bash
-npx fdb-cli balance --private-key YOUR_PRIVATE_KEY
+npm start setup
 ```
 
 ### balance
 
 Check wallet and payment balances across different tokens and services.
 
-**Required Arguments:**
+**Required Environment Variables:**
 
-- `-p, --private-key <key>` - Ethereum account private key
+- `PRIVATE_KEY` - Ethereum account private key
 
 **Information Displayed:**
 
@@ -86,7 +105,7 @@ Check wallet and payment balances across different tokens and services.
 **Example:**
 
 ```bash
-npx fdb-cli balance --private-key YOUR_PRIVATE_KEY
+npm start balance
 ```
 
 ### import
@@ -96,7 +115,10 @@ Import data from a CSV file to the Filo Data Broker with NFT collection creation
 **Required Arguments:**
 
 - `-f, --file <path>` - Path to the CSV file to import
-- `-p, --private-key <key>` - Ethereum account private key
+
+**Required Environment Variables:**
+
+- `PRIVATE_KEY` - Ethereum account private key
 
 **Interactive Process:**
 
@@ -111,7 +133,7 @@ Import data from a CSV file to the Filo Data Broker with NFT collection creation
 **Example:**
 
 ```bash
-npx fdb-cli import -- --private-key YOUR_PRIVATE_KEY --file ./data.csv
+npm start import -- --file ./data.csv
 ```
 
 **Sample Output:**
@@ -173,21 +195,27 @@ Wallet Address: 0x...
 
 ### First Time Setup
 
-1. **Setup Payment Rail**:
+1. **Environment Configuration**:
 
    ```bash
-   npx fdb-cli setup --private-key YOUR_PRIVATE_KEY
+   echo "PRIVATE_KEY=your_private_key_here" > .env
    ```
 
-2. **Check Balances**:
+2. **Setup Payment Rail**:
 
    ```bash
-   npx fdb-cli balance --private-key YOUR_PRIVATE_KEY
+   npm start setup
    ```
 
-3. **Import Data**:
+3. **Check Balances**:
+
    ```bash
-   npx fdb-cli import --private-key YOUR_PRIVATE_KEY --file ./data.csv
+   npm start balance
+   ```
+
+4. **Import Data**:
+   ```bash
+   npm start import -- --file ./data.csv
    ```
 
 ## Sample Datasets

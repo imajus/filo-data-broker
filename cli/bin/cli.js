@@ -6,11 +6,14 @@ import fs from 'fs-extra';
 import inquirer from 'inquirer';
 import { pick } from 'lodash-es';
 import { ethers } from 'ethers';
+import dotenv from 'dotenv';
 import packageJson from '../package.json' assert { type: 'json' };
 import { Processor } from '../lib/processor.js';
 import { Uploader } from '../lib/uploader.js';
 import { SynapsePayment } from '../lib/synapse/payment.js';
 import { SynapseStorage } from '../lib/synapse/storage.js';
+
+dotenv.config();
 
 const RPC_URL = 'https://api.calibration.node.glif.io/rpc/v1';
 const PROOFSET_BASE_URL = 'https://pdp.vxb.ai/calibration/proofsets/';
@@ -19,6 +22,19 @@ const provider = new ethers.JsonRpcProvider(RPC_URL);
 
 function proofSetUrl(proofSetId) {
   return `${PROOFSET_BASE_URL}${proofSetId}`;
+}
+
+function getWallet() {
+  if (!process.env.PRIVATE_KEY) {
+    console.log(
+      chalk.red('❌ Error: PRIVATE_KEY environment variable is required')
+    );
+    console.log(
+      chalk.yellow(`Usage: PRIVATE_KEY=<your-private-key> npx fdb-cli`)
+    );
+    process.exit(1);
+  }
+  return new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 }
 
 const program = new Command();
@@ -31,12 +47,11 @@ program
 program
   .command('import')
   .description('Import data from a CSV file')
-  .requiredOption('-p, --private-key <key>', 'Ethereum account private key')
   .requiredOption('-f, --file <path>', 'Path to the CSV file to import')
   .action(async (options) => {
     if (!options.file) {
       console.log(chalk.red('❌ Error: CSV file path is required'));
-      console.log(chalk.yellow('Usage: import -p <key> -f <csv-file-path>'));
+      console.log(chalk.yellow('Usage: import -f <csv-file-path>'));
       return;
     }
     // Step 1: Check if file exists
@@ -44,14 +59,14 @@ program
       console.log(chalk.red(`❌ Error: File not found at ${options.file}`));
       return;
     }
-    const wallet = new ethers.Wallet(options.privateKey, provider);
+    const wallet = getWallet();
     const payment = await SynapsePayment.create(wallet);
     const proofSet = await payment.selectProofset();
     if (!proofSet) {
       console.log(chalk.red('❌ Error: No Proof Set found'));
       console.log(
         chalk.yellow(
-          '\nℹ️ Please run `setup` command to set up the payment rail'
+          '\nℹ️ Please run `PRIVATE_KEY=<your-private-key> npm start setup` to set up the payment rail'
         )
       );
       return;
@@ -190,9 +205,8 @@ program
 program
   .command('setup')
   .description('Set up the payment rail')
-  .requiredOption('-p, --private-key <key>', 'Ethereum account private key')
   .action(async (options) => {
-    const wallet = new ethers.Wallet(options.privateKey, provider);
+    const wallet = getWallet();
     console.log(chalk.blue(`Wallet Address: ${wallet.address}`));
     console.log(chalk.yellow('\n▶️ Setting up payment rail...'));
     try {
@@ -222,9 +236,8 @@ program
 program
   .command('balance')
   .description('Check wallet and payment balances')
-  .requiredOption('-p, --private-key <key>', 'Ethereum account private key')
   .action(async (options) => {
-    const wallet = new ethers.Wallet(options.privateKey, provider);
+    const wallet = getWallet();
     console.log(chalk.blue(`Wallet Address: ${wallet.address}`));
     console.log(chalk.yellow('\n▶️ Fetching balances...'));
     try {
