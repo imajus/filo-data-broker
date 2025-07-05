@@ -73,7 +73,7 @@ export class FDBRegistry {
         const lockupPeriod = await this.factory.getCollectionLockupPeriod(
           address
         );
-        return { ...info, lockupPeriod };
+        return { name: info.name, price: info.price, lockupPeriod };
       })
     );
   }
