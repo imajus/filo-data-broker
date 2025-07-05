@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import FDBRegistryData from './FDBRegistry.json' assert { type: 'json' };
+import FDBRegistryData from './FDBRegistry.json' with { type: 'json' };
 import { getSigner } from '../signer.js';
 import { ERC20Token } from './ERC20Token.js';
 
