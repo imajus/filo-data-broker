@@ -11,7 +11,6 @@ This project implements an MCP server that enables AI agents and applications to
 ### Core Functionality
 
 - **Blockchain-Based Dataset Trading**: Purchase dataset access through Ethereum NFT contracts
-- **Encrypted Private Data**: Secure private dataset columns with Lighthouse encryption
 - **Public Data Previews**: Query public columns without purchase
 - **SQL Query Interface**: Standard SQL queries on purchased datasets
 - **IPFS/Filecoin Storage**: Decentralized data storage and retrieval
@@ -19,12 +18,12 @@ This project implements an MCP server that enables AI agents and applications to
 ### MCP Tools
 
 - **`list_datasets`**: Lists available datasets with metadata, pricing, and column information
-- **`query_dataset`**: Executes SQL queries on purchased datasets (public and private data)
+- **`query_dataset`**: Executes SQL queries on datasets
 
 ### Dataset Types
 
 - **Public Columns**: Available for querying without purchase, stored on IPFS
-- **Private Columns**: Encrypted, require NFT ownership to decrypt and access
+- **Private Columns**: Encrypted, require NFT ownership to decrypt and access (TBD)
 - **Hybrid Access**: Full dataset access includes both public and private data after purchase
 
 ## Architecture
@@ -35,7 +34,6 @@ This project implements an MCP server that enables AI agents and applications to
 - **Server**: `server.js` - MCP server instance and tool registration
 - **Dataset Factory**: `lib/dataset/factory.js` - Abstract dataset creation and management
 - **Blockchain Integration**: `lib/contracts/FDBRegistry.js` - Ethereum contract interactions
-- **Data Access**: `lib/lighthouse.js` - IPFS/Filecoin data retrieval with encryption support
 
 ### Dataset Implementations
 
@@ -151,7 +149,6 @@ mcp/
 │   ├── tools/
 │   │   ├── list-datasets.js       # MCP tool: list datasets
 │   │   └── query-dataset.js       # MCP tool: query datasets
-│   ├── lighthouse.js              # IPFS/Filecoin integration
 │   ├── signer.js                  # Ethereum signer configuration
 │   └── sql.js                     # SQL processing and security
 ├── sample/                        # Sample datasets for testing
@@ -201,7 +198,6 @@ For development without blockchain dependency:
 
 ### Data Privacy
 
-- Private dataset columns encrypted with Lighthouse
 - Public columns available for preview without purchase
 - Secure authentication flows for data decryption
 
@@ -210,37 +206,6 @@ For development without blockchain dependency:
 - Row limits enforced on SQL queries
 - Table name restrictions and input validation
 - Error messages that don't leak sensitive information
-
-## API Reference
-
-### Dataset Interface
-
-All datasets implement the standard `Dataset` interface:
-
-```typescript
-interface Dataset {
-  id: string;
-  name: string;
-  description: string;
-  publicColumns: string[];
-  privateColumns: string[];
-  price?: number;
-  query(sql: string): Promise<any[]>;
-}
-```
-
-### Blockchain Integration
-
-- **Contract Management**: Singleton pattern via `FDBRegistry.getInstance()`
-- **Purchase Flow**: Automatic NFT minting during first private data access
-- **Price Handling**: Prices stored in Wei, converted for display
-- **Error Handling**: Graceful handling of transaction failures
-
-## Requirements
-
-- Node.js ≥20.0.0
-- Ethereum private key with sufficient balance for transactions
-- Network access to Ethereum blockchain and IPFS gateways
 
 ## License
 

@@ -4,6 +4,8 @@
 
 The service enables import of data via a CLI tool, storage of public and private columns as separate CSV files on Filecoin (using Synapse SDK), NFT-gated access to private data, and on-chain dataset metadata. The system includes automatic dataset preservation fees and guaranteed 7-day storage availability through FWS Payments smart contracts.
 
+View the comprehensive demonstration [presentation](https://youtu.be/d3spXWp_vcE) for an overview of the project motivation and usage demonstration.
+
 ---
 
 ## 🏗️ Architecture Overview
@@ -63,6 +65,8 @@ Main Flows:
 - Interacts with FDBRegistry smart contract storing dataset metadata and CIDs.
 - Requires EOA private key with USDFC balance and small FIL amount for gas.
 
+For more details, refer to the [CLI project documentation](./cli/README.md).
+
 ### 2. **FDBRegistry Smart Contract (On-chain Registry + NFT Factory)**
 
 - Each dataset is represented by its own entry in FDBRegistry.
@@ -70,6 +74,8 @@ Main Flows:
 - Acts as NFT factory - creates and manages NFT collections for each dataset.
 - Handles payment processing with 10% service fee deduction.
 - Integrates with FWS Payments for dataset preservation fees and 7-day lockup periods.
+
+For more details, refer to the [EVM project documentation](./evm/README.md).
 
 ### 3. **MCP Server (STDIO Local Mode)**
 
@@ -80,10 +86,11 @@ Main Flows:
 - Requires data consumer's EOA private key with USDFC balance.
 - STDIO mode only - no HTTP REST API support.
 
+For more details, refer to the [MCP project documentation](./mcp/README.md).
+
 ### 4. **Data Storage & Preservation**
 
-- **Public data**: CSV file on Filecoin, CID stored on-chain, accessible via FilCDN for fast retrieval.
-- **Private data**: CSV file on Filecoin, CID stored on-chain, accessible via FilCDN for fast retrieval.
+- **Public/private data**: CSV file on Filecoin, CID stored on-chain, accessible via FilCDN for fast retrieval.
 - **FWS Integration**: Filecoin Web Services for verifiable storage deals and payments.
 - **Preservation System**: Automatic 7-day storage guarantee with lockup period extensions.
 
@@ -142,8 +149,6 @@ Main Flows:
 
 ### Synapse SDK Integration
 
-Using the [Synapse SDK](https://raw.githubusercontent.com/FilOzone/synapse-sdk/refs/heads/master/README.md):
-
 - **Storage Service Creation**: Creating Proof Sets for Filecoin storage operations
 - **USDFC Payments**: Deposits and allowances for storage services
 - **Upload Operations**: CSV data uploading to Proof Sets
@@ -152,7 +157,7 @@ Using the [Synapse SDK](https://raw.githubusercontent.com/FilOzone/synapse-sdk/r
 
 ### Filecoin Web Services (FWS)
 
-- **Custom Deployment**: Deployed a custom copy of Pandora Service smart contract as an arbiter/listener implementation integrated with Synapse SDK - [0xAB18...FaA6](https://filecoin-testnet.blockscout.com/address/0xAB187e95508699b36b91b727365E1B24362eFaA6)
+- **Custom Deployment**: Deployed a custom copy of Pandora Service smart contract as an arbiter/listener implementation integrated with Synapse SDK - [0x7c...2c32](https://filecoin-testnet.blockscout.com/address/0xAB187e95508699b36b91b727365E1B24362eFaA6)
 - **FilCDN Integration**: Leverages FilCDN for fast data retrieval and improved performance when accessing dataset content
 - **Trustless Lockup Extensions**: Custom implementation allows increasing dataset lockup periods in a trustless manner, preventing data providers from withdrawing preservation funds
 - **Data Persistence Guarantees**: Disallowing fund withdrawals provides guaranteed data persistence to data consumers for the locked period
@@ -161,6 +166,11 @@ Using the [Synapse SDK](https://raw.githubusercontent.com/FilOzone/synapse-sdk/r
 ### FilCDN Integration
 
 - **CDN Support**: Enabled for faster data access via FilCDN
+
+### Mosaia Integration
+
+- **List Tool**: Lists available datasets with metadata, pricing, and column information ([source code](https://github.com/imajus/fdb-list-mosaia-tool))
+- **Query Tool**: Executes SQL queries on datasets ([source code](https://github.com/imajus/fdb-query-mosaia-tool))
 
 ---
 

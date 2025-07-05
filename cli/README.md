@@ -35,6 +35,9 @@ npm start setup
 # Check wallet and payment balances
 npm start balance
 
+# List all available datasets
+npm start datasets
+
 # Import data from a CSV file (interactive mode)
 npm start import -- --file ./data.csv
 
@@ -42,6 +45,7 @@ npm start import -- --file ./data.csv
 npm start -- --help
 npm start setup --help
 npm start balance --help
+npm start datasets --help
 npm start import --help
 ```
 
@@ -106,6 +110,44 @@ Check wallet and payment balances across different tokens and services.
 
 ```bash
 npm start balance
+```
+
+### datasets
+
+List all available datasets from the Filo Data Broker registry.
+
+**Information Displayed:**
+
+- 📊 **Dataset Name**: Name of each available dataset
+- 💰 **Price**: Cost in USDFC tokens to access the dataset
+- 🕐 **Lockup Period**: Duration in days for payment lockup
+
+**Example:**
+
+```bash
+npm start datasets
+```
+
+**Sample Output:**
+
+```
+Wallet Address: 0x...
+
+▶️ Fetching datasets...
+
+📊 Available Datasets:
+
+  1. Bali Tourism Destinations
+     Price: 0.1 USDFC
+     Lockup: 7.00 days
+
+  2. Famous Quotes Collection
+     Price: 0.05 USDFC
+     Lockup: 3.50 days
+
+  3. YouTube Analytics Data
+     Price: 0.2 USDFC
+     Lockup: 14.00 days
 ```
 
 ### import
@@ -214,8 +256,15 @@ Wallet Address: 0x...
    ```
 
 4. **Import Data**:
+
    ```bash
    npm start import -- --file ./data.csv
+   ```
+
+5. **Browse Available Datasets**:
+
+   ```bash
+   npm start datasets
    ```
 
 ## Sample Datasets
