@@ -12,19 +12,19 @@ npm install
 
 ```bash
 # Set up payment rail (first time setup)
-npm start setup -- --private-key YOUR_PRIVATE_KEY
+npx fdb-cli setup --private-key YOUR_PRIVATE_KEY
 
 # Check wallet and payment balances
-npm start balance -- --private-key YOUR_PRIVATE_KEY
+npx fdb-cli balance --private-key YOUR_PRIVATE_KEY
 
 # Import data from a CSV file (interactive mode)
-npm start import -- --private-key YOUR_PRIVATE_KEY --file ./data.csv
+npx fdb-cli import --private-key YOUR_PRIVATE_KEY --file ./data.csv
 
 # Show help
-npm start -- --help
-npm start setup --help
-npm start balance --help
-npm start import --help
+npx fdb-cli --help
+npx fdb-cli setup --help
+npx fdb-cli balance --help
+npx fdb-cli import --help
 ```
 
 ## Features
@@ -66,7 +66,7 @@ Set up the Synapse payment rail for data storage operations.
 **Example:**
 
 ```bash
-npm start setup -- --private-key YOUR_PRIVATE_KEY
+npx fdb-cli balance --private-key YOUR_PRIVATE_KEY
 ```
 
 ### balance
@@ -86,7 +86,7 @@ Check wallet and payment balances across different tokens and services.
 **Example:**
 
 ```bash
-npm start balance -- --private-key YOUR_PRIVATE_KEY
+npx fdb-cli balance --private-key YOUR_PRIVATE_KEY
 ```
 
 ### import
@@ -111,7 +111,7 @@ Import data from a CSV file to the Filo Data Broker with NFT collection creation
 **Example:**
 
 ```bash
-npm start import -- --private-key YOUR_PRIVATE_KEY --file ./data.csv
+npx fdb-cli import -- --private-key YOUR_PRIVATE_KEY --file ./data.csv
 ```
 
 **Sample Output:**
@@ -176,35 +176,19 @@ Wallet Address: 0x...
 1. **Setup Payment Rail**:
 
    ```bash
-   npm start setup -- --private-key YOUR_PRIVATE_KEY
+   npx fdb-cli setup --private-key YOUR_PRIVATE_KEY
    ```
 
 2. **Check Balances**:
 
    ```bash
-   npm start balance -- --private-key YOUR_PRIVATE_KEY
+   npx fdb-cli balance --private-key YOUR_PRIVATE_KEY
    ```
 
 3. **Import Data**:
    ```bash
-   npm start import -- --private-key YOUR_PRIVATE_KEY --file ./data.csv
+   npx fdb-cli import --private-key YOUR_PRIVATE_KEY --file ./data.csv
    ```
-
-### Global Installation
-
-Install globally for easier usage:
-
-```bash
-npm install -g
-```
-
-Then use directly:
-
-```bash
-filo setup --private-key YOUR_PRIVATE_KEY
-filo balance --private-key YOUR_PRIVATE_KEY
-filo import --private-key YOUR_PRIVATE_KEY --file ./data.csv
-```
 
 ## Sample Datasets
 
