@@ -55,32 +55,36 @@ This project implements an MCP server that enables AI agents and applications to
 
 ### Installation
 
-1. **Install dependencies**:
+### Manual Execution
 
 ```bash
-npm install
+ETHEREUM_PRIVATE_KEY=... npx -y fdb-mcp --help
 ```
 
-2. **Environment configuration**:
-   Create a `.env` file with:
+### Claude Desktop
 
-```bash
-ETHEREUM_PRIVATE_KEY=0x...  # Your Ethereum private key
-```
-
-3. **Start the server**:
-
-```bash
-npm start
+```json
+{
+  "mcpServers": {
+    "filoDataBroker": {
+      "command": "npx",
+      "args": ["-y", "fdb-mcp"],
+      "env": {
+        "ETHEREUM_PRIVATE_KEY": "..."
+      }
+    }
+  }
+}
 ```
 
 ### Development Mode
 
-For development with MCP inspector and auto-reload:
+1. Edit `.env` file by filling required values
+1. Start MCP inspector and auto-reload:
 
-```bash
-npm run dev
-```
+   ```bash
+   npm run dev
+   ```
 
 This provides a debugging interface for testing tool calls and responses.
 

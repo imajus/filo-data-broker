@@ -157,10 +157,9 @@ For more details, refer to the [MCP project documentation](./mcp/README.md).
 
 ### Filecoin Web Services (FWS)
 
-- **Custom Deployment**: Deployed a custom copy of Pandora Service smart contract as an arbiter/listener implementation integrated with Synapse SDK - [0x7c...2c32](https://filecoin-testnet.blockscout.com/address/0xAB187e95508699b36b91b727365E1B24362eFaA6)
+- **Custom Deployment**: Deployed a custom copy of Pandora Service smart contract as an arbiter/listener implementation integrated with Synapse SDK - [0x7c...2c32](https://filecoin-testnet.blockscout.com/address/0x7cc566A5402713f4E09C0669E113Ef21Fd8a2c32)
 - **FilCDN Integration**: Leverages FilCDN for fast data retrieval and improved performance when accessing dataset content
 - **Trustless Lockup Extensions**: Custom implementation allows increasing dataset lockup periods in a trustless manner, preventing data providers from withdrawing preservation funds
-- **Data Persistence Guarantees**: Disallowing fund withdrawals provides guaranteed data persistence to data consumers for the locked period
 - **Upstream Contribution**: Submitted [PR #72](https://github.com/FilOzone/filecoin-services/pull/72) to Pandora Service upstream repository with helpful functions for the implementation
 
 ### FilCDN Integration
@@ -176,23 +175,29 @@ For more details, refer to the [MCP project documentation](./mcp/README.md).
 
 ## ⚙️ Quick Start (For Hackathon Demo)
 
-1. **Provider:**  
-   a. Prepare your CSV file with public/private data columns or choose one of the sample datasets in `cli/sample` folder.
-   b. Get private key from EOA with some USDFC tokens on Filecoin Calibration network  
-   c. (optional) Run `npx fdb-cli balance` to check yout balance
-   d. Run `npx fdb-cli setup` to do the initial FWS setup
-   e. Run `npx fdb-cli import` to share the dataset:
+### Provider
 
-   - Enter name & descriptio
-   - Select private columns
+1. Prepare your CSV file with public/private data columns or choose one of the sample datasets in `cli/sample` folder.
+1. Get private key from EOA with some USDFC & FIL tokens on Filecoin Calibration network
+1. (optional) Run `npx fdb-cli balance` to check yout balance
+1. Run `npx fdb-cli setup` to do the initial FWS setup
+1. Run `npx fdb-cli import` to share the dataset:
+
+   - Enter name & description
    - Set dataset price in USDFC token (e.g. `0.1`)
-   - The tool will split CSV to public/private chunks and upload them to Filecoin, register the dataset in FDBRegistry
+   - Select private columns
 
-2. **Consumer:**  
-   a. Integrate MCP server with EOA private key to discover datasets to any LLM application, e.g. Claude Desktop (see detailed instruction [here](./mcp/README.md))
-   b. Provide private key from EOA with some USDFC tokens for NFT purchases
-   c. Query public data freely; MCP auto-purchases NFT for private data access  
-   d. MCP downloads and merges CSV files for complete dataset querying
+1. The tool will split CSV to public/private chunks and upload them to Filecoin
+1. The tool will register the dataset in FDBRegistry
+
+### Consumer
+
+1. Integrate MCP server with EOA private key to discover datasets to any LLM application, e.g. Claude Desktop.
+
+   > Note: You must provide private key from EOA with some USDFC tokens for NFT purchases
+
+1. Query public data freely; MCP auto-purchases NFT for private data access
+1. MCP downloads and merges CSV files for complete dataset querying
 
 ---
 
