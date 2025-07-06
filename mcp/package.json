@@ -3,6 +3,12 @@
   "version": "0.3.0",
   "description": "Filo Data Broker MCP Server",
   "main": "index.js",
+  "exports": {
+    ".": {
+      "import": "./index.js",
+      "require": "./dist/bundle.cjs"
+    }
+  },
   "bin": {
     "fdb-mcp": "./bin/index.js"
   },
@@ -10,6 +16,8 @@
   "scripts": {
     "start": "node bin/index.js",
     "dev": "npx @modelcontextprotocol/inspector node --watch bin/index.js",
+    "bundle": "vite build",
+    "prepublishOnly": "npm run bundle",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -21,10 +29,16 @@
   ],
   "author": "",
   "license": "MIT",
+  "files": [
+    "dist/",
+    "lib/",
+    "bin/",
+    "index.js",
+    "server.js",
+    "types.d.ts"
+  ],
   "dependencies": {
     "@filoz/synapse-sdk": "^0.15.0",
-    "@lighthouse-web3/kavach": "^0.2.1",
-    "@lighthouse-web3/sdk": "^0.4.0",
     "@lit-protocol/auth-helpers": "^7.2.0",
     "@lit-protocol/constants": "^7.2.0",
     "@lit-protocol/encryption": "^7.2.0",
@@ -35,12 +49,12 @@
     "dotenv": "^16.6.0",
     "ethers": "^6.15.0",
     "lodash-es": "^4.17.21",
-    "sql.js": "^1.13.0",
     "stream-transform": "^3.3.3",
     "zod": "^3.25.67"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0"
+    "@types/node": "^20.0.0",
+    "vite": "^7.0.2"
   },
   "engines": {
     "node": ">=20.0.0"
