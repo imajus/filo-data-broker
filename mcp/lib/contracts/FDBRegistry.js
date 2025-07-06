@@ -1,6 +1,6 @@
 import { ethers } from 'ethers';
 import FDBRegistryData from './FDBRegistry.json' with { type: 'json' };
-import { getSigner } from '../signer.js';
+import { getWallet } from '../signer.js';
 import { ERC20Token } from './ERC20Token.js';
 
 export class FDBRegistry {
@@ -12,7 +12,7 @@ export class FDBRegistry {
     this.contract = new ethers.Contract(
       FDBRegistryData.address,
       FDBRegistryData.abi,
-      getSigner()
+      getWallet()
     );
   }
 
@@ -36,7 +36,7 @@ export class FDBRegistry {
     return this.#token;
   }
 
-  async listDatasets() {
+  async listCollections() {
     const collections = await this.contract.getActiveCollections();
     const datasets = Promise.all(
       collections.map(async (address) => {
@@ -50,8 +50,6 @@ export class FDBRegistry {
           description: info.description,
           publicColumns: info.publicColumns,
           privateColumns: info.privateColumns,
-          publicCid: info.publicCid,
-          privateCid: info.privateCid,
           createdAt: info.createdAt.toString(),
           price,
         };
@@ -60,7 +58,7 @@ export class FDBRegistry {
     return datasets;
   }
 
-  async getDatasetMetadata(address) {
+  async getCollectionInfo(address) {
     const info = await this.contract.getCollectionInfo(address);
     const price = await this.contract.getCollectionEffectivePrice(address);
     return {
@@ -71,9 +69,20 @@ export class FDBRegistry {
       description: info.description,
       publicColumns: info.publicColumns,
       privateColumns: info.privateColumns,
+      price,
+    };
+  }
+
+  async getDatasetInfo(address) {
+    const info = await this.contract.getDatasetInfo(address);
+    const privateDataHash = ethers.encodeBase64(ethers.getBytes(info.privateDataHash));
+    return {
+      address: info.nftContract,
+      owner: info.owner,
+      proofSetId: info.proofSetId,
       publicCid: info.publicCid,
       privateCid: info.privateCid,
-      price,
+      privateDataHash,
     };
   }
 

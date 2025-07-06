@@ -1,5 +1,6 @@
 import { ethers } from 'ethers';
 import { SynapseStorage } from './synapse/storage.js';
+import { encryptDataWithNFTGatedAccess } from './lit.js';
 
 /**
  * Class for uploading data to Lighthouse
@@ -26,12 +27,15 @@ export class Uploader {
 
   /**
    * Encrypt and upload private data to Filecoin
+   * @param {string} address - The address of the NFT contract
    * @param {string} data - The private data
-   * @returns {Promise<import('@filoz/synapse-sdk').CommP>} - The CommP of the uploaded data
+   * @returns {Promise<{cid: import('@filoz/synapse-sdk').CommP, hash: string}>} - The CID and hash of the uploaded data
    */
-  async uploadPrivateData(data) {
-    //TODO: Encrypt data
-    return this.uploadPublicData(data);
+  async uploadPrivateData(address, data) {
+    const { ciphertext, dataToEncryptHash } =
+      await encryptDataWithNFTGatedAccess(address, data);
+    const cid = await this.uploadPublicData(ciphertext);
+    return { cid, hash: dataToEncryptHash };
   }
 
   /**

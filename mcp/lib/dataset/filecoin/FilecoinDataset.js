@@ -1,7 +1,7 @@
 import alasql from 'alasql';
 import { FDBRegistry } from '../../contracts/FDBRegistry.js';
 import { transformQuery } from '../../sql.js';
-import { fetchPrivateDataset, fetchPublicDataset } from '../../synapse.js';
+import { SynapseStorage } from '../../synapse.js';
 import { ethers } from 'ethers';
 
 alasql.options.cache = true;
@@ -12,10 +12,6 @@ export class FilecoinDataset {
   #address = null;
   /** @type {string} */
   #owner = null;
-  /** @type {string} */
-  #publicCid = null;
-  /** @type {string} */
-  #privateCid = null;
   /** @type {BigInt} */
   #price = null;
   /** @type {Array} */
@@ -44,51 +40,46 @@ export class FilecoinDataset {
   }
 
   async #initialize() {
-    const factory = FDBRegistry.getInstance();
-    const metadata = await factory.getDatasetMetadata(this.#address);
+    const registry = FDBRegistry.getInstance();
+    const metadata = await registry.getCollectionInfo(this.#address);
     this.name = metadata.name;
     this.description = metadata.description;
     this.publicColumns = metadata.publicColumns;
     this.privateColumns = metadata.privateColumns;
     this.#price = metadata.price;
     this.#owner = metadata.owner;
-    this.#publicCid = metadata.publicCid;
-    this.#privateCid = metadata.privateCid;
-    this.#rows = await fetchPublicDataset(this.#owner, this.#publicCid);
   }
 
-  async #decrypt() {
-    if (!this.#decrypted) {
-      const rows = await fetchPrivateDataset(this.#owner, this.#privateCid);
-      this.#rows = this.#rows.map((row, i) => ({ ...row, ...rows[i] }));
-      this.#decrypted = true;
+  async #download() {
+    if (!this.#rows) {
+      const registry = FDBRegistry.getInstance();
+      const storage = await SynapseStorage.create(this.#owner);
+      const { publicCid, privateCid, privateDataHash } =
+        await registry.getDatasetInfo(this.#address);
+      this.#rows = await storage.fetchPublicDataset(publicCid);
+      if (!this.#decrypted) {
+        const rows = await storage.fetchPrivateDataset(
+          this.#address,
+          privateCid,
+          privateDataHash
+        );
+        this.#rows = this.#rows.map((row, i) => ({ ...row, ...rows[i] }));
+        this.#decrypted = true;
+      }
     }
   }
 
   async purchase() {
     if (!this.#purchased) {
-      const factory = FDBRegistry.getInstance();
-      await factory.purchase(this.#address, this.#price);
+      const registry = FDBRegistry.getInstance();
+      await registry.purchase(this.#address, this.#price);
       this.#purchased = true;
     }
   }
 
   async query(sql) {
-    // Ensure data is loaded
-    if (!this.#rows) {
-      await this.#initialize();
-    }
-    // Ensure dataset is purchased
-    if (!this.#purchased) {
-      await this.purchase();
-    }
-    // Ensure data is decrypted
-    if (!this.#decrypted) {
-      await this.#decrypt();
-    }
-    // Use AlaSQL to query the data array
+    await this.#download();
     const result = alasql(transformQuery(sql), [this.#rows]);
-    // Ensure we always return an array
     return Array.isArray(result) ? result : [];
   }
 }

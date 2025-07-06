@@ -34,6 +34,7 @@ function loadDataset(fileName) {
 
 /** @implements {Dataset} */
 export class LocalDataset {
+  price = '0';
   #rows = null;
 
   static BASE_DIR = join(__dirname, '../../..', 'sample');

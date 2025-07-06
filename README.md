@@ -1,8 +1,8 @@
 ## 🚀 Project Summary
 
-**FiloDataBroker** is a proof-of-concept platform to help data providers monetize their structured CSV datasets while protecting sensitive information using Filecoin Web Services (FWS) and NFT-gated access.
+**FiloDataBroker** is a proof-of-concept platform to help data providers monetize their structured CSV datasets while protecting sensitive information using Filecoin Web Services (FWS), Lit Protocol encryption, and NFT-gated access.
 
-The service enables import of data via a CLI tool, storage of public and private columns as separate CSV files on Filecoin (using Synapse SDK), NFT-gated access to private data, and on-chain dataset metadata. The system includes automatic dataset preservation fees and guaranteed 7-day storage availability through FWS Payments smart contracts.
+The service enables import of data via a CLI tool, storage of public and private columns as separate CSV files on Filecoin (using Synapse SDK), NFT-gated access to encrypted private data using Lit Protocol, and on-chain dataset metadata. The system includes automatic dataset preservation fees and guaranteed 7-day storage availability through FWS Payments smart contracts.
 
 View the comprehensive demonstration [presentation](https://youtu.be/d3spXWp_vcE) for an overview of the project motivation and usage demonstration.
 
@@ -19,7 +19,7 @@ View the comprehensive demonstration [presentation](https://youtu.be/d3spXWp_vcE
 |      Filecoin (via FWS)       |
 |-------------------------------|
 | - Public CSV (unencrypted)    |
-| - Private CSV (encrypted*)    |
+| - Private CSV (encrypted)     |
 | - Dataset Preservation        |
 +-------------------------------+
         |
@@ -44,13 +44,12 @@ View the comprehensive demonstration [presentation](https://youtu.be/d3spXWp_vcE
 Main Flows:
 
 - **Public columns**: Uploaded as CSV to Filecoin (unencrypted) via Synapse SDK with FilCDN for fast retrieval.
-- **Private columns**: Uploaded as separate CSV to Filecoin (encrypted\*) via Synapse SDK with FilCDN for fast retrieval.
-- **NFT Access**: Each dataset has its own NFT contract; holding an NFT grants access to private data.
+- **Private columns**: Uploaded as separate CSV to Filecoin (encrypted with Lit Protocol) via Synapse SDK with FilCDN for fast retrieval.
+- **NFT Access**: Each dataset has its own NFT contract; holding an NFT grants access to decrypt private data using Lit Protocol.
 - **Metadata**: Dataset name, description, schema, and CIDs stored in FDBRegistry smart contract.
 - **Preservation Fees**: Automatic 7-day storage guarantee through FWS Payments with lockup periods.
+- **Encryption**: Private data encrypted using Lit Protocol with NFT-gated access control conditions.
 - **No backend DB, no web portal, no off-chain registry.**
-
-(\*): The private data is supposed to be encrypted, but this has been put aside from the PoC implementation due to time constraints.
 
 ---
 
@@ -91,6 +90,7 @@ For more details, refer to the [MCP project documentation](./mcp/README.md).
 ### 4. **Data Storage & Preservation**
 
 - **Public/private data**: CSV file on Filecoin, CID stored on-chain, accessible via FilCDN for fast retrieval.
+- **Encryption**: Private data encrypted using Lit Protocol with NFT-based access control conditions.
 - **FWS Integration**: Filecoin Web Services for verifiable storage deals and payments.
 - **Preservation System**: Automatic 7-day storage guarantee with lockup period extensions.
 
@@ -121,9 +121,16 @@ For more details, refer to the [MCP project documentation](./mcp/README.md).
 - NFT ownership is the sole access and proof mechanism for private data and acts as proof of legal data access.
 - No per-query auditing, no off-chain registry, no web portal, no backend DB.
 - All dataset metadata stored on-chain in FDBRegistry contract.
-- No encryption/decryption in PoC - can be added later with DePin platforms like Lit Protocol.
+- Private data encryption/decryption implemented using Lit Protocol with NFT-gated access control.
 - MCP server automatically handles NFT purchasing - no manual authentication required.
 - STDIO mode only for MCP server - no HTTP REST API mode.
+
+### Lit Protocol Integration
+
+- **Decentralized Encryption**: Private data encrypted using Lit Protocol's threshold cryptography
+- **NFT-Gated Access**: Access control conditions based on NFT ownership for decryption
+- **Trustless Decryption**: No centralized key management - decryption handled by Lit Network
+- **Automatic Handling**: MCP server automatically manages encryption/decryption flows
 
 ---
 
@@ -157,7 +164,7 @@ For more details, refer to the [MCP project documentation](./mcp/README.md).
 
 ### Filecoin Web Services (FWS)
 
-- **Custom Deployment**: Deployed a custom copy of Pandora Service smart contract as an arbiter/listener implementation integrated with Synapse SDK - [0x7c...2c32](https://filecoin-testnet.blockscout.com/address/0x7cc566A5402713f4E09C0669E113Ef21Fd8a2c32)
+- **Custom Deployment**: Deployed a custom copy of Pandora Service smart contract as an arbiter/listener implementation integrated with Synapse SDK - [0x55...62D2](https://filecoin-testnet.blockscout.com/address/0x55577C413A68CF7Ed1383db3b5122425787162D2)
 - **FilCDN Integration**: Leverages FilCDN for fast data retrieval and improved performance when accessing dataset content
 - **Trustless Lockup Extensions**: Custom implementation allows increasing dataset lockup periods in a trustless manner, preventing data providers from withdrawing preservation funds
 - **Upstream Contribution**: Submitted [PR #72](https://github.com/FilOzone/filecoin-services/pull/72) to Pandora Service upstream repository with helpful functions for the implementation

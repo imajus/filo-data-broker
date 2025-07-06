@@ -20,7 +20,6 @@ contract FDBRegistry {
 
     // Fee distribution constants (in percentage)
     uint256 public constant DEPLOYER_FEE_PERCENT = 10; // 10% to deployer
-    uint256 public constant PAYMENTS_FEE_PERCENT = 10; // 10% to FWS payments
     
     // Reserve cost calculation constants
     uint256 public constant RESERVE_PERIOD_DAYS = 7; // 7 days reserve period
@@ -34,6 +33,13 @@ contract FDBRegistry {
     // Contract deployer address for fee collection
     address private immutable deployer;
 
+    struct Dataset {
+        uint256 proofSetId;
+        string publicCid;
+        string privateCid;
+        bytes privateDataHash;
+    }
+
     struct Collection {
         address nftContract;
         address owner;
@@ -42,9 +48,6 @@ contract FDBRegistry {
         string description;
         string privateColumns;
         string publicColumns;
-        string publicCid;
-        string privateCid;
-        uint256 proofSetId;
         uint256 price;
         uint256 createdAt;
         bool isActive;
@@ -52,6 +55,7 @@ contract FDBRegistry {
 
     mapping(address => Collection[]) private s_userCollections;
     mapping(address => Collection) private s_collectionInfo;
+    mapping(address => Dataset) private s_collectionDatasets;
     mapping(address => uint256) private s_balances;
     address[] private s_allCollections;
     uint256 private s_totalCollections;
@@ -64,7 +68,6 @@ contract FDBRegistry {
         string description,
         string privateColumns,
         string publicColumns,
-        uint256 proofSetId,
         uint256 price,
         uint256 indexed collectionId
     );
@@ -79,6 +82,14 @@ contract FDBRegistry {
     );
 
     event BalanceWithdrawn(address indexed owner, uint256 amount);
+
+    event DatasetLinked(
+        address indexed nftContract,
+        uint256 proofSetId,
+        string publicCid,
+        string privateCid,
+        bytes privateDataHash
+    );
 
     constructor(address _paymentToken, address _pandoraServer) {
         require(_paymentToken != address(0), "FDBRegistry: Payment token address cannot be zero");
@@ -95,7 +106,6 @@ contract FDBRegistry {
         string memory description,
         string memory privateColumns,
         string memory publicColumns,
-        uint256 proofSetId,
         uint256 price
     ) external returns (address) {
         if (bytes(name).length == 0) {
@@ -116,9 +126,6 @@ contract FDBRegistry {
             description: description,
             privateColumns: privateColumns,
             publicColumns: publicColumns,
-            publicCid: "",
-            privateCid: "",
-            proofSetId: proofSetId,
             price: price,
             createdAt: block.timestamp,
             isActive: false
@@ -137,7 +144,6 @@ contract FDBRegistry {
             description,
             privateColumns,
             publicColumns,
-            proofSetId,
             price,
             s_totalCollections - 1
         );
@@ -182,7 +188,7 @@ contract FDBRegistry {
         s_balances[deployer] += deployerFee;
 
         // Increase rail lockup period through PandoraService (no token transfer, just period extension)
-        pandoraService.increaseLockupPeriod(collection.proofSetId, lockupPeriodIncrement);
+        pandoraService.increaseLockupPeriod(s_collectionDatasets[nftContract].proofSetId, lockupPeriodIncrement);
 
         // Add collection amount plus reserve cost to collection owner's balance
         s_balances[collection.owner] += ownerAmount;
@@ -308,22 +314,32 @@ contract FDBRegistry {
         return activeCollections;
     }
 
-    function setCollectionCid(
+    function linkCollectionToDataset(
         address nftContract,
+        uint256 proofSetId,
         string memory publicCid,
-        string memory privateCid
+        string memory privateCid,
+        bytes calldata dataHash
     ) external {
         Collection storage collection = s_collectionInfo[nftContract];
         if (collection.owner != msg.sender) {
             revert FDBRegistry__NotCollectionOwner();
         }
-        collection.publicCid = publicCid;
-        collection.privateCid = privateCid;
-
+        s_collectionDatasets[nftContract] = Dataset({
+            proofSetId: proofSetId,
+            publicCid: publicCid,
+            privateCid: privateCid,
+            privateDataHash: dataHash
+        });
+        emit DatasetLinked(nftContract, proofSetId, publicCid, privateCid, dataHash);
         if (!collection.isActive) {
             collection.isActive = true;
             emit CollectionStatusUpdated(nftContract, true);
         }
+    }
+
+    function getDatasetInfo(address nftContract) external view returns (Dataset memory) {
+        return s_collectionDatasets[nftContract];
     }
 
     function getBalance(address user) external view returns (uint256) {
@@ -335,7 +351,7 @@ contract FDBRegistry {
     }
 
     function getCollectionReserveCost(address nftContract) external view returns (uint256) {
-        uint256 proofSetId = s_collectionInfo[nftContract].proofSetId;
+        uint256 proofSetId = s_collectionDatasets[nftContract].proofSetId;
         uint256 dailyCost = pandoraService.getProofSetDailyCost(proofSetId);
         return dailyCost * RESERVE_PERIOD_DAYS;
     }
@@ -347,7 +363,7 @@ contract FDBRegistry {
     }
 
     function getCollectionLockupPeriod(address nftContract) external view returns (uint256) {
-        uint256 proofSetId = s_collectionInfo[nftContract].proofSetId;
+        uint256 proofSetId = s_collectionDatasets[nftContract].proofSetId;
         return pandoraService.getLockupPeriod(proofSetId);
     }
 }
