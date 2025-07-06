@@ -8,6 +8,10 @@ export class SynapseStorage {
     this.#storage = storage;
   }
 
+  get proofSetId() {
+    return this.#storage.proofSetId;
+  }
+
   /**
    * @param {import('ethers').Signer} signer
    * @returns {Promise<SynapseStorage>}

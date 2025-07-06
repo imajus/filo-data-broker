@@ -210,8 +210,8 @@ program
   .action(async (options) => {
     const wallet = getWallet();
     console.log(chalk.blue(`Wallet Address: ${wallet.address}`));
-    console.log(chalk.yellow('\n▶️ Setting up payment rail...'));
     try {
+      console.log(chalk.yellow('\n▶️ Setting up payment rail...'));
       const payment = await SynapsePayment.create(wallet);
       const accountInfo = await payment.reserve();
       const availableFunds = ethers.formatUnits(accountInfo.availableFunds, 18);
@@ -224,11 +224,9 @@ program
       console.log(chalk.white(` • Lockup amount: ${lockupAmount} USDFC`));
       console.log(chalk.white(` • Lockup rate: ${lockupRate} USDFC / day`));
       console.log(chalk.yellow('\n▶️ Setting up storage...'));
-      //FIXME: Dirty hack to upsert Proof Set ID
       const storage = await SynapseStorage.create(wallet);
-      const { selectedProofSetId } = await storage.preflight(65);
       console.log(
-        chalk.blue(`\n🤝 Proof Set: ${proofSetUrl(selectedProofSetId)}`)
+        chalk.blue(`\n🤝 Proof Set: ${proofSetUrl(storage.proofSetId)}`)
       );
       console.log(chalk.green('\n✅ Payment rail & storage set up successfully!'));
     } catch (err) {
