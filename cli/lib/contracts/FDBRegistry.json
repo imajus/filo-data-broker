@@ -1,5 +1,5 @@
 {
-  "address": "0x49F1A666406d0532F7032873108cB0bcaCa6e893",
+  "address": "0x0C168775d59D1238E2aB3eC4C7d1F587Ce0A4Dc7",
   "abi": [
     {
       "inputs": [
@@ -119,12 +119,6 @@
         {
           "indexed": false,
           "internalType": "uint256",
-          "name": "proofSetId",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
           "name": "price",
           "type": "uint256"
         },
@@ -155,6 +149,43 @@
         }
       ],
       "name": "CollectionStatusUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "nftContract",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "proofSetId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "publicCid",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "privateCid",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes",
+          "name": "privateDataHash",
+          "type": "bytes"
+        }
+      ],
+      "name": "DatasetLinked",
       "type": "event"
     },
     {
@@ -204,19 +235,6 @@
     {
       "inputs": [],
       "name": "DEPLOYER_FEE_PERCENT",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "PAYMENTS_FEE_PERCENT",
       "outputs": [
         {
           "internalType": "uint256",
@@ -290,11 +308,6 @@
           "internalType": "string",
           "name": "publicColumns",
           "type": "string"
-        },
-        {
-          "internalType": "uint256",
-          "name": "proofSetId",
-          "type": "uint256"
         },
         {
           "internalType": "uint256",
@@ -425,21 +438,6 @@
               "type": "string"
             },
             {
-              "internalType": "string",
-              "name": "publicCid",
-              "type": "string"
-            },
-            {
-              "internalType": "string",
-              "name": "privateCid",
-              "type": "string"
-            },
-            {
-              "internalType": "uint256",
-              "name": "proofSetId",
-              "type": "uint256"
-            },
-            {
               "internalType": "uint256",
               "name": "price",
               "type": "uint256"
@@ -496,6 +494,47 @@
           "internalType": "uint256",
           "name": "",
           "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "nftContract",
+          "type": "address"
+        }
+      ],
+      "name": "getDatasetInfo",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint256",
+              "name": "proofSetId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "publicCid",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "privateCid",
+              "type": "string"
+            },
+            {
+              "internalType": "bytes",
+              "name": "privateDataHash",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct FDBRegistry.Dataset",
+          "name": "",
+          "type": "tuple"
         }
       ],
       "stateMutability": "view",
@@ -594,21 +633,6 @@
               "type": "string"
             },
             {
-              "internalType": "string",
-              "name": "publicCid",
-              "type": "string"
-            },
-            {
-              "internalType": "string",
-              "name": "privateCid",
-              "type": "string"
-            },
-            {
-              "internalType": "uint256",
-              "name": "proofSetId",
-              "type": "uint256"
-            },
-            {
               "internalType": "uint256",
               "name": "price",
               "type": "uint256"
@@ -683,6 +707,39 @@
           "type": "address"
         },
         {
+          "internalType": "uint256",
+          "name": "proofSetId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "publicCid",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "privateCid",
+          "type": "string"
+        },
+        {
+          "internalType": "bytes",
+          "name": "dataHash",
+          "type": "bytes"
+        }
+      ],
+      "name": "linkCollectionToDataset",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "nftContract",
+          "type": "address"
+        },
+        {
           "internalType": "address",
           "name": "to",
           "type": "address"
@@ -715,29 +772,6 @@
           "type": "uint256"
         }
       ],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "nftContract",
-          "type": "address"
-        },
-        {
-          "internalType": "string",
-          "name": "publicCid",
-          "type": "string"
-        },
-        {
-          "internalType": "string",
-          "name": "privateCid",
-          "type": "string"
-        }
-      ],
-      "name": "setCollectionCid",
-      "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
     },

@@ -1,16 +1,19 @@
 # Filecoin Data Broker MCP Server
 
-A Model Context Protocol (MCP) server implementation that provides blockchain-based dataset trading functionality using Filecoin, IPFS, and Ethereum smart contracts.
+A Model Context Protocol (MCP) server implementation that provides blockchain-based dataset trading functionality using Filecoin, IPFS, Ethereum smart contracts, and Lit Protocol for decentralized encryption.
 
 ## Overview
 
-This project implements an MCP server that enables AI agents and applications to discover, purchase, and query datasets stored on Filecoin/IPFS with Ethereum NFT-based access controls. The server provides a secure, decentralized marketplace for data trading with encrypted private datasets and public dataset previews.
+This project implements an MCP server that enables AI agents and applications to discover, purchase, and query datasets stored on Filecoin/IPFS with Ethereum NFT-based access controls. The server provides a secure, decentralized marketplace for data trading with Lit Protocol encrypted private datasets and public dataset previews.
 
 ## Features
 
 ### Core Functionality
 
 - **Blockchain-Based Dataset Trading**: Purchase dataset access through Ethereum NFT contracts
+- **Lit Protocol Integration**: Decentralized encryption and access control for private datasets
+- **SynapseStorage Integration**: Enhanced data fetching and management capabilities
+- **Automatic Purchase Flow**: Seamless NFT purchase during dataset queries
 - **Public Data Previews**: Query public columns without purchase
 - **SQL Query Interface**: Standard SQL queries on purchased datasets
 - **IPFS/Filecoin Storage**: Decentralized data storage and retrieval
@@ -18,12 +21,12 @@ This project implements an MCP server that enables AI agents and applications to
 ### MCP Tools
 
 - **`list_datasets`**: Lists available datasets with metadata, pricing, and column information
-- **`query_dataset`**: Executes SQL queries on datasets
+- **`query_dataset`**: Executes SQL queries on datasets with automatic purchase handling
 
 ### Dataset Types
 
 - **Public Columns**: Available for querying without purchase, stored on IPFS
-- **Private Columns**: Encrypted, require NFT ownership to decrypt and access (TBD)
+- **Private Columns**: Encrypted with Lit Protocol, require NFT ownership to decrypt and access
 - **Hybrid Access**: Full dataset access includes both public and private data after purchase
 
 ## Architecture
@@ -34,16 +37,19 @@ This project implements an MCP server that enables AI agents and applications to
 - **Server**: `server.js` - MCP server instance and tool registration
 - **Dataset Factory**: `lib/dataset/factory.js` - Abstract dataset creation and management
 - **Blockchain Integration**: `lib/contracts/FDBRegistry.js` - Ethereum contract interactions
+- **Encryption Layer**: `lib/lit.js` - Lit Protocol integration for decentralized encryption
+- **Storage Layer**: `lib/synapse.js` - SynapseStorage for enhanced data operations
 
 ### Dataset Implementations
 
-- **FilecoinDataset**: `lib/dataset/filecoin/FilecoinDataset.js` - Production blockchain-based datasets
+- **FilecoinDataset**: `lib/dataset/filecoin/FilecoinDataset.js` - Production blockchain-based datasets with Lit Protocol decryption
 - **LocalDataset**: `lib/dataset/mock/LocalDataset.js` - Development/testing mock datasets
 
 ### Security & Data Processing
 
 - **SQL Security**: `lib/sql.js` - Query sanitization and access control
-- **Ethereum Integration**: `lib/signer.js` - Blockchain authentication and signing
+- **Ethereum Integration**: `lib/signer.js` - Blockchain authentication and wallet management
+- **Decentralized Encryption**: Lit Protocol for secure data access control
 
 ## Setup
 
@@ -98,16 +104,12 @@ This provides a debugging interface for testing tool calls and responses.
    - Review metadata, pricing, and column information
    - Public columns are immediately queryable
 
-2. **Purchase Dataset Access**:
+2. **Query Datasets with Automatic Purchase**:
 
-   - Datasets require NFT purchase for private column access
-   - Purchase happens automatically during first private data query
-   - Payment processed through Ethereum smart contract
-
-3. **Query Datasets**:
    - Use `query_dataset` tool with SQL queries
-   - Public data: Available without purchase
-   - Private data: Available after NFT ownership verification
+   - System automatically handles NFT purchase for private data access
+   - Payment processed through Ethereum smart contract when needed
+   - Lit Protocol handles decryption of private datasets post-purchase
 
 ### Example Tool Usage
 
@@ -152,9 +154,11 @@ mcp/
 │   │       └── LocalDatasetFactory.js    # Local dataset factory
 │   ├── tools/
 │   │   ├── list-datasets.js       # MCP tool: list datasets
-│   │   └── query-dataset.js       # MCP tool: query datasets
-│   ├── signer.js                  # Ethereum signer configuration
-│   └── sql.js                     # SQL processing and security
+│   │   └── query-dataset.js       # MCP tool: query datasets with auto-purchase
+│   ├── lit.js                     # Lit Protocol integration
+│   ├── signer.js                  # Ethereum wallet configuration
+│   ├── sql.js                     # SQL processing and security
+│   └── synapse.js                 # SynapseStorage integration
 ├── sample/                        # Sample datasets for testing
 ├── server.js                      # MCP server and tool registration
 ├── types.d.ts                     # TypeScript type definitions
@@ -203,7 +207,8 @@ For development without blockchain dependency:
 ### Data Privacy
 
 - Public columns available for preview without purchase
-- Secure authentication flows for data decryption
+- Lit Protocol provides decentralized encryption and access control
+- Automatic purchase and decryption workflows for seamless data access
 
 ### Query Security
 

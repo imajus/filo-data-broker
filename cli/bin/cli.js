@@ -166,31 +166,31 @@ program
           },
         }
       );
-      // Step 5: Upload public & private data (parallel uploads are not supported)
-      console.log(chalk.yellow('\n▶️ Starting public data upload...'));
-      const publicCid = await uploader.uploadPublicData(publicData);
-      console.log(chalk.green('\n✅ Public data uploaded successfully!'));
-      console.log(chalk.yellow('\n▶️ Starting private data upload...'));
-      const privateCid = await uploader.uploadPrivateData(privateData);
-      console.log(chalk.green('\n✅ Private data uploaded successfully!'));
-      // Step 6: Create NFT collection
+      // Step 5: Create NFT collection
       console.log(chalk.yellow('\n▶️ Creating NFT collection...'));
       const address = await registry.createCollection(
         name,
         description,
         publicColumns,
         privateColumns,
-        proofSet.pdpVerifierProofSetId,
         price
       );
       console.log(chalk.green('\n✅ NFT collection created successfully!'));
+      // Step 6: Upload public & private data (parallel uploads are not supported)
+      console.log(chalk.yellow('\n▶️ Starting public data upload...'));
+      const publicCid = await uploader.uploadPublicData(publicData);
+      console.log(chalk.green('\n✅ Public data uploaded successfully!'));
+      console.log(chalk.yellow('\n▶️ Starting private data upload...'));
+      const { cid: privateCid, hash: privateDataHash } = await uploader.uploadPrivateData(address, privateData);
+      console.log(chalk.green('\n✅ Private data uploaded successfully!'));
       // Step 7: Link dataset to NFT collection
       console.log(chalk.yellow('\n▶️ Linking dataset to NFT collection...'));
-      //TODO: Merge into createCollection
       await registry.linkDataset(
         address,
+        proofSet.pdpVerifierProofSetId,
         publicCid.toString(),
-        privateCid.toString()
+        privateCid.toString(),
+        privateDataHash,
       );
       console.log(chalk.green('\n✅ Dataset linked to NFT collection!'));
       console.log(chalk.blue('\n📈 All done! Processing summary:'));
@@ -198,6 +198,7 @@ program
       console.log(chalk.white(`  • NFT collection address: ${address}`));
       console.log(chalk.white(`  • Public CID: ${publicCid}`));
       console.log(chalk.white(`  • Private CID: ${privateCid}`));
+      console.log(chalk.white(`  • Private Data hash: ${privateDataHash}`));
     } catch (err) {
       console.log(chalk.red(`❌ Processing Error: ${err.message}`));
     }
@@ -222,13 +223,14 @@ program
       console.log(chalk.white(` • Total funds: ${totalFunds} USDFC`));
       console.log(chalk.white(` • Lockup amount: ${lockupAmount} USDFC`));
       console.log(chalk.white(` • Lockup rate: ${lockupRate} USDFC / day`));
+      console.log(chalk.yellow('\n▶️ Setting up storage...'));
       //FIXME: Dirty hack to upsert Proof Set ID
       const storage = await SynapseStorage.create(wallet);
       const { selectedProofSetId } = await storage.preflight(65);
       console.log(
         chalk.blue(`\n🤝 Proof Set: ${proofSetUrl(selectedProofSetId)}`)
       );
-      console.log(chalk.green('\n✅ Payment rail set up successfully!'));
+      console.log(chalk.green('\n✅ Payment rail & storage set up successfully!'));
     } catch (err) {
       console.log(chalk.red(`❌ Setup Error: ${err.message}`));
     }

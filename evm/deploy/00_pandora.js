@@ -108,13 +108,12 @@ module.exports = async ({ deployments, network, run }) => {
 
     // Only wait for initial deployment to allow block confirmations
     if (pandoraService.newlyDeployed) {
+        await addProviders(pandoraService)
         console.log("Initial deployment detected. Waiting for 45 seconds...")
         await new Promise((resolve) => setTimeout(resolve, 45000))
     } else {
         console.log("Existing deployment detected. Skipping delay.")
     }
-
-    await addProviders(pandoraService)
 
     // Verify the implementation contract on block explorer
     try {

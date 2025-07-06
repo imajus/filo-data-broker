@@ -5,11 +5,11 @@ import { FilecoinDataset } from './FilecoinDataset.js';
 /** @implements {DatasetFactory} */
 export class FilecoinDatasetFactory {
   async get(address) {
-    return new FilecoinDataset(address);
+    return FilecoinDataset.load(address);
   }
 
   async list() {
-    const datasets = await FDBRegistry.getInstance().listDatasets();
+    const datasets = await FDBRegistry.getInstance().listCollections();
     return datasets.map((ds) => ({
       id: ds.address,
       name: ds.name,

@@ -16,6 +16,7 @@ export default (mcp) =>
       // Create Dataset instance and fetch data
       const factory = getDatasetFactory();
       const dataset = await factory.get(datasetId);
+      await dataset.purchase();
       const results = await dataset.query(sql);
       return {
         content: [

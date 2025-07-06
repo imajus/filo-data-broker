@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { getSigner } from '../signer.js';
+import { getWallet } from '../signer.js';
 
 export class ERC20Token {
   /**
@@ -11,7 +11,7 @@ export class ERC20Token {
       'function balanceOf(address owner) external view returns (uint256)',
       'function allowance(address owner, address spender) external view returns (uint256)',
     ];
-    this.contract = new ethers.Contract(address, this.abi, getSigner());
+    this.contract = new ethers.Contract(address, this.abi, getWallet());
   }
 
   /**
@@ -29,7 +29,7 @@ export class ERC20Token {
    * @returns {Promise<BigInt>} The token balance
    */
   async balance() {
-    const signer = getSigner();
+    const signer = getWallet();
     const address = await signer.getAddress();
     return await this.contract.balanceOf(address);
   }

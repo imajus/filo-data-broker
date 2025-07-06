@@ -28,7 +28,6 @@ export class FDBRegistry {
     description,
     publicColumns,
     privateColumns,
-    proofSetId,
     price
   ) {
     const tx = await this.factory.createCollection(
@@ -37,7 +36,6 @@ export class FDBRegistry {
       description,
       privateColumns.join(','),
       publicColumns.join(','),
-      proofSetId,
       ethers.parseEther(price)
     );
     const receipt = await tx.wait();
@@ -48,15 +46,20 @@ export class FDBRegistry {
   /**
    * Link a dataset to the NFT collection
    * @param {string} address - The address of the NFT collection
+   * @param {string} proofSetId - The proof set ID that holds the data
    * @param {string} publicCid - The CID of the public dataset
-   * @param {string} privateCid - The CID of the private dataset
+   * @param {string} privateCid - The CID of the encrypted private dataset
+   * @param {string} privateDataHash - The hash of the encrypted private dataset
    * @returns {Promise<void>}
    */
-  async linkDataset(address, publicCid, privateCid) {
-    const tx = await this.factory.setCollectionCid(
+  async linkDataset(address, proofSetId, publicCid, privateCid, privateDataHash) {
+    const privateDataHashHex = ethers.hexlify(ethers.decodeBase64(privateDataHash));
+    const tx = await this.factory.linkCollectionToDataset(
       address,
+      proofSetId,
       publicCid,
-      privateCid
+      privateCid,
+      privateDataHashHex,
     );
     await tx.wait();
   }

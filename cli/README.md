@@ -54,6 +54,7 @@ npm start import --help
 - **CSV Header Analysis**: Automatically reads and displays CSV column names
 - **Interactive Privacy Selection**: Choose which columns contain sensitive/private data
 - **NFT Collection Creation**: Creates blockchain-based NFT collections for data ownership
+- **NFT-Gated Encryption**: Private data is encrypted using Lit Protocol with NFT-based access control
 - **Filecoin Network Integration**: Decentralized storage and payment processing
 - **Payment Rail Management**: USDFC token support with allowances and deposits
 - **Dual Data Upload**: Separate handling of public and private data with IPFS CIDs
@@ -169,8 +170,9 @@ Import data from a CSV file to the Filo Data Broker with NFT collection creation
 3. 📋 **Column Display**: Shows all available column names
 4. 🔒 **Privacy Selection**: Interactive checkbox to select private data columns
 5. 🎨 **NFT Creation**: Creates blockchain NFT collection
-6. 📤 **Data Upload**: Uploads public and private data separately
-7. 🔗 **Dataset Linking**: Links uploaded data to NFT collection
+6. 📤 **Public Data Upload**: Uploads public data to Filecoin
+7. 📤 **Private Data Upload**: Uploads encrypted private data to Filecoin
+8. 🔗 **Dataset Linking**: Links both public and private data CIDs to NFT collection with proof set configuration
 
 **Example:**
 
@@ -284,6 +286,9 @@ Wallet Address: 0x...
 ## Dependencies
 
 - **@filoz/synapse-sdk**: Synapse network integration for decentralized storage and payments
+- **@lit-protocol/lit-node-client**: Lit Protocol integration for decentralized encryption
+- **@lit-protocol/auth-helpers**: Authentication utilities for Lit Protocol
+- **@lit-protocol/constants**: Constants and configuration for Lit Protocol
 - **commander**: Command-line argument parsing
 - **chalk**: Terminal colors and styling
 - **csv-parse**: CSV file parsing and **csv-stringify**: CSV file generation

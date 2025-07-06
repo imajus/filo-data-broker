@@ -98,6 +98,8 @@ Enterprise payment infrastructure copied from the [original](https://github.com/
 2. **Environment Variables**: Configure all required variables in `.env`
 3. **Network Access**: Ensure deployer has sufficient FIL for gas fees
 
+> **Note:** After deploying PandoraService, the deployment script will automatically add a set of default service providers and verify both the implementation and proxy contracts on the block explorer. The deployment uses the ERC1967Proxy pattern.
+
 ### Two-Stage Deployment Process
 
 The deployment uses a sequential process with dependency management:
@@ -137,218 +139,9 @@ FDBRegistry deployed to: 0x...
 
 Keep note of the deployed contract addresses for usage examples.
 
-## CLI Usage Examples
+## CLI Tasks Usage Examples
 
-### Data Owner Workflow
-
-#### 1. Create a Dataset Collection
-
-```bash
-npx hardhat create-collection \
-  --registry 0x123...abc \
-  --name "Climate Data 2024" \
-  --symbol "CLIMATE24" \
-  --description "Comprehensive climate dataset for 2024" \
-  --public-columns "timestamp,location,temperature,humidity" \
-  --private-columns "sensor_id,raw_data,calibration,metadata" \
-  --proof-set-id 12345 \
-  --price "1000000000000000000" \
-  --network calibrationnet
-
-# Check effective pricing (collection price + reserve cost)
-npx hardhat get-collection-effective-price \
-  --registry 0x123...abc \
-  --collection 0x456...def \
-  --network calibrationnet
-
-# Check reserve cost breakdown
-npx hardhat get-collection-reserve-cost \
-  --registry 0x123...abc \
-  --collection 0x456...def \
-  --network calibrationnet
-```
-
-#### 2. Set Dataset CIDs (Activate Collection)
-
-```bash
-npx hardhat set-collection-cid \
-  --registry 0x123...abc \
-  --collection 0x456...def \
-  --public-cid "QmPublicDataHash..." \
-  --private-cid "QmPrivateDataHash..." \
-  --network calibrationnet
-```
-
-#### 3. Monitor Sales and Withdraw Earnings
-
-```bash
-# Check collection statistics
-npx hardhat collection-stats \
-  --registry 0x123...abc \
-  --collection 0x456...def \
-  --network calibrationnet
-
-# Check balance and withdraw earnings
-npx hardhat get-balance \
-  --registry 0x123...abc \
-  --user 0x789...ghi \
-  --network calibrationnet
-
-npx hardhat withdraw \
-  --registry 0x123...abc \
-  --network calibrationnet
-```
-
-### Data Buyer Workflow
-
-#### 1. Browse Available Datasets
-
-```bash
-# View all active dataset collections
-npx hardhat get-active-collections \
-  --registry 0x123...abc \
-  --network calibrationnet
-
-# Get details for specific collection
-npx hardhat get-collection-details \
-  --registry 0x123...abc \
-  --collection 0x456...def \
-  --network calibrationnet
-```
-
-#### 2. Purchase Dataset Access with Reserve Costs
-
-```bash
-# Check total effective price (collection + reserve cost)
-npx hardhat get-collection-effective-price \
-  --registry 0x123...abc \
-  --collection 0x456...def \
-  --network calibrationnet
-
-# Approve token spending for total effective price
-npx hardhat approve-token \
-  --token 0xabc...123 \
-  --spender 0x123...abc \
-  --amount "1100000000000000000" \
-  --network calibrationnet
-
-# Purchase dataset access (mints NFT automatically)
-npx hardhat purchase-dataset \
-  --registry 0x123...abc \
-  --collection 0x456...def \
-  --network calibrationnet
-
-# Check payment breakdown
-npx hardhat get-purchase-breakdown \
-  --registry 0x123...abc \
-  --collection 0x456...def \
-  --network calibrationnet
-```
-
-#### 3. Verify Access
-
-```bash
-# Check if user has access NFT
-npx hardhat has-nft \
-  --registry 0x123...abc \
-  --collection 0x456...def \
-  --user 0x789...ghi \
-  --network calibrationnet
-
-# Get owned collections
-npx hardhat get-collections \
-  --registry 0x123...abc \
-  --user 0x789...ghi \
-  --network calibrationnet
-```
-
-### Storage Provider Workflow
-
-#### 1. Register as Service Provider (Multi-Step Process)
-
-```bash
-# Step 1: Register provider (pending approval)
-npx hardhat add-service-provider \
-  --pandora 0x123...abc \
-  --provider 0x456...def \
-  --pdp-url "https://storage-provider.com/pdp" \
-  --retrieval-url "https://storage-provider.com/retrieve" \
-  --network calibrationnet
-
-# Step 2: Check registration status
-npx hardhat get-provider-status \
-  --pandora 0x123...abc \
-  --provider 0x456...def \
-  --network calibrationnet
-```
-
-#### 2. Monitor Approval Status (Admin Required)
-
-```bash
-# List all approved providers (current: 3 providers)
-npx hardhat list-providers \
-  --pandora 0x123...abc \
-  --network calibrationnet
-
-# List pending providers awaiting approval
-npx hardhat list-pending-providers \
-  --pandora 0x123...abc \
-  --network calibrationnet
-
-# Admin: Approve pending provider
-npx hardhat approve-provider \
-  --pandora 0x123...abc \
-  --provider 0x456...def \
-  --network calibrationnet
-```
-
-#### 3. Check Service Pricing (Service-Based Rates)
-
-```bash
-# Get pricing for basic service (2 USDFC/TiB/month, 5% commission)
-npx hardhat get-pricing \
-  --pandora 0x123...abc \
-  --size "107374182400" \
-  --with-cdn false \
-  --network calibrationnet
-
-# Get pricing for CDN service (3 USDFC/TiB/month, 40% commission)
-npx hardhat get-pricing \
-  --pandora 0x123...abc \
-  --size "107374182400" \
-  --with-cdn true \
-  --network calibrationnet
-
-# Check provider commission earnings
-npx hardhat get-provider-earnings \
-  --pandora 0x123...abc \
-  --provider 0x456...def \
-  --network calibrationnet
-```
-
-### NFT Operations
-
-#### Mint Access Tokens
-
-```bash
-# Mint individual NFT
-npx hardhat mint-nft \
-  --registry 0x123...abc \
-  --collection 0x456...def \
-  --to 0x789...ghi \
-  --network calibrationnet
-
-# Batch mint to multiple recipients
-npx hardhat batch-mint \
-  --registry 0x123...abc \
-  --collection 0x456...def \
-  --recipients "0x789...ghi,0xabc...123,0xdef...456" \
-  --network calibrationnet
-```
-
-### System Administration
-
-#### Contract Synchronization
+### Contract Synchronization
 
 Update smart contract addresses & ABIs in other platform projects:
 
@@ -359,21 +152,6 @@ npx hardhat sync-contracts --network calibrationnet
 # Sync specific contract only
 npx hardhat sync-contracts \
   --contract FDBRegistry \
-  --network calibrationnet
-```
-
-#### Provider Management (Admin Only)
-
-```bash
-# Approve pending provider
-npx hardhat approve-provider \
-  --pandora 0x123...abc \
-  --provider 0x456...def \
-  --network calibrationnet
-
-# List pending providers
-npx hardhat list-pending-providers \
-  --pandora 0x123...abc \
   --network calibrationnet
 ```
 
@@ -390,12 +168,20 @@ struct Collection {
     string description;      // Dataset description
     string privateColumns;   // Private data columns
     string publicColumns;    // Public data columns
-    string publicCid;        // IPFS CID for public data
-    string privateCid;       // IPFS CID for private data
-    uint256 proofSetId;      // PDP proof set identifier
     uint256 price;           // Purchase price in USDFC
     uint256 createdAt;       // Creation timestamp
     bool isActive;           // Purchase availability
+}
+```
+
+### Dataset Data Structure
+
+```solidity
+struct Dataset {
+    uint256 proofSetId;      // PDP proof set identifier (links to the proof set for this dataset)
+    string publicCid;        // IPFS CID for public data
+    string privateCid;       // IPFS CID for private data
+    bytes privateDataHash;   // Hash of the private data for integrity verification
 }
 ```
 
@@ -470,6 +256,16 @@ The payment system includes robust error recovery:
     );
     ```
 - `BalanceWithdrawn`: Emitted when earnings are withdrawn
+- `DatasetLinked`: Emitted when a dataset is linked to a collection
+    ```solidity
+    event DatasetLinked(
+        address indexed nftContract,
+        uint256 proofSetId,
+        string publicCid,
+        string privateCid,
+        bytes privateDataHash
+    );
+    ```
 
 ### PandoraService Events
 

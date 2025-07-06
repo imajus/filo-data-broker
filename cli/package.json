@@ -8,7 +8,7 @@
     "fdb-cli": "./bin/cli.js"
   },
   "scripts": {
-    "start": "node bin/cli.js",
+    "start": "node --no-deprecation bin/cli.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -20,6 +20,9 @@
   "license": "ISC",
   "dependencies": {
     "@filoz/synapse-sdk": "^0.15.0",
+    "@lit-protocol/constants": "^7.2.0",
+    "@lit-protocol/encryption": "^7.2.0",
+    "@lit-protocol/lit-node-client-nodejs": "^7.2.0",
     "chalk": "^4.1.2",
     "commander": "^11.1.0",
     "csv-parse": "^5.6.0",
