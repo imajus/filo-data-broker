@@ -125,13 +125,6 @@ For more details, refer to the [MCP project documentation](./mcp/README.md).
 - MCP server automatically handles NFT purchasing - no manual authentication required.
 - STDIO mode only for MCP server - no HTTP REST API mode.
 
-### Lit Protocol Integration
-
-- **Decentralized Encryption**: Private data encrypted using Lit Protocol's threshold cryptography
-- **NFT-Gated Access**: Access control conditions based on NFT ownership for decryption
-- **Trustless Decryption**: No centralized key management - decryption handled by Lit Network
-- **Automatic Handling**: MCP server automatically manages encryption/decryption flows
-
 ---
 
 ## 💰 Pricing & Preservation System
@@ -164,19 +157,75 @@ For more details, refer to the [MCP project documentation](./mcp/README.md).
 
 ### Filecoin Web Services (FWS)
 
-- **Custom Deployment**: Deployed a custom copy of Pandora Service smart contract as an arbiter/listener implementation integrated with Synapse SDK - [0x55...62D2](https://filecoin-testnet.blockscout.com/address/0x55577C413A68CF7Ed1383db3b5122425787162D2)
+- **Smart Contract Modification**: Custom implementation allows increasing dataset lockup periods in a trustless manner, preventing data providers from withdrawing preservation funds
 - **FilCDN Integration**: Leverages FilCDN for fast data retrieval and improved performance when accessing dataset content
-- **Trustless Lockup Extensions**: Custom implementation allows increasing dataset lockup periods in a trustless manner, preventing data providers from withdrawing preservation funds
-- **Upstream Contribution**: Submitted [PR #72](https://github.com/FilOzone/filecoin-services/pull/72) to Pandora Service upstream repository with helpful functions for the implementation
 
-### FilCDN Integration
+## 🏊 Hackathon Tracks
 
-- **CDN Support**: Enabled for faster data access via FilCDN
+### Main Tracks
 
-### Mosaia Integration
+I am unsure which of the main tracks this project fits best, so I will let the judges decide where it belongs. Here’s why FiloDataBroker could be relevant to each track:
 
-- **List Tool**: Lists available datasets with metadata, pricing, and column information ([source code](https://github.com/imajus/fdb-list-mosaia-tool))
-- **Query Tool**: Executes SQL queries on datasets ([source code](https://github.com/imajus/fdb-query-mosaia-tool))
+- **Secure, Sovereign Systems:**
+
+  The project empowers data providers to control access to their data using NFT-gated encryption and on-chain registries, eliminating reliance on centralized servers or off-chain databases. Sensitive data is protected with cryptography and access is enforced by smart contracts, ensuring users hold the keys and data cannot be censored or unplugged.
+
+- **AI & Autonomous Infrastructure:**
+
+  By making structured, on-chain-registered datasets available for LLMs and agents, the platform grounds AI in open, verifiable data. The MCP server enables agents to discover, purchase, and query datasets with on-chain provenance, supporting transparent and trustworthy AI workflows.
+
+- **Decentralized Economies, Governance & Science:**
+
+  FiloDataBroker creates new economic incentives for data sharing by enabling direct monetization of datasets, programmable pricing, and automatic fee distribution. The use of NFTs for access and on-chain registries for metadata supports open collaboration and transparent economic coordination, aligning with the goals of decentralized science and programmable economies.
+
+### ⚡️ Hack The Sovereign Data Layer with Filecoin
+
+FiloDataBroker directly addresses the challenge of building with programmable storage on Filecoin by combining on-chain dataset registries, NFT-gated access, and automated payment flows:
+
+- **Programmable Storage & Retrieval:** The platform uses FEVM smart contracts (FDBRegistry/Pandora/PDPVerifier) to register datasets, store metadata, and manage payment rails. Public and private CSV data is stored on Filecoin via Synapse SDK, with retrieval enabled through on-chain CIDs and FilCDN.
+
+  - **Custom Deployment**: Deployed a copy of Pandora Service smart contract as an arbiter/listener implementation integrated with Synapse SDK to allow fine grained control over the datasets storage lockup period - [0x55...62D2](https://filecoin-testnet.blockscout.com/address/0x55577C413A68CF7Ed1383db3b5122425787162D2)
+  - **Upstream Contribution**: Submitted [PR #72](https://github.com/FilOzone/filecoin-services/pull/72) to Pandora Service upstream repository with helpful functions for the implementation
+
+- **Crypto-based Payments:** Dataset purchases and storage fees are handled with USDFC stablecoin, including automatic service fee deduction and preservation fee lockups, all enforced by smart contracts.
+
+- **Impactful Use Cases:** The system enables new data monetization models, supports verifiable AI training data, and lays the groundwork for Data DAOs and open data marketplaces, all powered by Filecoin’s on-chain infrastructure.
+
+### ⚡️ Hack The Decentralized Economy with USDFC on Filecoin
+
+FiloDataBroker leverages USDFC as the core payment and incentive mechanism for decentralized data sharing:
+
+- **USDFC-Powered Data Marketplace:** All dataset purchases, access fees, and storage preservation payments are made in USDFC, providing stable, transparent, and crypto-native transactions for both data providers and consumers.
+
+- **Automated Fee Distribution:** The platform enforces automatic preservation fee lockups, ensuring fair compensation and sustainable storage, all handled by smart contracts with USDFC.
+
+- **Direct Monetization & Low Fees:** Data providers receive USDFC payments directly for their datasets, with no intermediaries or predatory platform fees, enabling new economic models for data sharing and collaboration.
+
+- **Programmable Finance:** The use of USDFC and smart contracts enables programmable, auditable, and trustless payment flows for data access, storage, and preservation, aligning with the vision of decentralized economies.
+
+### ⚡️ Build a low latency application using PDP and FilCDN
+
+FiloDataBroker is designed to deliver fast, reliable access to structured data by leveraging both Filecoin PDP (Proof of Data Possession) deals and FilCDN:
+
+- **FilCDN Integration for Instant Data Access:** All public and private CSV datasets are stored on Filecoin and made accessible via FilCDN, enabling low-latency retrieval for data consumers.
+
+- **PDP-backed Storage:** The platform uses Filecoin Web Services and Synapse SDK to ensure that all data is stored in verifiable PDP deals, guaranteeing data integrity and availability.
+
+- **Real-Time Data Consumption:** The MCP server fetches and merges public/private data on demand, allowing LLMs, agents, and other applications to access large datasets instantly, with minimal wait times.
+
+### 🧠 Mosaia challenge: Beat ChatGPT - build an AI that uses tools and trusted data to perform 10x better
+
+FiloDataBroker is not only a decentralized data infrastructure, but also integrates with the Mosaia platform by providing agent tools that enable AI agents to access, list, and query on-chain datasets:
+
+- **Custom Mosaia Agent & Tools:** I have created an AI agent in Mosaia and developed tools for listing available datasets and querying data. This allows agents to leverage unique, verifiable datasets stored on Filecoin, going beyond what centralized LLMs like ChatGPT can access.
+
+  - **List Tool**: Lists available datasets with metadata, pricing, and column information ([repository](https://github.com/imajus/fdb-list-mosaia-tool))
+  - **Query Tool**: Executes SQL queries on datasets ([repository](https://github.com/imajus/fdb-query-mosaia-tool))
+
+- **Unique, Trusted Data for Agents:** By exposing on-chain registered, NFT-gated datasets to Mosaia agents, the project empowers AI to deliver more accurate, trustworthy, and up-to-date results, especially for specialized or proprietary data.
+
+- **Tooling for Agent Integration:** The tools are designed for seamless integration with Mosaia’s agent framework, enabling rapid deployment and use by other developers and agents.
+  Enabling Smarter AI Workflows:
 
 ---
 
